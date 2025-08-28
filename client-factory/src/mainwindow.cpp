@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+/** 构造函数：初始化UI控件、连接信号槽 */
 MainWindow::MainWindow() {
     QWidget* w = new QWidget;
     auto lay = new QVBoxLayout(w);
@@ -42,24 +43,42 @@ MainWindow::MainWindow() {
     connect(&conn_, &ClientConn::packetArrived, this, &MainWindow::onPkt);
 }
 
+// 连接到服务器（使用Host/Port）
+/** 槽：连接服务器 */
 void MainWindow::onConnect() {
     conn_.connectTo(edHost->text(), edPort->text().toUShort());
     txtLog->append("Connecting...");
 }
+// 加入工单会议（发送房间号与用户名到服务器）
+/** 槽：加入工单（发送房间与用户名） */
 void MainWindow::onJoin() {
     QJsonObject j{{"roomId", edRoom->text()},
                   {"user", edUser->text()}};
     conn_.send(MSG_JOIN_WORKORDER, j);
 }
+/** 槽：发送文本（并在本端日志回显） */
 void MainWindow::onSendText() {
-    QJsonObject j{{"roomId", edRoom->text()},
+    // 发送文本：构造消息JSON并通过网络发送；同时在本端日志中也显示这条消息，
+    // 这样双方界面都能看到完整对话（包括自己发送的消息）。
+QJsonObject j{{"roomId", edRoom->text()},
                   {"sender", edUser->text()},
                   {"content", edInput->text()},
                   {"ts", QDateTime::currentMSecsSinceEpoch()}};
+    // 本端追加显示（sender 使用本端用户名，格式与接收端一致）
+    do {
+        QString s = QString("[%1] %2: %3")
+            .arg(edRoom->text())
+            .arg(edUser->text())
+            .arg(edInput->text());
+        txtLog->append(s);
+    } while(0);
+
     conn_.send(MSG_TEXT, j);
     edInput->clear();
 }
 
+// 处理网络收到的数据包（文本消息、服务器事件等）
+/** 槽：处理收到的Packet（文本、服务器事件等） */
 void MainWindow::onPkt(Packet p) {
     if (p.type == MSG_TEXT) {
         QString s = QString("[%1] %2: %3")
