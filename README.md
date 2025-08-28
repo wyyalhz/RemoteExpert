@@ -54,5 +54,3 @@ qmake && make -j && ./client-expert
 ## 常见问题
 - 若 `qmake` 报错缺少模块，请确认已安装 `qt5-default`、`qtbase5-dev` 等基础包。
 - 同机测试语音/视频时请佩戴耳机避免啸叫（音视频功能开发时适用）。
-
-祝你们冲刺顺利！
