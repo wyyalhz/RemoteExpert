@@ -7,5 +7,5 @@ SOURCES += src/main.cpp \
            src/clientconn.cpp
 HEADERS += src/mainwindow.h \
            src/clientconn.h
-FORMS   +=
+FORMS   += src/mainwindow.ui
 include(../common/common.pri)

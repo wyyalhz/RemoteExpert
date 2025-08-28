@@ -1,9 +1,13 @@
 TEMPLATE = app
 TARGET = server
-QT += core network
-CONFIG += c++11 console
+QT += core network gui widgets
+CONFIG += c++11
 CONFIG -= app_bundle
-SOURCES += src/main.cpp \
+SOURCES += src/mainwindow.cpp \
+            src/main.cpp \
            src/roomhub.cpp
-HEADERS += src/roomhub.h
+HEADERS += src/mainwindow.h \
+            src/roomhub.h
 include(../common/common.pri)
+
+FORMS   += src/mainwindow.ui

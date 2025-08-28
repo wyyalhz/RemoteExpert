@@ -1,18 +1,21 @@
+#include <QtWidgets>
 #include <QtCore>
 #include <QtNetwork>
-#include "roomhub.h"
+#include "mainwindow.h"
 
 int main(int argc, char** argv) {
-    QCoreApplication app(argc, argv);
+    QApplication app(argc, argv);
     QCommandLineParser parser; parser.addHelpOption();
     QCommandLineOption portOpt(QStringList() << "p" << "port", "Listen port", "port", "9000");
     parser.addOption(portOpt);
     parser.process(app);
 
-    quint16 port = parser.value(portOpt).toUShort();
-    RoomHub hub;
-    if (!hub.start(port)) return 1;
-
-    qInfo() << "Usage: clients connect to server_ip:" << port;
+    ServerWindow w;
+    // 如果命令行给了端口，就预填
+    QString portStr = parser.value(portOpt);
+    if (!portStr.isEmpty()) {
+        w.findChild<QLineEdit*>("edPort")->setText(portStr);
+    }
+    w.show();
     return app.exec();
 }

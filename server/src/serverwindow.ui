@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ServerWindow</class>
+ <widget class="QMainWindow" name="ServerWindow">
+  <property name="windowTitle">
+   <string>远程专家支持（服务端）</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="row1">
+      <item><widget class="QLabel" name="labelPort"><property name="text"><string>Port:</string></property></widget></item>
+      <item><widget class="QLineEdit" name="edPort"><property name="text"><string>9000</string></property></widget></item>
+      <item><widget class="QPushButton" name="btnStart"><property name="text"><string>启动服务</string></property></widget></item>
+      <item><widget class="QPushButton" name="btnStop"><property name="text"><string>停止</string></property></widget></item>
+    </layout>
+    </item>
+    <item>
+     <widget class="QTextEdit" name="txtLog">
+      <property name="readOnly"><bool>true</bool></property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar"/>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
