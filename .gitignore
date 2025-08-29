@@ -1,3 +1,10 @@
+# VSCode settings
+.vscode
+
+# VSCode qt building files
+build
+
+
 # C++ objects and libs
 *.slo
 *.lo
