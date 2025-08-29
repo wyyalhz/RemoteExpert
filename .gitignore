@@ -1,3 +1,11 @@
+# vscode settings
+.vscode/
+
+# vscode building output
+build/
+build-*/
+build-*/
+
 # C++ objects and libs
 *.slo
 *.lo
