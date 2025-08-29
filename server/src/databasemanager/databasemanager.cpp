@@ -33,7 +33,7 @@ bool DatabaseManager::initialize()
     }
 
     // 确保数据库目录存在
-    QString dbDirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QString dbDirPath = QDir::currentPath() + "/database";
     QDir dbDir(dbDirPath);
     if (!dbDir.exists() && !dbDir.mkpath(".")) {
         qCritical() << "Failed to create database directory:" << dbDirPath;
