@@ -10,8 +10,8 @@ TEMPLATE = app
 SOURCES += \
     src/main.cpp \
     src/roomhub.cpp \
-    src/usage_example.cpp \
     src/databasemanager/databasemanager.cpp \
+    src/databasemanager/base/db_base.cpp \
     src/databasemanager/user/user_manager.cpp \
     src/databasemanager/workorder/workorder_manager.cpp \
     src/databasemanager/logger/db_logger.cpp \
@@ -21,6 +21,7 @@ SOURCES += \
 HEADERS += \
     src/roomhub.h \
     src/databasemanager/databasemanager.h \
+    src/databasemanager/base/db_base.h \
     src/databasemanager/user/user_manager.h \
     src/databasemanager/workorder/workorder_manager.h \
     src/databasemanager/logger/db_logger.h \
@@ -30,6 +31,7 @@ HEADERS += \
 INCLUDEPATH += \
     src \
     src/databasemanager \
+    src/databasemanager/base \
     src/databasemanager/user \
     src/databasemanager/workorder \
     src/databasemanager/logger \

@@ -1,41 +1,39 @@
 #include "user_manager.h"
 
-UserManager::UserManager(QObject *parent) : QObject(parent) {}
+UserManager::UserManager(QObject *parent) : DBBase(parent) {}
 
 UserManager::~UserManager() {}
 
 bool UserManager::validateUser(const QString &username, const QString &password)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[UserManager] Validate user failed: Database is NOT open!";
+    if (!checkConnection("Validate user")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("SELECT password_hash FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!query.exec()) {
-        qCritical() << "[UserManager] Query user failed:" << query.lastError().text();
+    if (!executeQuery(query, "Query user")) {
         return false;
     }
     
-    if (!query.next()) {
-        qWarning() << "[UserManager] User not found:" << username;
+    if (!checkQueryResult(query, "User not found")) {
+        logWarning("Validate user", QString("User not found: %1").arg(username));
         return false;
     }
 
     QString storedHash = query.value(0).toString();
-    qDebug() << "[UserManager] Stored hash for" << username << ":" << storedHash;
+    qDebug() << QString("[%1] Stored hash for %2: %3").arg(metaObject()->className()).arg(username).arg(storedHash);
 
     QString inputHash = hashPassword(password);
-    qDebug() << "[UserManager] Input password hash:" << inputHash;
+    qDebug() << QString("[%1] Input password hash: %2").arg(metaObject()->className()).arg(inputHash);
 
     bool isPasswordCorrect = (storedHash == inputHash);
     if (isPasswordCorrect) {
-        qInfo() << "[UserManager] User validate SUCCESS:" << username;
+        logInfo("Validate user", QString("User validate SUCCESS: %1").arg(username));
     } else {
-        qWarning() << "[UserManager] User validate FAILED: Wrong password for" << username;
+        logWarning("Validate user", QString("User validate FAILED: Wrong password for %1").arg(username));
     }
     
     return isPasswordCorrect;
@@ -43,43 +41,41 @@ bool UserManager::validateUser(const QString &username, const QString &password)
 
 bool UserManager::registerUser(const QString &username, const QString &password, const QString &role)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[UserManager] Register user failed: Database is NOT open!";
+    if (!checkConnection("Register user")) {
         return false;
     }
 
     // 检查用户是否已存在
     if (userExists(username)) {
-        qWarning() << "[UserManager] User already exists:" << username;
+        logWarning("Register user", QString("User already exists: %1").arg(username));
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)");
     query.addBindValue(username);
     query.addBindValue(hashPassword(password));
     query.addBindValue(role);
 
-    if (!query.exec()) {
-        qCritical() << "[UserManager] Register user failed:" << query.lastError().text();
+    if (!executeQuery(query, "Register user")) {
         return false;
     }
 
-    qInfo() << "[UserManager] User registered successfully:" << username;
+    logInfo("Register user", QString("User registered successfully: %1").arg(username));
     return true;
 }
 
 int UserManager::getUserId(const QString &username)
 {
-    if (!db_.isOpen()) {
+    if (!checkConnection("Get user ID")) {
         return -1;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("SELECT id FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!query.exec() || !query.next()) {
+    if (!executeQuery(query, "Get user ID") || !checkQueryResult(query, "User not found")) {
         return -1;
     }
 
@@ -88,15 +84,15 @@ int UserManager::getUserId(const QString &username)
 
 QString UserManager::getUserRole(const QString &username)
 {
-    if (!db_.isOpen()) {
+    if (!checkConnection("Get user role")) {
         return QString();
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("SELECT role FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!query.exec() || !query.next()) {
+    if (!executeQuery(query, "Get user role") || !checkQueryResult(query, "User not found")) {
         return QString();
     }
 
@@ -105,15 +101,15 @@ QString UserManager::getUserRole(const QString &username)
 
 bool UserManager::userExists(const QString &username)
 {
-    if (!db_.isOpen()) {
+    if (!checkConnection("Check user exists")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("SELECT COUNT(*) FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!query.exec() || !query.next()) {
+    if (!executeQuery(query, "Check user exists") || !checkQueryResult(query, "Count query failed")) {
         return false;
     }
 

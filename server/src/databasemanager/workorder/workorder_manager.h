@@ -1,24 +1,15 @@
 #ifndef WORKORDER_MANAGER_H
 #define WORKORDER_MANAGER_H
 
-#include <QObject>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QDebug>
-#include <QJsonObject>
-#include <QJsonArray>
+#include "../base/db_base.h"
 
-class WorkOrderManager : public QObject
+class WorkOrderManager : public DBBase
 {
     Q_OBJECT
 public:
     explicit WorkOrderManager(QObject *parent = nullptr);
     ~WorkOrderManager();
 
-    // 设置数据库连接
-    void setDatabase(QSqlDatabase &db) { db_ = db; }
-    
     // 工单创建
     bool createWorkOrder(const QString &title, const QString &description,
                         int creatorId, const QString &priority, const QString &category, QString &generatedTicketId);
@@ -37,9 +28,6 @@ public:
     
     // 工单信息查询
     QJsonObject getWorkOrderInfo(int workOrderId);
-
-private:
-    QSqlDatabase db_;
 };
 
 #endif // WORKORDER_MANAGER_H

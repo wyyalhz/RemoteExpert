@@ -1,23 +1,21 @@
 #include "workorder_manager.h"
 
-WorkOrderManager::WorkOrderManager(QObject *parent) : QObject(parent) {}
+WorkOrderManager::WorkOrderManager(QObject *parent) : DBBase(parent) {}
 
 WorkOrderManager::~WorkOrderManager() {}
 
 bool WorkOrderManager::createWorkOrder(const QString &title, const QString &description,
                                      int creatorId, const QString &priority, const QString &category, QString &generatedTicketId)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Create work order failed: Database is NOT open!";
+    if (!checkConnection("Create work order")) {
         return false;
     }
 
     // 自动生成工单号
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare("SELECT MAX(CAST(ticket_id AS INTEGER)) FROM work_orders");
     
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Query max work order ID failed:" << query.lastError().text();
+    if (!executeQuery(query, "Query max work order ID")) {
         return false;
     }
     
@@ -29,7 +27,7 @@ bool WorkOrderManager::createWorkOrder(const QString &title, const QString &desc
     // 生成新的工单号（最大号+1）
     generatedTicketId = QString::number(maxId + 1);
     
-    qInfo() << "[WorkOrderManager] Generated work order ID:" << generatedTicketId;
+    logInfo("Create work order", QString("Generated work order ID: %1").arg(generatedTicketId));
 
     // 插入工单记录
     query.prepare(R"(
@@ -44,8 +42,7 @@ bool WorkOrderManager::createWorkOrder(const QString &title, const QString &desc
     query.addBindValue(priority);
     query.addBindValue(category);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Create work order failed:" << query.lastError().text();
+    if (!executeQuery(query, "Create work order")) {
         return false;
     }
 
@@ -57,26 +54,24 @@ bool WorkOrderManager::createWorkOrder(const QString &title, const QString &desc
         joinWorkOrder(workOrderId, creatorId, "creator");
     }
 
-    qInfo() << "[WorkOrderManager] Work order created successfully:" << generatedTicketId << "ID:" << workOrderId;
+    logInfo("Create work order", QString("Work order created successfully: %1 ID: %2").arg(generatedTicketId).arg(workOrderId));
     return true;
 }
 
 bool WorkOrderManager::joinWorkOrder(int workOrderId, int userId, const QString &role)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Join work order failed: Database is NOT open!";
+    if (!checkConnection("Join work order")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     
     // 检查是否已经参与该工单
     query.prepare("SELECT id FROM work_order_participants WHERE work_order_id = ? AND user_id = ?");
     query.addBindValue(workOrderId);
     query.addBindValue(userId);
     
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Check participant failed:" << query.lastError().text();
+    if (!executeQuery(query, "Check participant")) {
         return false;
     }
 
@@ -101,23 +96,21 @@ bool WorkOrderManager::joinWorkOrder(int workOrderId, int userId, const QString 
         query.addBindValue(role);
     }
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Join work order failed:" << query.lastError().text();
+    if (!executeQuery(query, "Join work order")) {
         return false;
     }
 
-    qInfo() << "[WorkOrderManager] User" << userId << "joined work order" << workOrderId << "as" << role;
+    logInfo("Join work order", QString("User %1 joined work order %2 as %3").arg(userId).arg(workOrderId).arg(role));
     return true;
 }
 
 bool WorkOrderManager::leaveWorkOrder(int workOrderId, int userId)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Leave work order failed: Database is NOT open!";
+    if (!checkConnection("Leave work order")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         UPDATE work_order_participants 
         SET left_at = CURRENT_TIMESTAMP 
@@ -127,12 +120,11 @@ bool WorkOrderManager::leaveWorkOrder(int workOrderId, int userId)
     query.addBindValue(workOrderId);
     query.addBindValue(userId);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Leave work order failed:" << query.lastError().text();
+    if (!executeQuery(query, "Leave work order")) {
         return false;
     }
 
-    qInfo() << "[WorkOrderManager] User" << userId << "left work order" << workOrderId;
+    logInfo("Leave work order", QString("User %1 left work order %2").arg(userId).arg(workOrderId));
     return true;
 }
 
@@ -140,12 +132,11 @@ QJsonArray WorkOrderManager::getWorkOrderParticipants(int workOrderId)
 {
     QJsonArray participants;
     
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Get participants failed: Database is NOT open!";
+    if (!checkConnection("Get participants")) {
         return participants;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         SELECT wp.user_id, wp.role, wp.joined_at, wp.left_at, u.username
         FROM work_order_participants wp
@@ -156,31 +147,21 @@ QJsonArray WorkOrderManager::getWorkOrderParticipants(int workOrderId)
     
     query.addBindValue(workOrderId);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Get participants failed:" << query.lastError().text();
+    if (!executeQuery(query, "Get participants")) {
         return participants;
     }
 
-    while (query.next()) {
-        QJsonObject participant;
-        participant["user_id"] = query.value("user_id").toInt();
-        participant["username"] = query.value("username").toString();
-        participant["role"] = query.value("role").toString();
-        participant["joined_at"] = query.value("joined_at").toString();
-        participants.append(participant);
-    }
-
+    participants = getQueryResultsAsJsonArray(query);
     return participants;
 }
 
 bool WorkOrderManager::updateWorkOrderStatus(int workOrderId, const QString &status)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Update status failed: Database is NOT open!";
+    if (!checkConnection("Update status")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         UPDATE work_orders 
         SET status = ?, updated_at = CURRENT_TIMESTAMP 
@@ -190,40 +171,37 @@ bool WorkOrderManager::updateWorkOrderStatus(int workOrderId, const QString &sta
     query.addBindValue(status);
     query.addBindValue(workOrderId);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Update status failed:" << query.lastError().text();
+    if (!executeQuery(query, "Update status")) {
         return false;
     }
 
-    qInfo() << "[WorkOrderManager] Work order" << workOrderId << "status updated to" << status;
+    logInfo("Update status", QString("Work order %1 status updated to %2").arg(workOrderId).arg(status));
     return true;
 }
 
 bool WorkOrderManager::closeWorkOrder(int workOrderId, int userId)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Close work order failed: Database is NOT open!";
+    if (!checkConnection("Close work order")) {
         return false;
     }
 
     // 检查用户是否为工单创建者
-    QSqlQuery checkQuery(db_);
+    QSqlQuery checkQuery(database());
     checkQuery.prepare("SELECT creator_id FROM work_orders WHERE id = ?");
     checkQuery.addBindValue(workOrderId);
     
-    if (!checkQuery.exec() || !checkQuery.next()) {
-        qCritical() << "[WorkOrderManager] Work order not found:" << workOrderId;
+    if (!executeQuery(checkQuery, "Check work order creator") || !checkQueryResult(checkQuery, "Work order not found")) {
         return false;
     }
     
     int creatorId = checkQuery.value("creator_id").toInt();
     if (creatorId != userId) {
-        qWarning() << "[WorkOrderManager] User" << userId << "is not the creator of work order" << workOrderId;
+        logWarning("Close work order", QString("User %1 is not the creator of work order %2").arg(userId).arg(workOrderId));
         return false;
     }
 
     // 更新工单状态为closed
-    QSqlQuery updateQuery(db_);
+    QSqlQuery updateQuery(database());
     updateQuery.prepare(R"(
         UPDATE work_orders 
         SET status = 'closed', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
@@ -232,23 +210,21 @@ bool WorkOrderManager::closeWorkOrder(int workOrderId, int userId)
     
     updateQuery.addBindValue(workOrderId);
 
-    if (!updateQuery.exec()) {
-        qCritical() << "[WorkOrderManager] Close work order failed:" << updateQuery.lastError().text();
+    if (!executeQuery(updateQuery, "Close work order")) {
         return false;
     }
 
-    qInfo() << "[WorkOrderManager] Work order" << workOrderId << "status updated to closed by user" << userId;
+    logInfo("Close work order", QString("Work order %1 status updated to closed by user %2").arg(workOrderId).arg(userId));
     return true;
 }
 
 bool WorkOrderManager::assignWorkOrder(int workOrderId, int expertId)
 {
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Assign work order failed: Database is NOT open!";
+    if (!checkConnection("Assign work order")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         UPDATE work_orders 
         SET assigned_to = ?, updated_at = CURRENT_TIMESTAMP 
@@ -258,12 +234,11 @@ bool WorkOrderManager::assignWorkOrder(int workOrderId, int expertId)
     query.addBindValue(expertId);
     query.addBindValue(workOrderId);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Assign work order failed:" << query.lastError().text();
+    if (!executeQuery(query, "Assign work order")) {
         return false;
     }
 
-    qInfo() << "[WorkOrderManager] Work order" << workOrderId << "assigned to expert" << expertId;
+    logInfo("Assign work order", QString("Work order %1 assigned to expert %2").arg(workOrderId).arg(expertId));
     return true;
 }
 
@@ -271,12 +246,11 @@ QJsonObject WorkOrderManager::getWorkOrderInfo(int workOrderId)
 {
     QJsonObject workOrder;
     
-    if (!db_.isOpen()) {
-        qCritical() << "[WorkOrderManager] Get work order info failed: Database is NOT open!";
+    if (!checkConnection("Get work order info")) {
         return workOrder;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         SELECT wo.*, u.username as creator_name, e.username as assigned_expert_name
         FROM work_orders wo
@@ -287,26 +261,12 @@ QJsonObject WorkOrderManager::getWorkOrderInfo(int workOrderId)
     
     query.addBindValue(workOrderId);
 
-    if (!query.exec()) {
-        qCritical() << "[WorkOrderManager] Get work order info failed:" << query.lastError().text();
+    if (!executeQuery(query, "Get work order info")) {
         return workOrder;
     }
 
     if (query.next()) {
-        workOrder["id"] = query.value("id").toInt();
-        workOrder["ticket_id"] = query.value("ticket_id").toString();
-        workOrder["title"] = query.value("title").toString();
-        workOrder["description"] = query.value("description").toString();
-        workOrder["status"] = query.value("status").toString();
-        workOrder["priority"] = query.value("priority").toString();
-        workOrder["category"] = query.value("category").toString();
-        workOrder["creator_id"] = query.value("creator_id").toInt();
-        workOrder["creator_name"] = query.value("creator_name").toString();
-        workOrder["assigned_to"] = query.value("assigned_to").toInt();
-        workOrder["assigned_expert_name"] = query.value("assigned_expert_name").toString();
-        workOrder["created_at"] = query.value("created_at").toString();
-        workOrder["updated_at"] = query.value("updated_at").toString();
-        workOrder["closed_at"] = query.value("closed_at").toString();
+        workOrder = getQueryResultAsJson(query);
     }
 
     return workOrder;

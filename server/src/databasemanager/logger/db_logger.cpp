@@ -1,7 +1,7 @@
 #include "db_logger.h"
 #include <QJsonDocument>
 
-DBLogger::DBLogger(QObject *parent) : QObject(parent) {}
+DBLogger::DBLogger(QObject *parent) : DBBase(parent) {}
 
 DBLogger::~DBLogger() {}
 
@@ -86,11 +86,11 @@ void DBLogger::logWorkOrderAssigned(int workOrderId, int expertId, int assignedB
 
 bool DBLogger::createLogTable()
 {
-    if (!db_.isOpen()) {
+    if (!checkConnection("Create log table")) {
         return false;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     QString createLogTable = R"(
         CREATE TABLE IF NOT EXISTS system_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,8 +106,7 @@ bool DBLogger::createLogTable()
         )
     )";
 
-    if (!query.exec(createLogTable)) {
-        qCritical() << "[DBLogger] Failed to create system_logs table:" << query.lastError().text();
+    if (!executeQuery(query, "Create system_logs table")) {
         return false;
     }
 
@@ -116,7 +115,7 @@ bool DBLogger::createLogTable()
 
 void DBLogger::logMessage(const QString &level, const QString &module, const QString &message, const QJsonObject &context)
 {
-    if (!db_.isOpen()) {
+    if (!checkConnection("Log message")) {
         // 如果数据库不可用，使用控制台日志
         qDebug() << QString("[%1] %2: %3").arg(level).arg(module).arg(message);
         return;
@@ -127,7 +126,7 @@ void DBLogger::logMessage(const QString &level, const QString &module, const QSt
         return;
     }
 
-    QSqlQuery query(db_);
+    QSqlQuery query(database());
     query.prepare(R"(
         INSERT INTO system_logs (level, module, message, context, timestamp)
         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -140,7 +139,8 @@ void DBLogger::logMessage(const QString &level, const QString &module, const QSt
     QString contextJson = QJsonDocument(context).toJson(QJsonDocument::Compact);
     query.addBindValue(contextJson);
 
-    if (!query.exec()) {
-        qCritical() << "[DBLogger] Failed to log message:" << query.lastError().text();
+    if (!executeQuery(query, "Insert log message")) {
+        // 如果数据库插入失败，使用控制台日志作为备选
+        qDebug() << QString("[%1] %2: %3").arg(level).arg(module).arg(message);
     }
 }

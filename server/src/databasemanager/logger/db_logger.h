@@ -1,24 +1,16 @@
 #ifndef DB_LOGGER_H
 #define DB_LOGGER_H
 
-#include <QObject>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QDebug>
+#include "../base/db_base.h"
 #include <QDateTime>
-#include <QJsonObject>
 
-class DBLogger : public QObject
+class DBLogger : public DBBase
 {
     Q_OBJECT
 public:
     explicit DBLogger(QObject *parent = nullptr);
     ~DBLogger();
 
-    // 设置数据库连接
-    void setDatabase(QSqlDatabase &db) { db_ = db; }
-    
     // 日志记录
     void logInfo(const QString &module, const QString &message, const QJsonObject &context = QJsonObject());
     void logWarning(const QString &module, const QString &message, const QJsonObject &context = QJsonObject());
@@ -34,8 +26,6 @@ public:
     void logWorkOrderAssigned(int workOrderId, int expertId, int assignedBy);
 
 private:
-    QSqlDatabase db_;
-    
     // 创建日志表
     bool createLogTable();
     

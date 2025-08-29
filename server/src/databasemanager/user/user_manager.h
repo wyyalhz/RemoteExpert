@@ -1,23 +1,16 @@
 #ifndef USER_MANAGER_H
 #define USER_MANAGER_H
 
-#include <QObject>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QDebug>
+#include "../base/db_base.h"
 #include <QCryptographicHash>
 
-class UserManager : public QObject
+class UserManager : public DBBase
 {
     Q_OBJECT
 public:
     explicit UserManager(QObject *parent = nullptr);
     ~UserManager();
 
-    // 设置数据库连接
-    void setDatabase(QSqlDatabase &db) { db_ = db; }
-    
     // 用户验证
     bool validateUser(const QString &username, const QString &password);
     
@@ -30,8 +23,6 @@ public:
     bool userExists(const QString &username);
 
 private:
-    QSqlDatabase db_;
-    
     // 密码哈希
     QString hashPassword(const QString &password);
 };
