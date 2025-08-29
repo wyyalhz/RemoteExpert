@@ -7,7 +7,8 @@
 #include <QtCore>
 #include <QtNetwork>
 #include "../../common/protocol.h"
-#include "databasemanager.h"
+#include "databasemanager/databasemanager.h"
+#include "databasemanager/user/user_manager.h"
 
 struct ClientCtx
 {

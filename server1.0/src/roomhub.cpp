@@ -1,4 +1,5 @@
 ﻿#include "roomhub.h"
+#include "databasemanager/databasemanager.h"
 
 RoomHub::RoomHub(QObject* parent) : QObject(parent) {}
 
@@ -166,7 +167,7 @@ void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
     QString password=p.json.value("password").toString();
 
     if(//username == "factory" && password =="123456"
-            dbManager_.validateUser(username,password))
+            dbManager_.userManager()->validateUser(username,password))
     {
         c->user =username;
         c->isAuthenticated =true;
