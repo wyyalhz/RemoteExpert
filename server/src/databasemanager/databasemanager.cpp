@@ -97,7 +97,7 @@ bool DatabaseManager::createTables()
             title TEXT NOT NULL,                           -- 工单标题（问题简述）
             description TEXT,                              -- 工单详细描述
             creator_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'open',                    -- 工单状态：open/processing/closed
+            status TEXT DEFAULT 'open',                    -- 工单状态：open/processing/refused/closed
             priority TEXT DEFAULT 'normal',                -- 优先级：low/normal/high/urgent
             category TEXT,                                 -- 工单分类（如：设备故障、软件问题等）
             assigned_to INTEGER,                           -- 指派给专家ID

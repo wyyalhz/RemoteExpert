@@ -7,6 +7,28 @@ class WorkOrderManager : public DBBase
 {
     Q_OBJECT
 public:
+    // 工单状态管理嵌套类
+    class WorkOrderStatus {
+    public:
+        // 状态定义
+        static const QString OPEN;
+        static const QString PROCESSING;
+        static const QString REFUSED;
+        static const QString CLOSED;
+        
+        // 状态等级映射
+        static int getStatusLevel(const QString &status);
+        
+        // 状态转换合法性验证
+        static bool isValidTransition(const QString &fromStatus, const QString &toStatus);
+        
+        // 获取所有有效状态
+        static QStringList getValidStatuses();
+        
+        // 验证状态是否有效
+        static bool isValidStatus(const QString &status);
+    };
+
     explicit WorkOrderManager(QObject *parent = nullptr);
     ~WorkOrderManager();
 

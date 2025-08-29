@@ -1,8 +1,49 @@
 #include "workorder_manager.h"
 
+// 静态常量定义
+const QString WorkOrderManager::WorkOrderStatus::OPEN = "open";
+const QString WorkOrderManager::WorkOrderStatus::PROCESSING = "processing";
+const QString WorkOrderManager::WorkOrderStatus::REFUSED = "refused";
+const QString WorkOrderManager::WorkOrderStatus::CLOSED = "closed";
+
 WorkOrderManager::WorkOrderManager(QObject *parent) : DBBase(parent) {}
 
 WorkOrderManager::~WorkOrderManager() {}
+
+// WorkOrderStatus 嵌套类实现
+int WorkOrderManager::WorkOrderStatus::getStatusLevel(const QString &status)
+{
+    if (status == OPEN) return 0;
+    if (status == REFUSED) return 3;
+    if (status == PROCESSING) return 6;
+    if (status == CLOSED) return 9;
+    return -1; // 无效状态
+}
+
+bool WorkOrderManager::WorkOrderStatus::isValidTransition(const QString &fromStatus, const QString &toStatus)
+{
+    // 获取状态等级
+    int fromLevel = getStatusLevel(fromStatus);
+    int toLevel = getStatusLevel(toStatus);
+    
+    // 检查状态是否有效
+    if (fromLevel == -1 || toLevel == -1) {
+        return false;
+    }
+    
+    // 只能从低等级状态转换为高等级状态
+    return toLevel > fromLevel;
+}
+
+QStringList WorkOrderManager::WorkOrderStatus::getValidStatuses()
+{
+    return {OPEN, REFUSED, PROCESSING, CLOSED};
+}
+
+bool WorkOrderManager::WorkOrderStatus::isValidStatus(const QString &status)
+{
+    return getStatusLevel(status) != -1;
+}
 
 bool WorkOrderManager::createWorkOrder(const QString &title, const QString &description,
                                      int creatorId, const QString &priority, const QString &category, QString &generatedTicketId)
@@ -161,6 +202,30 @@ bool WorkOrderManager::updateWorkOrderStatus(int workOrderId, const QString &sta
         return false;
     }
 
+    // 验证状态是否有效
+    if (!WorkOrderStatus::isValidStatus(status)) {
+        logError("Update status", QString("Invalid status: %1").arg(status));
+        return false;
+    }
+
+    // 获取当前工单状态
+    QSqlQuery currentQuery(database());
+    currentQuery.prepare("SELECT status FROM work_orders WHERE id = ?");
+    currentQuery.addBindValue(workOrderId);
+    
+    if (!executeQuery(currentQuery, "Get current status") || !checkQueryResult(currentQuery, "Work order not found")) {
+        return false;
+    }
+    
+    QString currentStatus = currentQuery.value("status").toString();
+    
+    // 验证状态转换合法性
+    if (!WorkOrderStatus::isValidTransition(currentStatus, status)) {
+        logError("Update status", QString("Invalid status transition from %1 to %2").arg(currentStatus).arg(status));
+        return false;
+    }
+
+    // 执行状态更新
     QSqlQuery query(database());
     query.prepare(R"(
         UPDATE work_orders 
@@ -175,7 +240,7 @@ bool WorkOrderManager::updateWorkOrderStatus(int workOrderId, const QString &sta
         return false;
     }
 
-    logInfo("Update status", QString("Work order %1 status updated to %2").arg(workOrderId).arg(status));
+    logInfo("Update status", QString("Work order %1 status updated from %2 to %3").arg(workOrderId).arg(currentStatus).arg(status));
     return true;
 }
 
