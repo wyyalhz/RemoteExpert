@@ -3,6 +3,7 @@
 
 # VSCode qt building files
 build
+bin
 
 
 # C++ objects and libs
