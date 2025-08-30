@@ -1,8 +1,17 @@
-# VSCode settings
+# VSCode/Cursor settings
 .vscode
+.cursorignore
 
 # VSCode qt building files
 build
+bin
+debug
+release
+
+# 尚未实现的部分
+migrations
+permission_manager.*
+events
 
 
 # C++ objects and libs
