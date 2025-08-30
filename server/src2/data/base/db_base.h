@@ -6,7 +6,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>
-#include <QDebug>
+
 #include <QJsonObject>
 #include <QJsonArray>
 
@@ -28,10 +28,7 @@ protected:
     // 数据库连接检查
     bool checkConnection(const QString &operation = "Database operation");
     
-    // 通用错误处理
-    void logError(const QString &operation, const QSqlError &error);
-    void logWarning(const QString &operation, const QString &message);
-    void logInfo(const QString &operation, const QString &message);
+
     
     // 通用查询执行
     bool executeQuery(QSqlQuery &query, const QString &operation);

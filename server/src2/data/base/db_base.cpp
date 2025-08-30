@@ -1,4 +1,5 @@
 #include "db_base.h"
+#include "../logging/db_logger.h"
 
 DBBase::DBBase(QObject *parent) : QObject(parent) {}
 
@@ -8,26 +9,10 @@ bool DBBase::checkConnection(const QString &operation)
 {
     if (!db_.isOpen()) {
         lastError_ = QString("Database connection is not open for operation: %1").arg(operation);
-        logError(operation, QSqlError(lastError_, "", QSqlError::ConnectionError));
+        DBLogger::error(operation, QSqlError(lastError_, "", QSqlError::ConnectionError));
         return false;
     }
     return true;
-}
-
-void DBBase::logError(const QString &operation, const QSqlError &error)
-{
-    lastError_ = error.text();
-    qCritical() << "Database error in" << operation << ":" << error.text();
-}
-
-void DBBase::logWarning(const QString &operation, const QString &message)
-{
-    qWarning() << "Database warning in" << operation << ":" << message;
-}
-
-void DBBase::logInfo(const QString &operation, const QString &message)
-{
-    qInfo() << "Database info in" << operation << ":" << message;
 }
 
 bool DBBase::executeQuery(QSqlQuery &query, const QString &operation)
@@ -37,18 +22,18 @@ bool DBBase::executeQuery(QSqlQuery &query, const QString &operation)
     }
     
     if (!query.exec()) {
-        logError(operation, query.lastError());
+        DBLogger::error(operation, query.lastError());
         return false;
     }
     
-    logInfo(operation, "Query executed successfully");
+    DBLogger::info(operation, "Query executed successfully");
     return true;
 }
 
 bool DBBase::checkQueryResult(QSqlQuery &query, const QString &operation)
 {
     if (query.lastError().isValid()) {
-        logError(operation, query.lastError());
+        DBLogger::error(operation, query.lastError());
         return false;
     }
     return true;

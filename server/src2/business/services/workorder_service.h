@@ -76,6 +76,22 @@ private:
     bool validateUserPermissions(int workOrderId, int userId, const QString& operation);
     void logWorkOrderActivity(const QString& operation, int workOrderId, bool success, const QString& details = QString());
     QString generateTicketId();
+    
+    // 业务验证方法
+    bool validateWorkOrderCreation(const QString& title, const QString& description, int creatorId);
+    bool validateStatusTransition(int workOrderId, const QString& newStatus, int userId);
+    bool validateAssignment(int workOrderId, int assigneeId, int assignerId);
+    bool validateParticipantAddition(int workOrderId, int userId, const QString& role);
+    
+    // 权限检查方法
+    bool checkUserPermission(int userId, const QString& operation, int workOrderId);
+    bool checkWorkOrderAccess(int userId, int workOrderId);
+    
+    // 业务事件触发方法
+    void triggerWorkOrderCreatedEvent(const WorkOrderModel& workOrder);
+    void triggerWorkOrderStatusChangedEvent(const WorkOrderModel& workOrder, const QString& oldStatus);
+    void triggerWorkOrderAssignedEvent(const WorkOrderModel& workOrder, int assigneeId);
+    void triggerWorkOrderClosedEvent(const WorkOrderModel& workOrder);
 };
 
 #endif // WORKORDER_SERVICE_H

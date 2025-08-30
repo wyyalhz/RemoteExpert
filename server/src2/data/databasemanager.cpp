@@ -1,4 +1,5 @@
 #include "databasemanager.h"
+#include "logging/db_logger.h"
 #include "repositories/workorder_repository.h"
 #include "repositories/user_repository.h"
 #include "repositories/session_repository.h"
@@ -38,12 +39,12 @@ bool DatabaseManager::initialize()
     }
 
     QString dbPath = QDir::currentPath() + "/database/remote_support.db";
-    qInfo() << "Database path:" << dbPath;
+    DBLogger::info("数据库初始化", QString("数据库路径: %1").arg(dbPath));
 
     db_.setDatabaseName(dbPath);
 
     if (!db_.open()) {
-        qCritical() << "Failed to open database:" << db_.lastError().text();
+        DBLogger::error("数据库初始化", db_.lastError());
         return false;
     }
 
@@ -62,7 +63,7 @@ bool DatabaseManager::initialize()
     userRepo_->setDatabase(db_);
     sessionRepo_->setDatabase(db_);
 
-    qInfo() << "Database initialized successfully! All repositories are ready.";
+    DBLogger::info("数据库初始化", "数据库初始化成功！所有Repository已准备就绪。");
     return true;
 }
 
@@ -71,7 +72,7 @@ bool DatabaseManager::ensureDatabaseDirectory()
     QString dbDirPath = QDir::currentPath() + "/database";
     QDir dbDir(dbDirPath);
     if (!dbDir.exists() && !dbDir.mkpath(".")) {
-        qCritical() << QString("Failed to create database directory: %1").arg(dbDirPath);
+        DBLogger::error("数据库目录创建", QString("创建数据库目录失败: %1").arg(dbDirPath));
         return false;
     }
     return true;
@@ -109,7 +110,7 @@ bool DatabaseManager::createWorkOrderTables()
     )";
     
     if (!query.exec(createWorkOrderTable)) {
-        qCritical() << "Failed to create work_orders table:" << query.lastError().text();
+        DBLogger::error("创建工单表", query.lastError());
         return false;
     }
 
@@ -130,11 +131,11 @@ bool DatabaseManager::createWorkOrderTables()
     )";
     
     if (!query.exec(createWorkOrderParticipantsTable)) {
-        qCritical() << "Failed to create work_order_participants table:" << query.lastError().text();
+        DBLogger::error("创建工单参与者表", query.lastError());
         return false;
     }
 
-    qInfo() << "Work order tables created successfully!";
+    DBLogger::info("创建工单表", "工单表创建成功！");
     return true;
 }
 
@@ -156,11 +157,11 @@ bool DatabaseManager::createUserTables()
     )";
 
     if (!query.exec(createUserTable)) {
-        qCritical() << "Failed to create users table:" << query.lastError().text();
+        DBLogger::error("创建用户表", query.lastError());
         return false;
     }
 
-    qInfo() << "User tables created successfully!";
+    DBLogger::info("创建用户表", "用户表创建成功！");
     return true;
 }
 
@@ -184,11 +185,11 @@ bool DatabaseManager::createSessionTables()
     )";
 
     if (!query.exec(createSessionTable)) {
-        qCritical() << "Failed to create sessions table:" << query.lastError().text();
+        DBLogger::error("创建会话表", query.lastError());
         return false;
     }
 
-    qInfo() << "Session tables created successfully!";
+    DBLogger::info("创建会话表", "会话表创建成功！");
     return true;
 }
 

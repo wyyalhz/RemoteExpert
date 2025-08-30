@@ -1,4 +1,5 @@
 #include "workorder_repository.h"
+#include "../logging/db_logger.h"
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QDateTime>
@@ -13,16 +14,13 @@ bool WorkOrderRepository::create(const WorkOrderModel& workOrder, int& workOrder
         return false;
     }
 
-    // 生成工单号
-    QString ticketId = workOrder.ticketId.isEmpty() ? generateTicketId() : workOrder.ticketId;
-    
     QSqlQuery query(database());
     query.prepare(R"(
         INSERT INTO work_orders (ticket_id, title, description, creator_id, priority, category, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     )");
     
-    query.addBindValue(ticketId);
+    query.addBindValue(workOrder.ticketId);
     query.addBindValue(workOrder.title);
     query.addBindValue(workOrder.description);
     query.addBindValue(workOrder.creatorId);
@@ -35,13 +33,8 @@ bool WorkOrderRepository::create(const WorkOrderModel& workOrder, int& workOrder
 
     // 获取新创建的工单ID
     workOrderId = query.lastInsertId().toInt();
-    
-    // 自动将创建者添加为参与者
-    if (workOrderId > 0) {
-        addParticipant(workOrderId, workOrder.creatorId, ParticipantModel::ROLE_CREATOR);
-    }
 
-    logInfo("Create work order", QString("Work order created successfully: %1 ID: %2").arg(ticketId).arg(workOrderId));
+    DBLogger::info("Create work order", QString("Work order created successfully: %1 ID: %2").arg(workOrder.ticketId).arg(workOrderId));
     return true;
 }
 
@@ -136,6 +129,8 @@ bool WorkOrderRepository::remove(int workOrderId)
 
     return executeWorkOrderQuery(query, "Remove work order");
 }
+
+// =========查询操作=========
 
 QList<WorkOrderModel> WorkOrderRepository::findByStatus(const QString& status)
 {
@@ -410,42 +405,34 @@ bool WorkOrderRepository::updateStatus(int workOrderId, const QString& status)
     return executeWorkOrderQuery(query, "Update work order status");
 }
 
-bool WorkOrderRepository::assignTo(int workOrderId, int expertId)
+bool WorkOrderRepository::updateField(int workOrderId, const QString& field, const QVariant& value)
 {
-    if (!checkConnection("Assign work order")) {
+    if (!checkConnection("Update work order field")) {
         return false;
     }
 
     QSqlQuery query(database());
-    query.prepare(R"(
-        UPDATE work_orders 
-        SET assigned_to = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-    )");
+    query.prepare(QString("UPDATE work_orders SET %1 = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").arg(field));
     
-    query.addBindValue(expertId);
+    query.addBindValue(value);
     query.addBindValue(workOrderId);
 
-    return executeWorkOrderQuery(query, "Assign work order");
+    return executeWorkOrderQuery(query, "Update work order field");
 }
 
-bool WorkOrderRepository::closeWorkOrder(int workOrderId)
+bool WorkOrderRepository::updateStatus(int workOrderId, const QString& status)
 {
-    if (!checkConnection("Close work order")) {
-        return false;
-    }
+    return updateField(workOrderId, "status", status);
+}
 
-    QSqlQuery query(database());
-    query.prepare(R"(
-        UPDATE work_orders 
-        SET status = ?, closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-    )");
-    
-    query.addBindValue(WorkOrderModel::STATUS_CLOSED);
-    query.addBindValue(workOrderId);
+bool WorkOrderRepository::updateAssignee(int workOrderId, int assigneeId)
+{
+    return updateField(workOrderId, "assigned_to", assigneeId);
+}
 
-    return executeWorkOrderQuery(query, "Close work order");
+bool WorkOrderRepository::updateClosedAt(int workOrderId, const QDateTime& closedAt)
+{
+    return updateField(workOrderId, "closed_at", closedAt);
 }
 
 int WorkOrderRepository::countByStatus(const QString& status)
@@ -531,27 +518,7 @@ int WorkOrderRepository::countAll()
     return 0;
 }
 
-QString WorkOrderRepository::generateTicketId()
-{
-    if (!checkConnection("Generate ticket ID")) {
-        return QString();
-    }
 
-    QSqlQuery query(database());
-    query.prepare("SELECT MAX(CAST(ticket_id AS INTEGER)) FROM work_orders");
-    
-    if (!executeWorkOrderQuery(query, "Query max work order ID")) {
-        return QString();
-    }
-    
-    int maxId = 0;
-    if (query.next()) {
-        maxId = query.value(0).toInt();
-    }
-    
-    // 生成新的工单号（最大号+1）
-    return QString::number(maxId + 1);
-}
 
 WorkOrderModel WorkOrderRepository::mapToModel(const QSqlRecord& record)
 {

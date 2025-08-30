@@ -20,10 +20,8 @@ public:
     bool update(const UserModel& user);
     bool remove(int userId);
     
-    // 用户管理
-    bool validateUser(const QString& username, const QString& password, int userType);
-    bool registerUser(const QString& username, const QString& password, 
-                     const QString& email = "", const QString& phone = "", int userType = 0);
+    // 纯数据字段更新操作
+    bool updateField(int userId, const QString& field, const QVariant& value);
     bool updatePassword(int userId, const QString& newPasswordHash);
     bool updateUserType(int userId, int userType);
     
@@ -42,11 +40,14 @@ public:
     QString getUserEmail(const QString& username);
     QString getUserPhone(const QString& username);
 
+public:
+    // 密码哈希方法
+    QString hashPassword(const QString& password);
+
 private:
     // 私有辅助方法
     UserModel mapToModel(const QSqlRecord& record);
     bool executeUserQuery(QSqlQuery& query, const QString& operation);
-    QString hashPassword(const QString& password);
 };
 
 #endif // USER_REPOSITORY_H

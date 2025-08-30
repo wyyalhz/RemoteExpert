@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include <QDir>
-#include <QDebug>
+
 
 // 前向声明
 class WorkOrderRepository;

@@ -1,4 +1,5 @@
 #include "user_service.h"
+#include <QCryptographicHash>
 
 UserService::UserService(DatabaseManager* dbManager, QObject *parent)
     : QObject(parent), dbManager_(dbManager), userRepo_(dbManager->userRepository())
@@ -64,7 +65,7 @@ bool UserService::registerUser(const QString& username, const QString& password,
         // 创建用户模型
         UserModel user;
         user.username = username;
-        user.passwordHash = password; // 将在repository中哈希
+        user.passwordHash = userRepo_->hashPassword(password); // 在业务层哈希密码
         user.email = email;
         user.phone = phone;
         user.userType = userType;
@@ -203,8 +204,9 @@ bool UserService::updatePassword(int userId, const QString& oldPassword, const Q
             return false;
         }
         
-        // 更新密码
-        bool success = userRepo_->updatePassword(userId, newPassword);
+        // 哈希新密码并更新
+        QString newPasswordHash = userRepo_->hashPassword(newPassword);
+        bool success = userRepo_->updatePassword(userId, newPasswordHash);
         
         if (success) {
             BusinessLogger::businessOperationSuccess("Update Password", QString::number(userId));
@@ -353,8 +355,23 @@ bool UserService::canModifyWorkOrder(int userId, int workOrderId)
 // 私有辅助方法
 bool UserService::validateUserCredentials(const QString& username, const QString& password, int userType)
 {
-    return userRepo_->validateUser(username, password, userType);
+    // 获取用户信息
+    UserModel user;
+    if (!userRepo_->findByUsername(username, user)) {
+        return false;
+    }
+    
+    // 检查用户类型
+    if (user.userType != userType) {
+        return false;
+    }
+    
+    // 验证密码
+    QString inputHash = userRepo_->hashPassword(password);
+    return (user.passwordHash == inputHash);
 }
+
+
 
 void UserService::logUserActivity(const QString& operation, const QString& username, bool success, const QString& reason)
 {
@@ -367,4 +384,128 @@ void UserService::logUserActivity(const QString& operation, const QString& usern
         }
         BusinessLogger::warning(operation, message);
     }
+}
+
+// 业务验证方法
+bool UserService::validateUserRegistration(const QString& username, const QString& password, 
+                                        const QString& email, const QString& phone, int userType)
+{
+    // 检查用户类型是否有效
+    if (userType != FACTORY_USER && userType != EXPERT_USER) {
+        BusinessLogger::validationFailed("User Registration", "userType", "Invalid user type");
+        return false;
+    }
+    
+    // 检查用户名是否已被使用
+    if (userExists(username)) {
+        BusinessLogger::validationFailed("User Registration", "username", "Username already exists");
+        return false;
+    }
+    
+    // 检查邮箱是否已被使用（如果提供了邮箱）
+    if (!email.isEmpty()) {
+        // 这里可以添加邮箱唯一性检查
+    }
+    
+    return true;
+}
+
+bool UserService::validatePasswordChange(int userId, const QString& oldPassword, const QString& newPassword)
+{
+    // 获取用户信息
+    UserModel user = getUserInfo(userId);
+    if (!user.isValid()) {
+        BusinessLogger::validationFailed("Password Change", "userId", "User not found");
+        return false;
+    }
+    
+    // 验证旧密码
+    QString oldHash = userRepo_->hashPassword(oldPassword);
+    if (user.passwordHash != oldHash) {
+        BusinessLogger::validationFailed("Password Change", "oldPassword", "Old password is incorrect");
+        return false;
+    }
+    
+    // 检查新密码是否与旧密码相同
+    if (oldPassword == newPassword) {
+        BusinessLogger::validationFailed("Password Change", "newPassword", "New password must be different from old password");
+        return false;
+    }
+    
+    return true;
+}
+
+bool UserService::validateUserUpdate(const UserModel& user)
+{
+    // 检查用户是否存在
+    if (!userExists(user.id)) {
+        BusinessLogger::validationFailed("User Update", "userId", "User not found");
+        return false;
+    }
+    
+    // 检查用户名是否已被其他用户使用
+    UserModel existingUser;
+    if (userRepo_->findByUsername(user.username, existingUser) && existingUser.id != user.id) {
+        BusinessLogger::validationFailed("User Update", "username", "Username already exists");
+        return false;
+    }
+    
+    return true;
+}
+
+// 权限检查方法
+bool UserService::checkUserPermission(int userId, const QString& operation)
+{
+    // 这里应该调用权限管理器
+    // 目前简单返回true，后续可以扩展
+    return true;
+}
+
+bool UserService::checkWorkOrderAccess(int userId, int workOrderId)
+{
+    // 这里应该调用工单服务检查访问权限
+    // 目前简单返回true，后续可以扩展
+    return true;
+}
+
+// 业务事件触发方法
+void UserService::triggerUserRegisteredEvent(const UserModel& user)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("user.registered", "UserService", 
+        QJsonObject{
+            {"userId", user.id}, 
+            {"username", user.username},
+            {"userType", user.userType}
+        });
+}
+
+void UserService::triggerUserLoginEvent(const UserModel& user)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("user.login", "UserService", 
+        QJsonObject{
+            {"userId", user.id}, 
+            {"username", user.username}
+        });
+}
+
+void UserService::triggerUserLogoutEvent(const UserModel& user)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("user.logout", "UserService", 
+        QJsonObject{
+            {"userId", user.id}, 
+            {"username", user.username}
+        });
+}
+
+void UserService::triggerUserPasswordChangedEvent(const UserModel& user)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("user.password.changed", "UserService", 
+        QJsonObject{
+            {"userId", user.id}, 
+            {"username", user.username}
+        });
 }

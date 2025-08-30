@@ -306,7 +306,8 @@ bool WorkOrderService::closeWorkOrder(int workOrderId, int userId)
         }
         
         // 关闭工单
-        bool success = workOrderRepo_->closeWorkOrder(workOrderId);
+        bool success = workOrderRepo_->updateStatus(workOrderId, WorkOrderStatusManager::CLOSED) &&
+                      workOrderRepo_->updateClosedAt(workOrderId, QDateTime::currentDateTime());
         
         if (success) {
             BusinessLogger::workOrderClosed(workOrder.ticketId, userId, true);
@@ -356,7 +357,7 @@ bool WorkOrderService::assignWorkOrder(int workOrderId, int assigneeId, int assi
         }
         
         // 分配工单
-        bool success = workOrderRepo_->assignTo(workOrderId, assigneeId);
+        bool success = workOrderRepo_->updateAssignee(workOrderId, assigneeId);
         
         if (success) {
             BusinessLogger::workOrderAssigned("", assigneeId, true);
@@ -392,7 +393,7 @@ bool WorkOrderService::unassignWorkOrder(int workOrderId, int assignerId)
         }
         
         // 取消分配工单
-        bool success = workOrderRepo_->assignTo(workOrderId, -1); // 设置为-1表示未分配
+        bool success = workOrderRepo_->updateAssignee(workOrderId, -1); // 设置为-1表示未分配
         
         if (success) {
             BusinessLogger::businessOperationSuccess("Work Order Unassignment", QString::number(workOrderId));
@@ -635,4 +636,161 @@ QString WorkOrderService::generateTicketId()
     QString timestamp = now.toString("yyyyMMddhhmmss");
     QString randomSuffix = QString::number(QRandomGenerator::global()->bounded(1000, 9999));
     return QString("WO%1%2").arg(timestamp).arg(randomSuffix);
+}
+
+// 业务验证方法
+bool WorkOrderService::validateWorkOrderCreation(const QString& title, const QString& description, int creatorId)
+{
+    // 检查创建者是否存在
+    if (creatorId <= 0) {
+        BusinessLogger::validationFailed("Work Order Creation", "creatorId", "Invalid creator ID");
+        return false;
+    }
+    
+    // 检查用户是否有创建工单的权限
+    if (!checkUserPermission(creatorId, "create_workorder", 0)) {
+        BusinessLogger::validationFailed("Work Order Creation", "permission", "User does not have permission to create work orders");
+        return false;
+    }
+    
+    return true;
+}
+
+bool WorkOrderService::validateStatusTransition(int workOrderId, const QString& newStatus, int userId)
+{
+    // 检查工单是否存在
+    WorkOrderModel workOrder = getWorkOrderById(workOrderId);
+    if (!workOrder.isValid()) {
+        BusinessLogger::validationFailed("Status Transition", "workOrderId", "Work order not found");
+        return false;
+    }
+    
+    // 检查状态转换是否有效
+    if (!WorkOrderStatusManager::isValidTransition(workOrder.status, newStatus)) {
+        BusinessLogger::validationFailed("Status Transition", "status", 
+            QString("Invalid transition from '%1' to '%2'").arg(workOrder.status).arg(newStatus));
+        return false;
+    }
+    
+    // 检查用户权限
+    if (!checkUserPermission(userId, "update_status", workOrderId)) {
+        BusinessLogger::validationFailed("Status Transition", "permission", "User does not have permission to update status");
+        return false;
+    }
+    
+    return true;
+}
+
+bool WorkOrderService::validateAssignment(int workOrderId, int assigneeId, int assignerId)
+{
+    // 检查工单是否存在
+    WorkOrderModel workOrder = getWorkOrderById(workOrderId);
+    if (!workOrder.isValid()) {
+        BusinessLogger::validationFailed("Assignment", "workOrderId", "Work order not found");
+        return false;
+    }
+    
+    // 检查分配者权限
+    if (!checkUserPermission(assignerId, "assign_workorder", workOrderId)) {
+        BusinessLogger::validationFailed("Assignment", "permission", "Assigner does not have permission to assign work orders");
+        return false;
+    }
+    
+    // 检查被分配者是否存在且是专家类型
+    // 这里可以添加更多的业务规则验证
+    
+    return true;
+}
+
+bool WorkOrderService::validateParticipantAddition(int workOrderId, int userId, const QString& role)
+{
+    // 检查工单是否存在
+    WorkOrderModel workOrder = getWorkOrderById(workOrderId);
+    if (!workOrder.isValid()) {
+        BusinessLogger::validationFailed("Participant Addition", "workOrderId", "Work order not found");
+        return false;
+    }
+    
+    // 检查用户是否已经是参与者
+    if (isParticipant(workOrderId, userId)) {
+        BusinessLogger::validationFailed("Participant Addition", "userId", "User is already a participant");
+        return false;
+    }
+    
+    // 检查角色是否有效
+    if (role != ParticipantModel::ROLE_CREATOR && 
+        role != ParticipantModel::ROLE_EXPERT && 
+        role != ParticipantModel::ROLE_OPERATOR && 
+        role != ParticipantModel::ROLE_VIEWER) {
+        BusinessLogger::validationFailed("Participant Addition", "role", "Invalid role");
+        return false;
+    }
+    
+    return true;
+}
+
+// 权限检查方法
+bool WorkOrderService::checkUserPermission(int userId, const QString& operation, int workOrderId)
+{
+    // 这里应该调用权限管理器
+    // 目前简单返回true，后续可以扩展
+    return true;
+}
+
+bool WorkOrderService::checkWorkOrderAccess(int userId, int workOrderId)
+{
+    // 检查用户是否有访问工单的权限
+    WorkOrderModel workOrder = getWorkOrderById(workOrderId);
+    if (!workOrder.isValid()) {
+        return false;
+    }
+    
+    // 创建者、分配者、参与者都可以访问
+    if (workOrder.creatorId == userId || workOrder.assignedTo == userId) {
+        return true;
+    }
+    
+    return isParticipant(workOrderId, userId);
+}
+
+// 业务事件触发方法
+void WorkOrderService::triggerWorkOrderCreatedEvent(const WorkOrderModel& workOrder)
+{
+    // 这里应该调用事件分发器
+    // 目前只是记录日志，后续可以扩展
+    BusinessLogger::eventTriggered("workorder.created", "WorkOrderService", 
+        QJsonObject{{"workOrderId", workOrder.id}, {"ticketId", workOrder.ticketId}});
+}
+
+void WorkOrderService::triggerWorkOrderStatusChangedEvent(const WorkOrderModel& workOrder, const QString& oldStatus)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("workorder.status.changed", "WorkOrderService", 
+        QJsonObject{
+            {"workOrderId", workOrder.id}, 
+            {"ticketId", workOrder.ticketId},
+            {"oldStatus", oldStatus},
+            {"newStatus", workOrder.status}
+        });
+}
+
+void WorkOrderService::triggerWorkOrderAssignedEvent(const WorkOrderModel& workOrder, int assigneeId)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("workorder.assigned", "WorkOrderService", 
+        QJsonObject{
+            {"workOrderId", workOrder.id}, 
+            {"ticketId", workOrder.ticketId},
+            {"assigneeId", assigneeId}
+        });
+}
+
+void WorkOrderService::triggerWorkOrderClosedEvent(const WorkOrderModel& workOrder)
+{
+    // 这里应该调用事件分发器
+    BusinessLogger::eventTriggered("workorder.closed", "WorkOrderService", 
+        QJsonObject{
+            {"workOrderId", workOrder.id}, 
+            {"ticketId", workOrder.ticketId}
+        });
 }

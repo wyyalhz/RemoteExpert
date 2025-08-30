@@ -1,4 +1,5 @@
 #include "user_repository.h"
+#include "../logging/db_logger.h"
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QCryptographicHash>
@@ -7,7 +8,7 @@ UserRepository::UserRepository(QObject *parent) : DBBase(parent) {}
 
 UserRepository::~UserRepository() {}
 
-// 基础CRUD操作
+// =========基础CRUD操作=========
 bool UserRepository::create(const UserModel& user, int& userId)
 {
     if (!checkConnection("Create user")) {
@@ -27,7 +28,7 @@ bool UserRepository::create(const UserModel& user, int& userId)
     }
 
     userId = query.lastInsertId().toInt();
-    logInfo("Create user", QString("User created successfully: %1 ID: %2").arg(user.username).arg(userId));
+    DBLogger::info("Create user", QString("User created successfully: %1 ID: %2").arg(user.username).arg(userId));
     return true;
 }
 
@@ -111,67 +112,29 @@ bool UserRepository::remove(int userId)
     return executeUserQuery(query, "Remove user");
 }
 
-// 用户管理
-bool UserRepository::validateUser(const QString& username, const QString& password, int userType)
+// =========纯数据字段更新操作=========
+bool UserRepository::updateField(int userId, const QString& field, const QVariant& value)
 {
-    if (!checkConnection("Validate user")) {
+    if (!checkConnection("Update user field")) {
         return false;
     }
 
     QSqlQuery query(database());
-    query.prepare("SELECT password_hash FROM users WHERE username = ? AND user_type = ?");
-    query.addBindValue(username);
-    query.addBindValue(userType);
+    query.prepare(QString("UPDATE users SET %1 = ? WHERE id = ?").arg(field));
+    query.addBindValue(value);
+    query.addBindValue(userId);
 
-    if (!executeUserQuery(query, "Query user")) {
-        return false;
-    }
-    
-    if (!checkQueryResult(query, "User not found")) {
-        logWarning("Validate user", QString("User not found: %1 (user_type: %2)").arg(username).arg(userType));
-        return false;
-    }
-
-    QString storedHash = query.value(0).toString();
-    QString inputHash = hashPassword(password);
-
-    bool isPasswordCorrect = (storedHash == inputHash);
-    if (isPasswordCorrect) {
-        logInfo("Validate user", QString("User validate SUCCESS: %1 (user_type: %2)").arg(username).arg(userType));
-    } else {
-        logWarning("Validate user", QString("User validate FAILED: Wrong password for %1").arg(username));
-    }
-    
-    return isPasswordCorrect;
+    return executeUserQuery(query, "Update user field");
 }
 
-bool UserRepository::registerUser(const QString& username, const QString& password, 
-                                 const QString& email, const QString& phone, int userType)
+bool UserRepository::updatePassword(int userId, const QString& newPasswordHash)
 {
-    if (!checkConnection("Register user")) {
-        return false;
-    }
+    return updateField(userId, "password_hash", newPasswordHash);
+}
 
-    // 检查用户是否已存在
-    if (exists(username)) {
-        logWarning("Register user", QString("User already exists: %1").arg(username));
-        return false;
-    }
-
-    QSqlQuery query(database());
-    query.prepare("INSERT INTO users (username, password_hash, email, phone, user_type) VALUES (?, ?, ?, ?, ?)");
-    query.addBindValue(username);
-    query.addBindValue(hashPassword(password));
-    query.addBindValue(email);
-    query.addBindValue(phone);
-    query.addBindValue(userType);
-
-    if (!executeUserQuery(query, "Register user")) {
-        return false;
-    }
-
-    logInfo("Register user", QString("User registered successfully: %1 (user_type: %2)").arg(username).arg(userType));
-    return true;
+bool UserRepository::updateUserType(int userId, int userType)
+{
+    return updateField(userId, "user_type", userType);
 }
 
 bool UserRepository::updatePassword(int userId, const QString& newPasswordHash)
@@ -202,7 +165,7 @@ bool UserRepository::updateUserType(int userId, int userType)
     return executeUserQuery(query, "Update user type");
 }
 
-// 查询操作
+// =========查询操作=========
 QList<UserModel> UserRepository::findByUserType(int userType)
 {
     QList<UserModel> users;
@@ -253,7 +216,7 @@ QList<UserModel> UserRepository::findAll(int limit, int offset)
     return users;
 }
 
-// 统计查询
+// =========统计查询=========
 int UserRepository::countByUserType(int userType)
 {
     if (!checkConnection("Count users by type")) {
@@ -316,7 +279,7 @@ bool UserRepository::exists(const QString& username)
     return false;
 }
 
-// 获取用户信息
+// =========获取用户信息=========
 int UserRepository::getUserId(const QString& username)
 {
     if (!checkConnection("Get user ID")) {
@@ -385,7 +348,7 @@ QString UserRepository::getUserPhone(const QString& username)
     return query.value(0).toString();
 }
 
-// 私有辅助方法
+// =========私有辅助方法=========
 UserModel UserRepository::mapToModel(const QSqlRecord& record)
 {
     UserModel model;
