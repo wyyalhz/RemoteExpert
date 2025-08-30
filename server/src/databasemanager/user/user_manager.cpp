@@ -4,22 +4,25 @@ UserManager::UserManager(QObject *parent) : DBBase(parent) {}
 
 UserManager::~UserManager() {}
 
-bool UserManager::validateUser(const QString &username, const QString &password)
+// ==========用户验证==========
+
+bool UserManager::validateUser(const QString &username, const QString &password, int userType)
 {
     if (!checkConnection("Validate user")) {
         return false;
     }
 
     QSqlQuery query(database());
-    query.prepare("SELECT password_hash FROM users WHERE username = ?");
+    query.prepare("SELECT password_hash FROM users WHERE username = ? AND user_type = ?");
     query.addBindValue(username);
+    query.addBindValue(userType);
 
     if (!executeQuery(query, "Query user")) {
         return false;
     }
     
     if (!checkQueryResult(query, "User not found")) {
-        logWarning("Validate user", QString("User not found: %1").arg(username));
+        logWarning("Validate user", QString("User not found: %1 (user_type: %2)").arg(username).arg(userType));
         return false;
     }
 
@@ -31,7 +34,7 @@ bool UserManager::validateUser(const QString &username, const QString &password)
 
     bool isPasswordCorrect = (storedHash == inputHash);
     if (isPasswordCorrect) {
-        logInfo("Validate user", QString("User validate SUCCESS: %1").arg(username));
+        logInfo("Validate user", QString("User validate SUCCESS: %1 (user_type: %2)").arg(username).arg(userType));
     } else {
         logWarning("Validate user", QString("User validate FAILED: Wrong password for %1").arg(username));
     }
@@ -39,7 +42,8 @@ bool UserManager::validateUser(const QString &username, const QString &password)
     return isPasswordCorrect;
 }
 
-bool UserManager::registerUser(const QString &username, const QString &password, const QString &role)
+bool UserManager::registerUser(const QString &username, const QString &password, 
+                              const QString &email, const QString &phone, int userType)
 {
     if (!checkConnection("Register user")) {
         return false;
@@ -52,18 +56,22 @@ bool UserManager::registerUser(const QString &username, const QString &password,
     }
 
     QSqlQuery query(database());
-    query.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)");
+    query.prepare("INSERT INTO users (username, password_hash, email, phone, user_type) VALUES (?, ?, ?, ?, ?)");
     query.addBindValue(username);
     query.addBindValue(hashPassword(password));
-    query.addBindValue(role);
+    query.addBindValue(email);
+    query.addBindValue(phone);
+    query.addBindValue(userType);
 
     if (!executeQuery(query, "Register user")) {
         return false;
     }
 
-    logInfo("Register user", QString("User registered successfully: %1").arg(username));
+    logInfo("Register user", QString("User registered successfully: %1 (user_type: %2)").arg(username).arg(userType));
     return true;
 }
+
+// ==========获取用户各类信息==========
 
 int UserManager::getUserId(const QString &username)
 {
@@ -82,17 +90,51 @@ int UserManager::getUserId(const QString &username)
     return query.value(0).toInt();
 }
 
-QString UserManager::getUserRole(const QString &username)
+int UserManager::getUserType(const QString &username)
 {
-    if (!checkConnection("Get user role")) {
+    if (!checkConnection("Get user type")) {
+        return -1;
+    }
+
+    QSqlQuery query(database());
+    query.prepare("SELECT user_type FROM users WHERE username = ?");
+    query.addBindValue(username);
+
+    if (!executeQuery(query, "Get user type") || !checkQueryResult(query, "User not found")) {
+        return -1;
+    }
+
+    return query.value(0).toInt();
+}
+
+QString UserManager::getUserEmail(const QString &username)
+{
+    if (!checkConnection("Get user email")) {
         return QString();
     }
 
     QSqlQuery query(database());
-    query.prepare("SELECT role FROM users WHERE username = ?");
+    query.prepare("SELECT email FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!executeQuery(query, "Get user role") || !checkQueryResult(query, "User not found")) {
+    if (!executeQuery(query, "Get user email") || !checkQueryResult(query, "User not found")) {
+        return QString();
+    }
+
+    return query.value(0).toString();
+}
+
+QString UserManager::getUserPhone(const QString &username)
+{
+    if (!checkConnection("Get user phone")) {
+        return QString();
+    }
+
+    QSqlQuery query(database());
+    query.prepare("SELECT phone FROM users WHERE username = ?");
+    query.addBindValue(username);
+
+    if (!executeQuery(query, "Get user phone") || !checkQueryResult(query, "User not found")) {
         return QString();
     }
 
@@ -115,6 +157,8 @@ bool UserManager::userExists(const QString &username)
 
     return query.value(0).toInt() > 0;
 }
+
+// ==========哈希密码==========
 
 QString UserManager::hashPassword(const QString &password)
 {
