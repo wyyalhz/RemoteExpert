@@ -386,25 +386,6 @@ bool WorkOrderRepository::isParticipant(int workOrderId, int userId)
     return false;
 }
 
-bool WorkOrderRepository::updateStatus(int workOrderId, const QString& status)
-{
-    if (!checkConnection("Update work order status")) {
-        return false;
-    }
-
-    QSqlQuery query(database());
-    query.prepare(R"(
-        UPDATE work_orders 
-        SET status = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-    )");
-    
-    query.addBindValue(status);
-    query.addBindValue(workOrderId);
-
-    return executeWorkOrderQuery(query, "Update work order status");
-}
-
 bool WorkOrderRepository::updateField(int workOrderId, const QString& field, const QVariant& value)
 {
     if (!checkConnection("Update work order field")) {

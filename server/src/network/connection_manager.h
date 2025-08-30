@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QByteArray>
 #include <QString>
+#include <QDateTime>
 
 class MessageRouter;
 

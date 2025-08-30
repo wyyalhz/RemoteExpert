@@ -137,34 +137,6 @@ bool UserRepository::updateUserType(int userId, int userType)
     return updateField(userId, "user_type", userType);
 }
 
-bool UserRepository::updatePassword(int userId, const QString& newPasswordHash)
-{
-    if (!checkConnection("Update password")) {
-        return false;
-    }
-
-    QSqlQuery query(database());
-    query.prepare("UPDATE users SET password_hash = ? WHERE id = ?");
-    query.addBindValue(newPasswordHash);
-    query.addBindValue(userId);
-
-    return executeUserQuery(query, "Update password");
-}
-
-bool UserRepository::updateUserType(int userId, int userType)
-{
-    if (!checkConnection("Update user type")) {
-        return false;
-    }
-
-    QSqlQuery query(database());
-    query.prepare("UPDATE users SET user_type = ? WHERE id = ?");
-    query.addBindValue(userType);
-    query.addBindValue(userId);
-
-    return executeUserQuery(query, "Update user type");
-}
-
 // =========查询操作=========
 QList<UserModel> UserRepository::findByUserType(int userType)
 {

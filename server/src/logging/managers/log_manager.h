@@ -5,6 +5,8 @@
 #include <QObject>
 #include <QMap>
 #include <QMutex>
+#include <QFile>
+#include <QTextStream>
 #include <utility>
 
 // 控制台日志输出器
