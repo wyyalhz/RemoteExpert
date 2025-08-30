@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RegisterDialog</class>
+ <widget class="QDialog" name="RegisterDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>555</width>
+    <height>747</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>用户注册</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/* 外观一致 */
+QDialog#RegisterDialog {
+    background: qlineargradient(x1:0,y1:0, x2:0,y2:1,
+                                stop:0   #eef5ff,
+                                stop:0.55 #f3f7ff,
+                                stop:1   #fbfcff);
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+QWidget#title_widget, QWidget#center_widget { background: transparent; border-radius: 20px; }
+QWidget#title_widget { background: rgba(255,255,255,0.26);
+    border-top-left-radius: 20px; border-top-right-radius: 20px; }
+
+QLabel#titleLabel { color: #111827; font-size: 28px; font-weight: 600; letter-spacing: .2px; }
+
+QToolButton {
+    background: transparent; border: none; width: 28px; height: 28px; border-radius: 14px;
+    qproperty-iconSize: 18px 18px;
+}
+QToolButton:hover  { background: rgba(0,0,0,0.06); }
+QToolButton:pressed{ background: rgba(0,0,0,0.12); }
+/* 如果你在登录页做了 “hover 换关闭图标”，这里同样可加：
+QToolButton#toolButton_close:hover { qproperty-icon: url(:/image/x-circle-fill.svg); }
+*/
+
+QLabel#label_5 { background: rgba(255,255,255,0.75); border: 1px solid rgba(0,0,0,0.05); border-radius: 18px; }
+
+/* 输入类控件一致变“胖” */
+QLineEdit, QComboBox {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 16px;
+    padding: 10px 14px;
+    min-height: 42px;
+    font-size: 14px;
+    color: #111827;
+    selection-background-color: #5CAEFF;
+    selection-color: #ffffff;
+}
+QLineEdit:focus, QComboBox:focus {
+    border: 1px solid #5CAEFF;
+    outline: 4px solid rgba(92,174,255,0.18);
+}
+QComboBox::drop-down { width: 26px; border: none; background: transparent; margin-right: 6px; }
+QComboBox QAbstractItemView {
+    background: #ffffff; border: 1px solid rgba(0,0,0,0.12);
+    selection-background-color: #E8F2FF; outline: none;
+}
+
+/* 协议勾选（若有） */
+QCheckBox, QRadioButton { color: #6b7280; spacing: 8px; }
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1px solid #BFC6D1; background: #fff;
+}
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background: #5CAEFF; border: 1px solid #5CAEFF;
+}
+
+
+
+/* 其他按钮一律文字按钮（无背景/无边框），不影响信号槽 */
+QPushButton:not(#registerButton) {
+    background: transparent;
+    border: none;
+    color: #2D7EF7;
+    font-size: 13px;
+    min-height: 28px;
+    padding: 4px 6px;
+}
+QPushButton:not(#registerButton):hover   { color: #1B63D9; text-decoration: underline; }
+QPushButton:not(#registerButton):pressed { color: #114DB3; }
+
+Line { color: rgba(0,0,0,0.10); }
+*:disabled { color: rgba(17,24,39,0.34); }
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="font">
+      <font>
+       <family>Serif</family>
+       <pointsize>-1</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Hi~ 欢迎你的加入</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>注册信息</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>用户类型:*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="userTypeCombo"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>用户名:*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="usernameEdit">
+          <property name="placeholderText">
+           <string>至少3个字符</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>密码:*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="passwordEdit">
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+          <property name="placeholderText">
+           <string>至少6个字符</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>确认密码:*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="confirmEdit">
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+          <property name="placeholderText">
+           <string>再次输入密码</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>邮箱:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="emailEdit">
+          <property name="placeholderText">
+           <string>可选，用于找回密码</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>手机号:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="phoneEdit">
+          <property name="placeholderText">
+           <string>可选，11位手机号</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="registerButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>注册</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancelButton">
+          <property name="text">
+           <string>取消</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_7">
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>注：带*号为必填项</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
