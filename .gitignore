@@ -5,6 +5,9 @@
 build
 bin
 
+# 尚未实现的部分
+migrations
+
 
 # C++ objects and libs
 *.slo
