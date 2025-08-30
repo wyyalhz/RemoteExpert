@@ -1,7 +1,9 @@
 ﻿#include "roomhub.h"
 #include "databasemanager/databasemanager.h"
 
-RoomHub::RoomHub(QObject* parent) : QObject(parent) {}
+RoomHub::RoomHub(QObject* parent) : QObject(parent), dbManager_(new DatabaseManager(this)) {}
+
+RoomHub::~RoomHub(){}
 
 // 实现监听功能
 bool RoomHub::startListening(const QHostAddress &address, quint16 port)
@@ -23,7 +25,7 @@ QHostAddress RoomHub::serverAddress() const
 // 启动服务器，开始监听指定端口port
 bool RoomHub::start(quint16 port)
 {
-    if(!dbManager_.initialize())
+    if(!dbManager_->initialize())
     {
         qCritical()<<"Failed to initialize database!";
         return false;
@@ -107,6 +109,9 @@ void RoomHub::onDisconnected()
 
     // 从客户端映射表中移除
     clients_.erase(it);
+
+    buffers_.remove(sock);
+
     // 安排套接字在适当的时候删除
     sock->deleteLater();
     // 删除客户端上下文对象
@@ -114,7 +119,8 @@ void RoomHub::onDisconnected()
 }
 
 // 处理客户端发送的数据
-void RoomHub::onReadyRead() {
+void RoomHub::onReadyRead()
+{
     // 获取发送数据的客户端套接字
     auto* sock = qobject_cast<QTcpSocket*>(sender());
     if (!sock) return;  // 无效的套接字，直接返回
@@ -125,12 +131,17 @@ void RoomHub::onReadyRead() {
 
     ClientCtx* c = it.value();  // 获取客户端上下文
 
-    // 静态哈希表：为每个套接字维护一个接收缓冲区
-    static QHash<QTcpSocket*, QByteArray> buffers;
-    QByteArray& buf = buffers[sock];  // 获取当前客户端的缓冲区
-
-    // 读取所有可用数据并追加到缓冲区
-    buf.append(sock->readAll());
+    //为每个套接字维护一个接收缓冲区
+    QByteArray& buf = buffers_[sock];  // 获取当前客户端的缓冲区
+    QByteArray newData = sock->readAll();  // 读取新收到的数据
+        if (!newData.isEmpty()) {  // 如果有新数据
+            // 打印：客户端IP、收到的字节数、前20字节（十六进制，方便核对）
+            qInfo() << "[TCP接收] 客户端" << sock->peerAddress().toString()
+                     << "收到" << newData.size() << "字节，前20字节：" << newData.left(20).toHex();
+            // 打印当前缓冲区总长度（判断是否数据不完整）
+            buf.append(newData);  // 将新数据追加到缓冲区
+            qInfo() << "[TCP接收] 当前缓冲区总长度：" << buf.size() << "字节";
+        }
 
     // 解析缓冲区中的数据包
     QVector<Packet> pkts;
@@ -141,6 +152,12 @@ void RoomHub::onReadyRead() {
             handlePacket(c, p);
         }
     }
+    else {
+           // 新增日志：未解析出完整数据包时的提示
+           if (buf.size() > 0) {
+               qInfo() << "[TCP解析] 未解析出完整数据包，当前缓冲区长度：" << buf.size() << "字节";
+           }
+    }
 }
 
 // 处理解析后的数据包
@@ -148,6 +165,48 @@ void RoomHub::onReadyRead() {
 // p: 要处理的数据包
 void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
 {
+    if(p.type == MSG_REGISTER)
+    {
+        QString username = p.json.value("username").toString();
+        QString password = p.json.value("password").toString();
+        QString email = p.json.value("email").toString();
+        QString phone = p.json.value("phone").toString();
+        int userType = p.json.value("user_type").toInt();
+
+        if(username.isEmpty()||password.isEmpty()||userType<=0)
+        {
+            QJsonObject resp
+            {
+                {"code",400},
+                {"message","Invalid parameters: username/password/user_type cannot be empty"}
+            };
+            c->sock->write(buildPacket(MSG_SERVER_EVENT,resp));
+            return;
+        }
+
+        bool registerSuccess = dbManager_->userManager()->registerUser(username,password,email,phone,userType);
+        if(registerSuccess)
+        {
+            QJsonObject resp
+            {
+                {"code",0},
+                {"message","User registered successfully"},
+                {"username",username}
+            };
+            c->sock->write(buildPacket(MSG_SERVER_EVENT,resp));
+        }
+        else
+        {
+            QJsonObject resp
+            {
+                {"code",409},
+                {"message","Username already exists"}
+            };
+            c->sock->write(buildPacket(MSG_SERVER_EVENT,resp));
+        }
+        return;
+    }
+
     if(p.type == MSG_LOGIN)
     {
         //如果已经登录，则拒绝重复登录
@@ -165,9 +224,10 @@ void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
     //解析登录数据
     QString username=p.json.value("username").toString();
     QString password=p.json.value("password").toString();
+    int userType = p.json.value("user_type").toInt();
 
     if(//username == "factory" && password =="123456"
-            dbManager_.userManager()->validateUser(username,password))
+            dbManager_->userManager()->validateUser(username,password,userType))
     {
         c->user =username;
         c->isAuthenticated =true;
@@ -220,10 +280,10 @@ void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
     }
     // 处理其他已认证的请求
     // 处理加入房间的请求
-    if (p.type == MSG_JOIN_WORKORDER) {
+    if (p.type == MSG_JOIN_WORKORDER)
+    {
         // 从数据包中解析房间ID和用户名
         const QString roomId = p.json.value("roomId").toString();
-        const QString user   = p.json.value("user").toString();
 
         // 检查房间ID是否为空
         if (roomId.isEmpty()) {
@@ -235,16 +295,18 @@ void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
         }
 
         // 保存用户名
-        c->user = user;
+        QString user = c->user;
+        if(user.isEmpty())
+        {
+            user = "anonymous";
+        }
+
         // 加入指定房间
         joinRoom(c, roomId);
 
         // 构造成功响应
         QJsonObject j{{"code",0},{"message","已加入"},{"roomId",roomId}};
         c->sock->write(buildPacket(MSG_SERVER_EVENT, j));
-
-        // 输出加入房间的信息
-        qInfo() << "加入房间" << roomId << "的用户是" << (user.isEmpty() ? "(匿名)" : user);
         return;
     }
 
@@ -275,6 +337,7 @@ void RoomHub::handlePacket(ClientCtx* c, const Packet& p)
 // c: 客户端上下文
 // roomId: 要加入的房间ID
 void RoomHub::joinRoom(ClientCtx* c, const QString& roomId) {
+    qInfo() << "[joinRoom] 进入函数，原始c->roomId=" << c->roomId << "，目标roomId=" << roomId;
     // 如果客户端已在其他房间，先从原房间移除
     if (!c->roomId.isEmpty()) {
         auto range = rooms_.equal_range(c->roomId);
@@ -289,8 +352,10 @@ void RoomHub::joinRoom(ClientCtx* c, const QString& roomId) {
 
     // 更新客户端的房间ID
     c->roomId = roomId;
+    qInfo() << "[joinRoom] 已设置c->roomId=" << c->roomId << "（赋值后检查）";
     // 将客户端添加到新房间
     rooms_.insert(roomId, c->sock);
+    qInfo() << "客户端已添加到新房间" << roomId << "，房间当前客户端数：" << rooms_.count(roomId);
 }
 
 // 向房间内其他客户端广播数据包
