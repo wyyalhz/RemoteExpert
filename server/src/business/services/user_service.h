@@ -7,6 +7,7 @@
 #include "../../data/databasemanager.h"
 #include "../../data/models/user_model.h"
 #include "../../data/repositories/user_repository.h"
+#include "session_service.h"
 #include "../../../common/protocol/types/enums.h"
 #include <QObject>
 #include <QJsonObject>
@@ -24,6 +25,16 @@ public:
     bool registerUser(const QString& username, const QString& password, 
                      const QString& email, const QString& phone, int userType);
     bool logoutUser(const QString& username);
+    
+    // 会话管理相关
+    QString createUserSession(int userId, const QString& roomId, int timeoutMinutes = 120);
+    bool updateUserSessionActivity(const QString& sessionId);
+    bool expireUserSession(const QString& sessionId);
+    bool isUserSessionValid(const QString& sessionId);
+    bool isUserInRoom(int userId, const QString& roomId);
+    QList<SessionModel> getUserSessions(int userId);
+    bool removeUserSession(const QString& sessionId);
+    bool removeAllUserSessions(int userId);
     
     // 用户信息管理
     UserModel getUserInfo(const QString& username);
@@ -47,10 +58,14 @@ public:
     bool hasPermission(int userId, const QString& operation);
     bool canAccessWorkOrder(int userId, int workOrderId);
     bool canModifyWorkOrder(int userId, int workOrderId);
+    
+    // 获取服务实例
+    SessionService* getSessionService() const;
 
 private:
     DatabaseManager* dbManager_;
     UserRepository* userRepo_;
+    SessionService* sessionService_;
     
     // 私有辅助方法
     bool validateUserCredentials(const QString& username, const QString& password, int userType);

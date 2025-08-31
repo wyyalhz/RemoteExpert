@@ -29,6 +29,7 @@ SOURCES += \
     src/business/managers/workorder_status_manager.cpp \
     src/business/services/user_service.cpp \
     src/business/services/workorder_service.cpp \
+    src/business/services/session_service.cpp \
     src/business/validators/user_validator.cpp \
     src/business/validators/workorder_validator.cpp \
     # 日志系统
@@ -64,6 +65,7 @@ HEADERS += \
     src/business/managers/workorder_status_manager.h \
     src/business/services/user_service.h \
     src/business/services/workorder_service.h \
+    src/business/services/session_service.h \
     src/business/validators/user_validator.h \
     src/business/validators/workorder_validator.h \
     # 日志系统

@@ -4,6 +4,8 @@
 UserService::UserService(DatabaseManager* dbManager, QObject *parent)
     : QObject(parent), dbManager_(dbManager), userRepo_(dbManager->userRepository())
 {
+    // 创建会话服务
+    sessionService_ = new SessionService(dbManager, this);
     BusinessLogger::info("User Service", "User service initialized");
 }
 
@@ -100,11 +102,22 @@ bool UserService::logoutUser(const QString& username)
 {
     BusinessLogger::businessOperationStart("User Logout", username);
     
-    // 这里可以添加会话清理等逻辑
-    BusinessLogger::userLogout(username);
-    BusinessLogger::businessOperationSuccess("User Logout", username);
-    
-    return true;
+    try {
+        // 获取用户ID
+        int userId = getUserId(username);
+        if (userId > 0) {
+            // 清理用户的所有会话
+            removeAllUserSessions(userId);
+        }
+        
+        BusinessLogger::userLogout(username);
+        BusinessLogger::businessOperationSuccess("User Logout", username);
+        return true;
+    }
+    catch (const BusinessException& e) {
+        BusinessLogger::businessOperationFailed("User Logout", e.getMessage());
+        return false;
+    }
 }
 
 // 用户信息管理
@@ -508,4 +521,90 @@ void UserService::triggerUserPasswordChangedEvent(const UserModel& user)
             {"userId", user.id}, 
             {"username", user.username}
         });
+}
+
+// 会话管理相关方法实现
+QString UserService::createUserSession(int userId, const QString& roomId, int timeoutMinutes)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return QString();
+    }
+    
+    return sessionService_->createSession(userId, roomId, timeoutMinutes);
+}
+
+bool UserService::updateUserSessionActivity(const QString& sessionId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+    
+    return sessionService_->updateSessionActivity(sessionId);
+}
+
+bool UserService::expireUserSession(const QString& sessionId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+    
+    return sessionService_->expireSession(sessionId);
+}
+
+bool UserService::isUserSessionValid(const QString& sessionId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+    
+    return sessionService_->isSessionValid(sessionId);
+}
+
+bool UserService::isUserInRoom(int userId, const QString& roomId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+    
+    return sessionService_->isUserInRoom(userId, roomId);
+}
+
+QList<SessionModel> UserService::getUserSessions(int userId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return QList<SessionModel>();
+    }
+    
+    return sessionService_->getUserSessions(userId);
+}
+
+bool UserService::removeUserSession(const QString& sessionId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+        
+    return sessionService_->removeSession(sessionId);
+}
+
+bool UserService::removeAllUserSessions(int userId)
+{
+    if (!sessionService_) {
+        BusinessLogger::error("User Service", "Session service not available");
+        return false;
+    }
+    
+    return sessionService_->removeUserSessions(userId);
+}
+
+SessionService* UserService::getSessionService() const
+{
+    return sessionService_;
 }

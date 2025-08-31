@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QDateTime>
+#include <QMutex>
 
 class MessageRouter;
 
@@ -15,6 +16,7 @@ struct ClientContext {
     QTcpSocket* socket = nullptr;
     QString username;
     QString currentRoom;
+    QString sessionId;  // 添加会话ID
     bool isAuthenticated = false;
     QDateTime connectedAt;
     QDateTime lastActivity;
@@ -60,6 +62,13 @@ public:
     
     // 设置消息路由器
     void setMessageRouter(MessageRouter* router);
+    
+    // 会话管理
+    void setSessionService(class SessionService* sessionService);
+    bool createSessionForUser(QTcpSocket* socket, int userId, const QString& roomId);
+    bool updateSessionActivity(QTcpSocket* socket);
+    bool expireSession(QTcpSocket* socket);
+    bool isSessionValid(QTcpSocket* socket);
 
 private slots:
     void onReadyRead();
@@ -73,6 +82,8 @@ private:
     QHash<QString, QList<QTcpSocket*>> rooms_;
     
     MessageRouter* messageRouter_;
+    class SessionService* sessionService_;
+    mutable QMutex mutex_;
     
     void setupSocketConnections(QTcpSocket* socket);
     void cleanupConnection(QTcpSocket* socket);
