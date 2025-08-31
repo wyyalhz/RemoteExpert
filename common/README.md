@@ -32,10 +32,6 @@ common/
 │   │   ├── message_parser.h  # 消息解析器
 │   │   └── message_parser.cpp
 │   │
-│   ├── converters/           # 转换工具层
-│   │   ├── enum_converter.h  # 枚举转换工具
-│   │   └── enum_converter.cpp
-│   │
 │   └── protocol.h            # 主入口头文件
 │
 ├── protocol.pri              # 项目文件
@@ -60,11 +56,10 @@ common/
 - **validators/message_validator.h**: 定义消息验证规则
 - **serialization/packet.h**: 定义数据包结构
 
-### 4. 工具层 (`builders/`, `validators/`, `parsers/`, `converters/`)
+### 4. 工具层 (`builders/`, `validators/`, `parsers/`)
 - **builders**: 消息构建工具
 - **validators**: 消息验证工具
 - **parsers**: 消息解析工具
-- **converters**: 类型转换工具
 
 ## 使用方法
 
@@ -86,7 +81,6 @@ include(../common/protocol.pri)
 - **MessageBuilder**: 消息构建工具
 - **MessageValidator**: 消息验证工具
 - **MessageParser**: 消息解析工具
-- **EnumConverter**: 枚举转换工具
 
 ## 向后兼容性
 

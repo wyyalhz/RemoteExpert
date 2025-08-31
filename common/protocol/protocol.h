@@ -27,11 +27,9 @@
 #include "builders/message_builder.h"
 #include "validators/message_validator.h"
 #include "parsers/message_parser.h"
-#include "converters/enum_converter.h"
 
 // 为了向后兼容，提供原有的接口
 using Packet = ::Packet;
 using MessageBuilder = ::MessageBuilder;
 using MessageValidator = ::MessageValidator;
 using MessageParser = ::MessageParser;
-using EnumConverter = ::EnumConverter;

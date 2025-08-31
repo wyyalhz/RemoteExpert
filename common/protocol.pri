@@ -28,9 +28,5 @@ HEADERS += $$PWD/protocol/validators/message_validator.h
 SOURCES += $$PWD/protocol/parsers/message_parser.cpp
 HEADERS += $$PWD/protocol/parsers/message_parser.h
 
-# 转换器层
-SOURCES += $$PWD/protocol/converters/enum_converter.cpp
-HEADERS += $$PWD/protocol/converters/enum_converter.h
-
 # 主入口
 HEADERS += $$PWD/protocol/protocol.h
