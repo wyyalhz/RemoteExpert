@@ -22,6 +22,7 @@ private:
     void handleLogin(QTcpSocket* socket, const QJsonObject& data);
     void handleRegister(QTcpSocket* socket, const QJsonObject& data);
     void handleLogout(QTcpSocket* socket, const QJsonObject& data);
+    void handleHeartbeat(QTcpSocket* socket, const QJsonObject& data);
     
     // 辅助方法
     void updateClientAuthentication(QTcpSocket* socket, const QString& username, bool authenticated);

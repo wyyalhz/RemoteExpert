@@ -3,6 +3,7 @@
 
 #include "../exceptions/business_exception.h"
 #include "../../data/models/user_model.h"
+#include "../../../common/protocol/types/enums.h"
 #include <QString>
 #include <QJsonObject>
 

@@ -1,7 +1,7 @@
 #include "protocol_handler.h"
 #include "../connection_manager.h"
 #include "../logging/network_logger.h"
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 
 ProtocolHandler::ProtocolHandler(QObject *parent)
     : QObject(parent)
@@ -46,10 +46,8 @@ void ProtocolHandler::sendResponse(QTcpSocket* socket, quint16 msgType, const QJ
 
 void ProtocolHandler::sendErrorResponse(QTcpSocket* socket, int errorCode, const QString& message)
 {
-    QJsonObject response{
-        {"code", errorCode},
-        {"message", message}
-    };
+    // 使用MessageBuilder构建错误响应
+    QJsonObject response = MessageBuilder::buildErrorResponse(errorCode, message);
     
     sendResponse(socket, response);
     
@@ -61,15 +59,8 @@ void ProtocolHandler::sendErrorResponse(QTcpSocket* socket, int errorCode, const
 
 void ProtocolHandler::sendSuccessResponse(QTcpSocket* socket, const QString& message, const QJsonObject& data)
 {
-    QJsonObject response{
-        {"code", 0},
-        {"message", message}
-    };
-    
-    // 合并额外的数据
-    for (auto it = data.begin(); it != data.end(); ++it) {
-        response[it.key()] = it.value();
-    }
+    // 使用MessageBuilder构建成功响应
+    QJsonObject response = MessageBuilder::buildSuccessResponse(message, data);
     
     sendResponse(socket, response);
     

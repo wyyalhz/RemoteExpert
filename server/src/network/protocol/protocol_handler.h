@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QJsonObject>
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 
 class ConnectionManager;
 

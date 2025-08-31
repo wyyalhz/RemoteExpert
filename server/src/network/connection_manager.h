@@ -50,6 +50,10 @@ public:
     void sendToClient(QTcpSocket* socket, const QByteArray& data);
     void sendToClient(const QString& username, const QByteArray& data);
     
+    // 用户映射管理
+    void addUserSocket(const QString& username, QTcpSocket* socket);
+    void removeUserSocket(const QString& username);
+    
     // 统计信息
     int getConnectionCount() const;
     int getRoomMemberCount(const QString& roomId) const;

@@ -150,7 +150,7 @@ void UserValidator::validatePhone(const QString& phone)
 
 void UserValidator::validateUserType(int userType)
 {
-    if (userType != FACTORY_USER && userType != EXPERT_USER) {
+    if (userType != USER_TYPE_NORMAL && userType != USER_TYPE_EXPERT) {
         throw ValidationException("Invalid user type", "userType", "User Type Validation");
     }
 }

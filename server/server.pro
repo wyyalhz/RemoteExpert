@@ -6,6 +6,9 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+# 包含重构后的协议模块
+include(../common/protocol.pri)
+
 # 源文件
 SOURCES += \
     # 主程序入口
@@ -41,9 +44,7 @@ SOURCES += \
     src/network/protocol/protocol_handlers/user_handler.cpp \
     src/network/protocol/protocol_handlers/workorder_handler.cpp \
     src/network/protocol/protocol_handlers/chat_handler.cpp \
-    src/network/logging/network_logger.cpp \
-    # 公共协议
-    ../common/protocol.cpp
+    src/network/logging/network_logger.cpp
 
 # 头文件
 HEADERS += \
@@ -78,9 +79,7 @@ HEADERS += \
     src/network/protocol/protocol_handlers/user_handler.h \
     src/network/protocol/protocol_handlers/workorder_handler.h \
     src/network/protocol/protocol_handlers/chat_handler.h \
-    src/network/logging/network_logger.h \
-    # 公共协议
-    ../common/protocol.h
+    src/network/logging/network_logger.h
 
 # 包含路径
 INCLUDEPATH += \
@@ -108,9 +107,7 @@ INCLUDEPATH += \
     src/network/server \
     src/network/protocol \
     src/network/protocol/protocol_handlers \
-    src/network/logging \
-    # 公共协议
-    ../common
+    src/network/logging
 
 # 目标名称
 TARGET = server

@@ -1,7 +1,7 @@
 #include "connection_manager.h"
 #include "protocol/message_router.h"
 #include "logging/network_logger.h"
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 #include <QDateTime>
 
 ConnectionManager::ConnectionManager(QObject *parent)
@@ -148,6 +148,20 @@ void ConnectionManager::sendToClient(const QString& username, const QByteArray& 
     QTcpSocket* socket = getSocket(username);
     if (socket) {
         sendToClient(socket, data);
+    }
+}
+
+void ConnectionManager::addUserSocket(const QString& username, QTcpSocket* socket)
+{
+    if (!username.isEmpty() && socket) {
+        userSockets_[username] = socket;
+    }
+}
+
+void ConnectionManager::removeUserSocket(const QString& username)
+{
+    if (!username.isEmpty()) {
+        userSockets_.remove(username);
     }
 }
 

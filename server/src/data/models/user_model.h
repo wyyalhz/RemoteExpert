@@ -4,12 +4,12 @@
 #include <QString>
 #include <QDateTime>
 #include <QJsonObject>
+#include "../../../../common/protocol/types/enums.h"
 
-// 用户类型枚举
-enum UserType {
-    FACTORY_USER = 0,    // 工厂端用户
-    EXPERT_USER = 1      // 专家端用户
-};
+// 使用common/protocol中的UserType枚举定义
+// 为了向后兼容，提供常量别名
+const int FACTORY_USER = USER_TYPE_NORMAL;
+const int EXPERT_USER = USER_TYPE_EXPERT;
 
 struct UserModel {
     int id = -1;
@@ -17,7 +17,7 @@ struct UserModel {
     QString passwordHash;
     QString email;
     QString phone;
-    int userType = FACTORY_USER;  // 替换原来的role字段
+    int userType = USER_TYPE_NORMAL;  // 使用common/protocol中的枚举值
     QDateTime createdAt;
     
     // 辅助方法

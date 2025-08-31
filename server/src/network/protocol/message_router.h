@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QHash>
 #include <QTcpSocket>
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 
 class ProtocolHandler;
 

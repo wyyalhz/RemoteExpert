@@ -1,7 +1,8 @@
 #include "user_handler.h"
 #include "../connection_manager.h"
 #include "../logging/network_logger.h"
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
+#include <QDateTime>
 
 UserHandler::UserHandler(UserService* userService, QObject *parent)
     : ProtocolHandler(parent)
@@ -22,6 +23,12 @@ void UserHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
         case MSG_REGISTER:
             handleRegister(socket, packet.json);
             break;
+        case MSG_LOGOUT:
+            handleLogout(socket, packet.json);
+            break;
+        case MSG_HEARTBEAT:
+            handleHeartbeat(socket, packet.json);
+            break;
         default:
             sendErrorResponse(socket, 404, QString("Unknown user message type: %1").arg(packet.type));
             break;
@@ -30,13 +37,18 @@ void UserHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
 
 void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
 {
-    QString username = data.value("username").toString();
-    QString password = data.value("password").toString();
-    int userType = data.value("user_type").toInt();
+    // 使用MessageValidator验证登录消息
+    QString validationError;
+    if (!MessageValidator::validateLoginMessage(data, validationError)) {
+        sendErrorResponse(socket, 400, validationError);
+        return;
+    }
     
-    // 基本验证
-    if (username.isEmpty() || password.isEmpty()) {
-        sendErrorResponse(socket, 400, "Username and password cannot be empty");
+    // 使用MessageParser解析登录消息
+    QString username, password;
+    int userType;
+    if (!MessageParser::parseLoginMessage(data, username, password, userType)) {
+        sendErrorResponse(socket, 400, "Invalid login message format");
         return;
     }
     
@@ -54,12 +66,10 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         // 更新客户端认证状态
         updateClientAuthentication(socket, username, true);
         
-        // 发送成功响应
-        QJsonObject responseData{
-            {"username", username},
-            {"user_type", userType}
-        };
-        sendSuccessResponse(socket, "Login successful", responseData);
+        // 使用MessageBuilder构建成功响应
+        QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
+            QJsonObject{{"username", username}, {"user_type", userType}});
+        sendResponse(socket, responseData);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
@@ -75,22 +85,51 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
     }
 }
 
+void UserHandler::handleLogout(QTcpSocket* socket, const QJsonObject& data)
+{
+    // 更新客户端认证状态
+    updateClientAuthentication(socket, QString(), false);
+    
+    // 发送成功响应
+    sendSuccessResponse(socket, "Logout successful", QJsonObject{});
+    
+    QString clientInfo = QString("%1:%2")
+                        .arg(socket->peerAddress().toString())
+                        .arg(socket->peerPort());
+    NetworkLogger::info("User Handler", 
+                       QString("User logged out from %1")
+                       .arg(clientInfo));
+}
+
+void UserHandler::handleHeartbeat(QTcpSocket* socket, const QJsonObject& data)
+{
+    // 发送心跳响应
+    QJsonObject responseData = MessageBuilder::buildHeartbeatResponse(
+        QDateTime::currentMSecsSinceEpoch());
+    sendSuccessResponse(socket, "Heartbeat received", responseData);
+    
+    QString clientInfo = QString("%1:%2")
+                        .arg(socket->peerAddress().toString())
+                        .arg(socket->peerPort());
+    NetworkLogger::debug("User Handler", 
+                        QString("Heartbeat from %1")
+                        .arg(clientInfo));
+}
+
 void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
 {
-    QString username = data.value("username").toString();
-    QString password = data.value("password").toString();
-    QString email = data.value("email").toString();
-    QString phone = data.value("phone").toString();
-    int userType = data.value("user_type").toInt();
-    
-    // 基本验证
-    if (username.isEmpty() || password.isEmpty()) {
-        sendErrorResponse(socket, 400, "Username and password cannot be empty");
+    // 使用MessageValidator验证注册消息
+    QString validationError;
+    if (!MessageValidator::validateRegisterMessage(data, validationError)) {
+        sendErrorResponse(socket, 400, validationError);
         return;
     }
     
-    if (userType != 0 && userType != 1) {
-        sendErrorResponse(socket, 400, "Invalid user type");
+    // 使用MessageParser解析注册消息
+    QString username, password, email, phone;
+    int userType;
+    if (!MessageParser::parseRegisterMessage(data, username, password, email, phone, userType)) {
+        sendErrorResponse(socket, 400, "Invalid register message format");
         return;
     }
     
@@ -98,71 +137,46 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     bool success = userService_->registerUser(username, password, email, phone, userType);
     
     if (success) {
-        sendSuccessResponse(socket, "User registered successfully", QJsonObject{{"username", username}});
+        sendSuccessResponse(socket, "Registration successful", QJsonObject{});
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
                             .arg(socket->peerPort());
         NetworkLogger::info("User Handler", 
                            QString("User '%1' registered successfully from %2")
-                           .arg(username).arg(clientInfo));
+                           .arg(username)
+                           .arg(clientInfo));
     } else {
-        sendErrorResponse(socket, 409, "Username already exists");
+        sendErrorResponse(socket, 500, "Registration failed");
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
                             .arg(socket->peerPort());
-        NetworkLogger::warning("User Handler", 
-                              QString("Registration failed for user '%1' from %2")
-                              .arg(username).arg(clientInfo));
-    }
-}
-
-void UserHandler::handleLogout(QTcpSocket* socket, const QJsonObject& data)
-{
-    ClientContext* context = getClientContext(socket);
-    if (!context || !context->isAuthenticated) {
-        sendErrorResponse(socket, 400, "Not logged in");
-        return;
-    }
-    
-    QString username = context->username;
-    
-    // 调用业务服务进行登出
-    bool success = userService_->logoutUser(username);
-    
-    if (success) {
-        // 更新客户端认证状态
-        updateClientAuthentication(socket, "", false);
-        
-        sendSuccessResponse(socket, "Logout successful");
-        
-        NetworkLogger::info("User Handler", 
-                           QString("User '%1' logged out successfully")
-                           .arg(username));
-    } else {
-        sendErrorResponse(socket, 500, "Logout failed");
+        NetworkLogger::error("User Handler", 
+                            QString("Failed to register user '%1' from %2")
+                            .arg(username)
+                            .arg(clientInfo));
     }
 }
 
 void UserHandler::updateClientAuthentication(QTcpSocket* socket, const QString& username, bool authenticated)
 {
-    if (!getConnectionManager()) {
+    ConnectionManager* manager = getConnectionManager();
+    if (!manager) {
         return;
     }
     
-    ClientContext* context = getClientContext(socket);
+    ClientContext* context = manager->getContext(socket);
     if (context) {
-        context->username = username;
         context->isAuthenticated = authenticated;
+        context->username = authenticated ? username : QString();
         
-        // 更新用户映射
-        if (authenticated && !username.isEmpty()) {
-            // 添加到用户映射
-            // 注意：这里需要访问ConnectionManager的私有成员，可能需要添加公共方法
+        if (authenticated) {
+            // 将用户添加到用户映射中
+            manager->addUserSocket(username, socket);
         } else {
-            // 从用户映射中移除
-            // 注意：这里需要访问ConnectionManager的私有成员，可能需要添加公共方法
+            // 从用户映射中移除用户
+            manager->removeUserSocket(username);
         }
     }
 }

@@ -18,9 +18,15 @@ private:
     // 处理具体的聊天消息
     void handleTextMessage(QTcpSocket* socket, const Packet& packet);
     void handleDeviceData(QTcpSocket* socket, const Packet& packet);
+    void handleFileTransfer(QTcpSocket* socket, const Packet& packet);
+    void handleScreenshot(QTcpSocket* socket, const Packet& packet);
     void handleVideoFrame(QTcpSocket* socket, const Packet& packet);
     void handleAudioFrame(QTcpSocket* socket, const Packet& packet);
+    void handleVideoControl(QTcpSocket* socket, const Packet& packet);
+    void handleAudioControl(QTcpSocket* socket, const Packet& packet);
     void handleControl(QTcpSocket* socket, const Packet& packet);
+    void handleDeviceControl(QTcpSocket* socket, const Packet& packet);
+    void handleSystemControl(QTcpSocket* socket, const Packet& packet);
     
     // 辅助方法
     void broadcastToRoom(QTcpSocket* socket, const Packet& packet);

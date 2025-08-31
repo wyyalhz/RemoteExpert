@@ -1,8 +1,8 @@
 #include "user_model.h"
 
 // 静态常量定义
-const int UserModel::TYPE_FACTORY = FACTORY_USER;
-const int UserModel::TYPE_EXPERT = EXPERT_USER;
+const int UserModel::TYPE_FACTORY = USER_TYPE_NORMAL;
+const int UserModel::TYPE_EXPERT = USER_TYPE_EXPERT;
 
 bool UserModel::isValid() const
 {
@@ -30,7 +30,7 @@ UserModel UserModel::fromJson(const QJsonObject& json)
     model.passwordHash = json["password_hash"].toString();
     model.email = json["email"].toString();
     model.phone = json["phone"].toString();
-    model.userType = json["user_type"].toInt(FACTORY_USER);
+    model.userType = json["user_type"].toInt(USER_TYPE_NORMAL);
     model.createdAt = QDateTime::fromString(json["created_at"].toString(), Qt::ISODate);
     return model;
 }

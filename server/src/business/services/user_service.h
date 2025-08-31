@@ -7,6 +7,7 @@
 #include "../../data/databasemanager.h"
 #include "../../data/models/user_model.h"
 #include "../../data/repositories/user_repository.h"
+#include "../../../common/protocol/types/enums.h"
 #include <QObject>
 #include <QJsonObject>
 

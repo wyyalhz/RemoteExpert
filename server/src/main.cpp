@@ -21,7 +21,7 @@
 #include "logging/managers/log_manager.h"
 
 // 公共协议
-#include "../../common/protocol.h"
+#include "../../common/protocol/protocol.h"
 
 int main(int argc, char *argv[])
 {

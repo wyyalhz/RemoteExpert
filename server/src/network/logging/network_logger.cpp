@@ -1,5 +1,5 @@
 #include "network_logger.h"
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 
 // 基本日志方法实现
 void NetworkLogger::error(const QString &operation, const QString &message)
@@ -181,14 +181,27 @@ QString NetworkLogger::formatMessageType(quint16 msgType)
     switch (msgType) {
         case MSG_LOGIN: return "LOGIN";
         case MSG_REGISTER: return "REGISTER";
+        case MSG_LOGOUT: return "LOGOUT";
+        case MSG_HEARTBEAT: return "HEARTBEAT";
         case MSG_CREATE_WORKORDER: return "CREATE_WORKORDER";
         case MSG_JOIN_WORKORDER: return "JOIN_WORKORDER";
+        case MSG_LEAVE_WORKORDER: return "LEAVE_WORKORDER";
+        case MSG_UPDATE_WORKORDER: return "UPDATE_WORKORDER";
+        case MSG_LIST_WORKORDERS: return "LIST_WORKORDERS";
         case MSG_TEXT: return "TEXT";
         case MSG_DEVICE_DATA: return "DEVICE_DATA";
+        case MSG_FILE_TRANSFER: return "FILE_TRANSFER";
+        case MSG_SCREENSHOT: return "SCREENSHOT";
         case MSG_VIDEO_FRAME: return "VIDEO_FRAME";
         case MSG_AUDIO_FRAME: return "AUDIO_FRAME";
+        case MSG_VIDEO_CONTROL: return "VIDEO_CONTROL";
+        case MSG_AUDIO_CONTROL: return "AUDIO_CONTROL";
         case MSG_CONTROL: return "CONTROL";
+        case MSG_DEVICE_CONTROL: return "DEVICE_CONTROL";
+        case MSG_SYSTEM_CONTROL: return "SYSTEM_CONTROL";
         case MSG_SERVER_EVENT: return "SERVER_EVENT";
+        case MSG_ERROR: return "ERROR";
+        case MSG_NOTIFICATION: return "NOTIFICATION";
         default: return QString("UNKNOWN(%1)").arg(msgType);
     }
 }

@@ -391,7 +391,7 @@ bool UserService::validateUserRegistration(const QString& username, const QStrin
                                         const QString& email, const QString& phone, int userType)
 {
     // 检查用户类型是否有效
-    if (userType != FACTORY_USER && userType != EXPERT_USER) {
+    if (userType != USER_TYPE_NORMAL && userType != USER_TYPE_EXPERT) {
         BusinessLogger::validationFailed("User Registration", "userType", "Invalid user type");
         return false;
     }

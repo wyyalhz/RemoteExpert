@@ -21,6 +21,9 @@ private:
     // 处理具体的工单消息
     void handleCreateWorkOrder(QTcpSocket* socket, const QJsonObject& data);
     void handleJoinWorkOrder(QTcpSocket* socket, const QJsonObject& data);
+    void handleLeaveWorkOrder(QTcpSocket* socket, const QJsonObject& data);
+    void handleUpdateWorkOrder(QTcpSocket* socket, const QJsonObject& data);
+    void handleListWorkOrders(QTcpSocket* socket, const QJsonObject& data);
     void handleGetWorkOrderInfo(QTcpSocket* socket, const QJsonObject& data);
     void handleUpdateWorkOrderStatus(QTcpSocket* socket, const QJsonObject& data);
     void handleAssignWorkOrder(QTcpSocket* socket, const QJsonObject& data);

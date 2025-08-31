@@ -1,6 +1,6 @@
 #include "network_server.h"
 #include "logging/network_logger.h"
-#include "../../../common/protocol.h"
+#include "../../../common/protocol/protocol.h"
 
 NetworkServer::NetworkServer(QObject *parent)
     : QObject(parent)
@@ -125,13 +125,22 @@ void NetworkServer::registerMessageHandlers()
     // 注册工单相关消息处理器
     messageRouter_->registerHandler(MSG_CREATE_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_JOIN_WORKORDER, workOrderHandler_);
+    messageRouter_->registerHandler(MSG_LEAVE_WORKORDER, workOrderHandler_);
+    messageRouter_->registerHandler(MSG_UPDATE_WORKORDER, workOrderHandler_);
+    messageRouter_->registerHandler(MSG_LIST_WORKORDERS, workOrderHandler_);
     
     // 注册聊天相关消息处理器
     messageRouter_->registerHandler(MSG_TEXT, chatHandler_);
     messageRouter_->registerHandler(MSG_DEVICE_DATA, chatHandler_);
+    messageRouter_->registerHandler(MSG_FILE_TRANSFER, chatHandler_);
+    messageRouter_->registerHandler(MSG_SCREENSHOT, chatHandler_);
     messageRouter_->registerHandler(MSG_VIDEO_FRAME, chatHandler_);
     messageRouter_->registerHandler(MSG_AUDIO_FRAME, chatHandler_);
+    messageRouter_->registerHandler(MSG_VIDEO_CONTROL, chatHandler_);
+    messageRouter_->registerHandler(MSG_AUDIO_CONTROL, chatHandler_);
     messageRouter_->registerHandler(MSG_CONTROL, chatHandler_);
+    messageRouter_->registerHandler(MSG_DEVICE_CONTROL, chatHandler_);
+    messageRouter_->registerHandler(MSG_SYSTEM_CONTROL, chatHandler_);
     
     NetworkLogger::info("Network Server", "Message handlers registered successfully");
 }
