@@ -2,6 +2,8 @@
 #include <QStackedWidget>
 #include <QToolButton>
 #include <QDebug>
+#include <QDateTime>
+#include <QTimer>
 #include "tickets/ticketpage.h"
 #include "homemainwindow.h"
 #include "ui_homemainwindow.h"
@@ -11,10 +13,19 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
     , ui(new Ui::HomeMainWindow)
     , m_thanksPage(nullptr)//指针置空
     , m_ticketPage(nullptr)
+    , m_settingPage(nullptr)
     , currentUser(currentUser)
     , currentUserType(currentUserType)
 {
     ui->setupUi(this);
+
+    // 初始化问候语
+    updateGreeting();
+
+    // 可选：定时刷新（比如每分钟刷新一次）
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &HomeMainWindow::updateGreeting);
+    timer->start(60000); // 60秒刷新一次
 
     initPage();
 }
@@ -22,6 +33,32 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
 HomeMainWindow::~HomeMainWindow()
 {
     delete ui;
+}
+
+// 设置问候语
+void HomeMainWindow::updateGreeting() {
+    int hour = QTime::currentTime().hour();
+    QString greeting;
+
+    if (hour >= 6 && hour < 12) {
+        greeting = "上午好!";
+    } else if (hour >= 12 && hour < 18) {
+        greeting = "下午好!";
+    } else if (hour >= 18 && hour < 23) {
+        greeting = "晚上好!";
+    } else {
+        greeting = "夜深了..";
+    }
+
+    ui->titleLabel_1->setText(greeting);
+
+    if(currentUserType == 0){
+        ui->titleLabel_2->setText("工厂用户:");
+    }else{
+        ui->titleLabel_2->setText("技术专家:");
+    }
+
+    ui->titleLabel_3->setText(currentUser);
 }
 
 
@@ -34,10 +71,12 @@ void HomeMainWindow::initPage()
     } else {
         m_ticketPage = new TicketPage(currentUser, false, this);
     }
+    m_settingPage = new SettingPage(this);
 
     //把这些页面加到stackWidget
     ui->stackWidget->addWidget(m_thanksPage);
     ui->stackWidget->addWidget(m_ticketPage);
+    ui->stackWidget->addWidget(m_settingPage);
     ui->stackWidget->setCurrentIndex(0);
 
     //实现按钮切换页面
@@ -61,6 +100,12 @@ void HomeMainWindow::dealMenu(){
             ui->stackWidget->setCurrentIndex(1);
             break;
         }
+        if("btnSettings" == str){
+            ui->stackWidget->setCurrentIndex(2);
+            break;
+        }
     }while(false);
 }
+
+
 

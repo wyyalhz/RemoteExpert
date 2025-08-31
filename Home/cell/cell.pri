@@ -2,6 +2,7 @@ FORMS += \
     $$PWD/homemainwindow.ui \
     $$PWD/logindialog.ui \
     $$PWD/registerdialog.ui \
+    $$PWD/settingpage.ui \
     $$PWD/thankswidget.ui \
     $$PWD/tickets/addticket.ui \
     $$PWD/tickets/ticketdialog.ui \
@@ -13,7 +14,9 @@ HEADERS += \
     $$PWD/homemainwindow.h \
     $$PWD/logindialog.h \
     $$PWD/registerdialog.h \
+    $$PWD/settingpage.h \
     $$PWD/thankswidget.h \
+    $$PWD/theme.h \
     $$PWD/tickets/addticket.h \
     $$PWD/tickets/ticketdialog.h \
     $$PWD/tickets/ticketdialogdetail.h \
@@ -26,7 +29,9 @@ SOURCES += \
     $$PWD/logindialog.cpp \
     $$PWD/main.cpp \
     $$PWD/registerdialog.cpp \
+    $$PWD/settingpage.cpp \
     $$PWD/thankswidget.cpp \
+    $$PWD/theme.cpp \
     $$PWD/tickets/addticket.cpp \
     $$PWD/tickets/ticketdialog.cpp \
     $$PWD/tickets/ticketdialogdetail.cpp \

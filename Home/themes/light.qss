@@ -1,0 +1,152 @@
+
+/* ===== Light (Blue brand) ===== */
+/* Global page background: soft blue */
+QWidget { background: #F2F7FF; color: #1B1D1F; font-family: "Segoe UI"; font-size: 10pt; }
+QLabel#titleLabel { font-size: 20pt; font-weight: 700; color: #111827; }
+.QHint { color: #6B7280; font-size: 9pt; }
+
+/* Optional: login/main root gradient (uncomment if you want a gentle gradient) */
+/*
+QDialog#LoginDialog, QWidget#LoginDialog,
+QMainWindow#HomeMainWindow, QWidget#HomeMainWindow {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #F3F8FF, stop:1 #F7FBFF);
+}
+*/
+
+/* Cards / GroupBox */
+QFrame#Card, QGroupBox {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+    margin-top: 14px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin; left: 12px; padding: 4px 6px;
+    font-weight: 600; color: #0F172A;
+}
+
+/* Inputs (pill) */
+QLineEdit, QPlainTextEdit, QTextEdit, QComboBox,
+QSpinBox, QDoubleSpinBox, QDateEdit, QTimeEdit, QDateTimeEdit {
+    background: #FFFFFF;
+    border: 1px solid #D8DEE6;
+    border-radius: 18px;
+    padding: 8px 14px;
+    min-height: 40px;
+    selection-background-color: #DCEFFD;
+    selection-color: #111827;
+}
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QComboBox:focus,
+QSpinBox:focus, QDoubleSpinBox:focus, QDateEdit:focus, QTimeEdit:focus, QDateTimeEdit:focus {
+    border: 1px solid #0B74D1;
+}
+QComboBox::drop-down { border: none; width: 28px; margin-right: 6px; }
+QComboBox::down-arrow {}
+
+/* Primary Buttons */
+QPushButton {
+    background: #0B74D1;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 18px;
+    padding: 10px 18px;
+    min-height: 40px;
+    font-weight: 600;
+}
+QPushButton:hover  { background: #106EBE; }
+QPushButton:pressed{ background: #0E5CA8; }
+QPushButton:disabled { background: #BFD8F4; color: #FFFFFF; }
+
+/* Ghost & Chip */
+QPushButton[flat="true"], QToolButton[flat="true"] {
+    background: #FFFFFF;
+    color: #0F5FA8;
+    border: 1px solid #C7D7EB;
+    border-radius: 12px;
+    padding: 8px 14px;
+}
+QPushButton[variant="chip"], QToolButton[variant="chip"] {
+    background: #EAF3FF;
+    color: #0B74D1;
+    border: 1px solid #C9E2FF;
+    border-radius: 18px;
+    padding: 8px 16px;
+}
+
+/* Sidebar container (give your left panel objectName="SideBar") */
+/*
+QWidget#SideBar {
+    background: #EAF3FF;
+    border: none;
+}
+*/
+
+QFrame#side_nav{
+    background: #EAF3FF;
+    border: none;
+}
+
+/* Sidebar buttons (add sidebar="true" and checkable=true) */
+QFrame#side_nav QToolButton {
+    background: transparent;
+    color: #1F2937;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding-top: 10px; padding-bottom: 10px;
+    padding-left: 18px; padding-right: 14px;  /* ↑ 增大左内边距让文字更“居中感” */
+    text-align: left;
+    qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+    qproperty-iconSize: 20 20;
+}
+QFrame#side_nav QToolButton:hover {
+    background: #E3EEFA;
+    border-color: #D6E6FB;
+}
+QFrame#side_nav QToolButton:checked {
+    background: #E3EEFA;
+    border-color: #BDD9FF;
+    color: #0B74D1;
+    border-left: 4px solid #0B74D1;
+    /* 为抵消左侧4px竖条，稍微再加左内边距，让视觉更稳： */
+    padding-left: 22px; /* 可在18~24之间微调 */
+}
+
+/* Table */
+QTableView {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+    gridline-color: #E6EBF1;
+    selection-background-color: #E6F2FB;
+    selection-color: #111827;
+}
+QHeaderView::section {
+    background: #F3F4F6;
+    color: #111827;
+    border: none;
+    border-right: 1px solid #E6EBF1;
+    padding: 8px 10px;
+    font-weight: 600;
+}
+
+/* Tabs */
+QTabBar::tab {
+    background: transparent;
+    padding: 8px 14px;
+    margin-right: 2px;
+    border-bottom: 2px solid transparent;
+    font-weight: 600;
+}
+QTabBar::tab:selected { color: #0B74D1; border-bottom: 2px solid #0B74D1; }
+QTabWidget::pane { border: none; top: -1px; }
+
+/* Scrollbars */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #CBD5E1; border-radius: 5px; min-height: 24px; }
+QScrollBar::handle:vertical:hover { background: #94A3B8; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #CBD5E1; border-radius: 5px; min-width: 24px; }
+QScrollBar::handle:horizontal:hover { background: #94A3B8; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }

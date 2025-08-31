@@ -26,4 +26,24 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    image/UiTool.qrc
+    image/UiTool.qrc \
+    image/icons_dark.qrc \
+    image/icons_light.qrc \
+    themes/themes.qrc
+
+# 开发/运行时：把外部 themes 目录复制到可执行文件旁，方便覆盖qss
+# （三端分别处理）
+win32 {
+    QMAKE_POST_LINK += xcopy /E /I /Y \"$$PWD\\themes\" \"$$OUT_PWD\\themes\" & echo.
+}
+unix:!macx {
+    QMAKE_POST_LINK += mkdir -p \"$$OUT_PWD/themes\"; cp -R \"$$PWD/themes/.\" \"$$OUT_PWD/themes/\"
+}
+macx {
+    QMAKE_POST_LINK += mkdir -p \"$$OUT_PWD/themes\"; cp -R \"$$PWD/themes/.\" \"$$OUT_PWD/themes/\"
+}
+
+# make install 时把themes安装到可执行旁
+themes.files = $$files($$PWD/themes/*)
+themes.path  = $$DESTDIR/themes
+INSTALLS    += themes

@@ -5,6 +5,7 @@
 
 #include "thankswidget.h"
 #include "tickets/ticketpage.h"
+#include "settingpage.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class HomeMainWindow; }
@@ -32,8 +33,10 @@ private:
 
     ThanksWidget *m_thanksPage;
     TicketPage *m_ticketPage;
+    SettingPage *m_settingPage;
 
     QString currentUser;
     int currentUserType;
+    void updateGreeting();
 };
 #endif // HOMEMAINWINDOW_H

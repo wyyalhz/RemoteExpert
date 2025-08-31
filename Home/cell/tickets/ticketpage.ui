@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <ui version="4.0">
  <class>TicketPage</class>
  <widget class="QWidget" name="TicketPage">
@@ -42,10 +42,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QListWidget" name="ticketListWidget"/>
+    <widget class="QListWidget" name="ticketListWidget" />
    </item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
+  <property name="spacing"><number>12</number></property><property name="leftMargin"><number>16</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>16</number></property><property name="bottomMargin"><number>16</number></property></layout>
+ <property name="font"><font><family>Segoe UI</family><pointsize>10</pointsize></font></property></widget>
+ <resources />
+ <connections />
 </ui>

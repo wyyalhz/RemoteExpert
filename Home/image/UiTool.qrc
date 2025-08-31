@@ -1,15 +1,4 @@
 <RCC>
-    <qresource prefix="/home">
-        <file>flower-color.svg</file>
-        <file>flower-white.svg</file>
-        <file>geer-black.svg</file>
-        <file>geer-white.svg</file>
-        <file>setGeer-color.svg</file>
-        <file>setGeer-white.svg</file>
-        <file>ticket-black.svg</file>
-        <file>ticket-white.svg</file>
-        <file>man.svg</file>
-    </qresource>
     <qresource prefix="/login">
         <file>gear-wide-connected.svg</file>
         <file>github.svg</file>

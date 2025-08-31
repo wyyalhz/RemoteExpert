@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <ui version="4.0">
  <class>AddTicket</class>
  <widget class="QWidget" name="AddTicket">
@@ -24,13 +24,13 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="title"/>
+      <widget class="QLineEdit" name="title" />
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="expert"/>
+      <widget class="QLineEdit" name="expert" />
      </item>
      <item row="2" column="1">
-      <widget class="QTextEdit" name="description"/>
+      <widget class="QTextEdit" name="description" />
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_2">
@@ -92,8 +92,8 @@
      </item>
     </layout>
    </item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
+  <property name="spacing"><number>12</number></property><property name="leftMargin"><number>16</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>16</number></property><property name="bottomMargin"><number>16</number></property></layout>
+ <property name="font"><font><family>Segoe UI</family><pointsize>10</pointsize></font></property></widget>
+ <resources />
+ <connections />
 </ui>
