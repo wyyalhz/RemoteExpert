@@ -93,7 +93,7 @@ RemoteExpert采用基于TCP的二进制协议，消息格式如下：
 
 ## 3. 工单类消息
 
-### 3.1 创建工单 (MSG_CREATE_WORKORDER = 3)
+### 3.1 创建工单 (MSG_CREATE_WORKORDER = 10)
 
 **请求格式:**
 ```json
@@ -123,7 +123,7 @@ RemoteExpert采用基于TCP的二进制协议，消息格式如下：
 }
 ```
 
-### 3.2 加入工单 (MSG_JOIN_WORKORDER = 4)
+### 3.2 加入工单 (MSG_JOIN_WORKORDER = 11)
 
 **请求格式:**
 ```json
@@ -158,7 +158,7 @@ RemoteExpert采用基于TCP的二进制协议，消息格式如下：
 
 ## 4. 聊天类消息
 
-### 4.1 文本消息 (MSG_TEXT = 10)
+### 4.1 文本消息 (MSG_TEXT = 20)
 
 **请求格式:**
 ```json
@@ -181,7 +181,7 @@ RemoteExpert采用基于TCP的二进制协议，消息格式如下：
 }
 ```
 
-### 4.2 设备数据 (MSG_DEVICE_DATA = 20)
+### 4.2 设备数据 (MSG_DEVICE_DATA = 21)
 
 **请求格式:**
 ```json
@@ -214,7 +214,7 @@ RemoteExpert采用基于TCP的二进制协议，消息格式如下：
 ```
 **二进制数据:** JPEG格式的视频帧数据
 
-### 5.2 音频帧 (MSG_AUDIO_FRAME = 40)
+### 5.2 音频帧 (MSG_AUDIO_FRAME = 31)
 
 **请求格式:**
 ```json

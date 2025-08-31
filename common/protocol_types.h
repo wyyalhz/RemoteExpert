@@ -9,7 +9,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-// 消息类型枚举（与protocol.h保持一致）
+// 消息类型枚举
 enum MsgType : quint16 {
     // 认证类消息 (1-9)
     MSG_REGISTER         = 1,   // 用户注册
@@ -61,32 +61,44 @@ enum WorkOrderPriority : int {
 };
 
 // 工单状态枚举
-enum WorkOrderStatus : QString {
-    STATUS_CREATED       = "created",      // 已创建
-    STATUS_ASSIGNED      = "assigned",     // 已分配
-    STATUS_IN_PROGRESS   = "in_progress",  // 进行中
-    STATUS_RESOLVED      = "resolved",     // 已解决
-    STATUS_CLOSED        = "closed"        // 已关闭
+enum WorkOrderStatus : int {
+    STATUS_CREATED       = 1,  // 已创建
+    STATUS_ASSIGNED      = 2,  // 已分配
+    STATUS_IN_PROGRESS   = 3,  // 进行中
+    STATUS_RESOLVED      = 4,  // 已解决
+    STATUS_CLOSED        = 5   // 已关闭
 };
 
 // 控制指令类型枚举
-enum ControlType : QString {
-    CONTROL_START_VIDEO  = "start_video",  // 开始视频
-    CONTROL_STOP_VIDEO   = "stop_video",   // 停止视频
-    CONTROL_START_AUDIO  = "start_audio",  // 开始音频
-    CONTROL_STOP_AUDIO   = "stop_audio",   // 停止音频
-    CONTROL_SCREENSHOT   = "screenshot",   // 截图
-    CONTROL_DEVICE_CTRL  = "device_control" // 设备控制
+enum ControlType : int {
+    CONTROL_START_VIDEO  = 1,  // 开始视频
+    CONTROL_STOP_VIDEO   = 2,  // 停止视频
+    CONTROL_START_AUDIO  = 3,  // 开始音频
+    CONTROL_STOP_AUDIO   = 4,  // 停止音频
+    CONTROL_SCREENSHOT   = 5,  // 截图
+    CONTROL_DEVICE_CTRL  = 6   // 设备控制
 };
 
 // 事件类型枚举
-enum EventType : QString {
-    EVENT_USER_JOINED    = "user_joined",  // 用户加入
-    EVENT_USER_LEFT      = "user_left",    // 用户离开
-    EVENT_ROOM_CREATED   = "room_created", // 房间创建
-    EVENT_ROOM_CLOSED    = "room_closed",  // 房间关闭
-    EVENT_WORKORDER_UPDATED = "workorder_updated" // 工单更新
+enum EventType : int {
+    EVENT_USER_JOINED    = 1,  // 用户加入
+    EVENT_USER_LEFT      = 2,  // 用户离开
+    EVENT_ROOM_CREATED   = 3,  // 房间创建
+    EVENT_ROOM_CLOSED    = 4,  // 房间关闭
+    EVENT_WORKORDER_UPDATED = 5 // 工单更新
 };
+
+// 枚举到字符串转换函数
+namespace EnumConverter {
+    QString workOrderStatusToString(WorkOrderStatus status);
+    WorkOrderStatus stringToWorkOrderStatus(const QString& str);
+    
+    QString controlTypeToString(ControlType type);
+    ControlType stringToControlType(const QString& str);
+    
+    QString eventTypeToString(EventType type);
+    EventType stringToEventType(const QString& str);
+}
 
 // 消息字段验证规则
 struct MessageValidationRules {
@@ -181,6 +193,25 @@ public:
     static QJsonObject buildErrorResponse(int code,
                                          const QString& message,
                                          const QJsonObject& data = QJsonObject());
+    
+    // 构建工单相关响应
+    static QJsonObject buildWorkOrderCreatedResponse(const QString& ticketId,
+                                                    const QString& title,
+                                                    const QString& priority,
+                                                    const QString& category);
+    
+    static QJsonObject buildWorkOrderJoinedResponse(const QString& roomId,
+                                                   const QJsonObject& workOrderInfo);
+    
+    static QJsonObject buildWorkOrderLeftResponse(const QString& roomId);
+    
+    static QJsonObject buildWorkOrderUpdatedResponse(const QString& ticketId,
+                                                    const QString& status);
+    
+    static QJsonObject buildWorkOrderListResponse(const QJsonArray& workOrders,
+                                                 int totalCount);
+    
+    static QJsonObject buildHeartbeatResponse(qint64 timestamp);
 };
 
 // 消息验证工具类
@@ -193,6 +224,9 @@ public:
     // 验证工单消息
     static bool validateCreateWorkOrderMessage(const QJsonObject& data, QString& error);
     static bool validateJoinWorkOrderMessage(const QJsonObject& data, QString& error);
+    static bool validateLeaveWorkOrderMessage(const QJsonObject& data, QString& error);
+    static bool validateUpdateWorkOrderMessage(const QJsonObject& data, QString& error);
+    static bool validateListWorkOrdersMessage(const QJsonObject& data, QString& error);
     
     // 验证聊天消息
     static bool validateTextMessage(const QJsonObject& data, QString& error);
@@ -250,6 +284,19 @@ public:
                                          QString& workorderId,
                                          QString& role);
     
+    static bool parseLeaveWorkOrderMessage(const QJsonObject& data,
+                                          QString& roomId);
+    
+    static bool parseUpdateWorkOrderMessage(const QJsonObject& data,
+                                           QString& ticketId,
+                                           QString& status,
+                                           QString& description);
+    
+    static bool parseListWorkOrdersMessage(const QJsonObject& data,
+                                          QString& status,
+                                          int& limit,
+                                          int& offset);
+    
     // 解析聊天消息
     static bool parseTextMessage(const QJsonObject& data,
                                 QString& roomId,
@@ -299,3 +346,68 @@ public:
                                  QString& message,
                                  QJsonObject& errorData);
 };
+
+// 枚举转换函数实现
+namespace EnumConverter {
+    inline QString workOrderStatusToString(WorkOrderStatus status) {
+        switch (status) {
+            case STATUS_CREATED: return "created";
+            case STATUS_ASSIGNED: return "assigned";
+            case STATUS_IN_PROGRESS: return "in_progress";
+            case STATUS_RESOLVED: return "resolved";
+            case STATUS_CLOSED: return "closed";
+            default: return "unknown";
+        }
+    }
+    
+    inline WorkOrderStatus stringToWorkOrderStatus(const QString& str) {
+        if (str == "created") return STATUS_CREATED;
+        if (str == "assigned") return STATUS_ASSIGNED;
+        if (str == "in_progress") return STATUS_IN_PROGRESS;
+        if (str == "resolved") return STATUS_RESOLVED;
+        if (str == "closed") return STATUS_CLOSED;
+        return STATUS_CREATED; // 默认值
+    }
+    
+    inline QString controlTypeToString(ControlType type) {
+        switch (type) {
+            case CONTROL_START_VIDEO: return "start_video";
+            case CONTROL_STOP_VIDEO: return "stop_video";
+            case CONTROL_START_AUDIO: return "start_audio";
+            case CONTROL_STOP_AUDIO: return "stop_audio";
+            case CONTROL_SCREENSHOT: return "screenshot";
+            case CONTROL_DEVICE_CTRL: return "device_control";
+            default: return "unknown";
+        }
+    }
+    
+    inline ControlType stringToControlType(const QString& str) {
+        if (str == "start_video") return CONTROL_START_VIDEO;
+        if (str == "stop_video") return CONTROL_STOP_VIDEO;
+        if (str == "start_audio") return CONTROL_START_AUDIO;
+        if (str == "stop_audio") return CONTROL_STOP_AUDIO;
+        if (str == "screenshot") return CONTROL_SCREENSHOT;
+        if (str == "device_control") return CONTROL_DEVICE_CTRL;
+        return CONTROL_START_VIDEO; // 默认值
+    }
+    
+    inline QString eventTypeToString(EventType type) {
+        switch (type) {
+            case EVENT_USER_JOINED: return "user_joined";
+            case EVENT_USER_LEFT: return "user_left";
+            case EVENT_ROOM_CREATED: return "room_created";
+            case EVENT_ROOM_CLOSED: return "room_closed";
+            case EVENT_WORKORDER_UPDATED: return "workorder_updated";
+            default: return "unknown";
+        }
+    }
+    
+    inline EventType stringToEventType(const QString& str) {
+        if (str == "user_joined") return EVENT_USER_JOINED;
+        if (str == "user_left") return EVENT_USER_LEFT;
+        if (str == "room_created") return EVENT_ROOM_CREATED;
+        if (str == "room_closed") return EVENT_ROOM_CLOSED;
+        if (str == "workorder_updated") return EVENT_WORKORDER_UPDATED;
+        return EVENT_USER_JOINED; // 默认值
+    }
+}
