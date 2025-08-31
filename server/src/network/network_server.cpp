@@ -1,4 +1,4 @@
-#include "network_server.h"
+﻿#include "network_server.h"
 #include "logging/network_logger.h"
 #include "../../../common/protocol/protocol.h"
 
@@ -46,7 +46,7 @@ bool NetworkServer::initialize(UserService* userService, WorkOrderService* workO
     // 创建协议处理器
     userHandler_ = new UserHandler(userService_, this);
     workOrderHandler_ = new WorkOrderHandler(workOrderService_, this);
-    chatHandler_ = new ChatHandler(this);
+    chatHandler_ = new ChatHandler(workOrderService_,this);
     
     // 设置组件间的连接
     setupConnections();

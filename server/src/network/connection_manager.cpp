@@ -1,4 +1,4 @@
-#include "connection_manager.h"
+﻿#include "connection_manager.h"
 #include "protocol/message_router.h"
 #include "logging/network_logger.h"
 #include "../../../common/protocol/protocol.h"
@@ -108,6 +108,14 @@ void ConnectionManager::leaveRoom(QTcpSocket* socket)
     context->currentRoom.clear();
     
     NetworkLogger::userLeftRoom(context->username, roomId);
+}
+
+QString ConnectionManager::getCurrentRoom(QTcpSocket* socket)
+{
+    if(!socket)return QString();
+    ClientContext* context = getContext(socket);
+    if(!context)return QString();
+    return context->currentRoom;
 }
 
 QList<QTcpSocket*> ConnectionManager::getRoomMembers(const QString& roomId)

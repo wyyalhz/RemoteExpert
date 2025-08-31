@@ -1,4 +1,4 @@
-#ifndef CONNECTION_MANAGER_H
+﻿#ifndef CONNECTION_MANAGER_H
 #define CONNECTION_MANAGER_H
 
 #include <QObject>
@@ -43,6 +43,7 @@ public:
     // 房间管理
     void joinRoom(QTcpSocket* socket, const QString& roomId);
     void leaveRoom(QTcpSocket* socket);
+    QString getCurrentRoom(QTcpSocket* socket);
     QList<QTcpSocket*> getRoomMembers(const QString& roomId);
     void broadcastToRoom(const QString& roomId, const QByteArray& data, QTcpSocket* except = nullptr);
     

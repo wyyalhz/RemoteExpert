@@ -1,15 +1,26 @@
-#include "chat_handler.h"
+﻿#include "chat_handler.h"
 #include "../connection_manager.h"
 #include "../logging/network_logger.h"
 #include "../../../common/protocol/protocol.h"
+#include "../services/workorder_service.h"
 
-ChatHandler::ChatHandler(QObject *parent)
-    : ProtocolHandler(parent)
+ForwardTask::ForwardTask(QTcpSocket* target,const QByteArray& data):m_target(target),m_data(data){}
+void ForwardTask::run()
 {
+    if(m_target&&m_target->state()==QAbstractSocket::ConnectedState)
+    {
+        m_target->write(m_data);
+    }
+}
+ChatHandler::ChatHandler(WorkOrderService* workOrderService, QObject *parent): ProtocolHandler(parent), m_workOrderService(workOrderService)
+{
+    // 初始化线程池，设置合适的线程数量
+    m_threadPool.setMaxThreadCount(QThread::idealThreadCount() * 2);
 }
 
 ChatHandler::~ChatHandler()
 {
+    m_threadPool.waitForDone();
 }
 
 void ChatHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
@@ -37,11 +48,10 @@ void ChatHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
         case MSG_SCREENSHOT:
             handleScreenshot(socket, packet);
             break;
-        case MSG_VIDEO_FRAME:
-            handleVideoFrame(socket, packet);
-            break;
+        // 实时媒体流采用专用处理路径
+        case MSG_VIDEO_FRAME:   
         case MSG_AUDIO_FRAME:
-            handleAudioFrame(socket, packet);
+            handleRealTimeMedia(socket,packet);
             break;
         case MSG_VIDEO_CONTROL:
             handleVideoControl(socket, packet);
@@ -82,7 +92,15 @@ void ChatHandler::handleTextMessage(QTcpSocket* socket, const Packet& packet)
     }
     
     // 广播到房间
-    broadcastToRoom(socket, packet);
+    // 检查是否在正确的房间
+    QString currentRoom = connectionManager_-> getCurrentRoom(socket);
+        if (currentRoom != roomId) {
+            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            return;
+        }
+    // 构建数据包并转发到房间
+    QByteArray packetData = buildPacket(packet.type, packet.json, packet.bin);
+            forwardToRoomParticipants(roomId, packetData, socket);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -92,6 +110,51 @@ void ChatHandler::handleTextMessage(QTcpSocket* socket, const Packet& packet)
                          .arg(clientInfo));
 }
 
+void ChatHandler::handleRealTimeMedia(QTcpSocket *socket, const Packet &packet)
+{
+    QString roomId = connectionManager_-> getCurrentRoom(socket);
+    if(roomId.isEmpty())
+    {
+        sendErrorResponse(socket,400,"Not in a room");
+        return;
+    }
+
+    // 极简验证 - 只验证必要字段以降低延迟
+    if(packet.bin.isEmpty())
+    {
+        sendErrorResponse(socket, 400, "Media data cannot be empty");
+        return;
+    }
+
+    QByteArray packetData = buildPacket(packet.type, packet.json, packet.bin);
+    forwardToRoomParticipants(roomId,packetData,socket);
+
+    // 记录日志
+    QString clientInfo = QString("%1,%2").arg(socket->peerAddress().toString()).arg(socket->peerPort());
+    NetworkLogger::debug("RealTime Media",
+                         QString("Media data from %1 forwarded to room %2 (%3 bytes)")
+                         .arg(clientInfo).arg(roomId).arg(packet.bin.size()));
+}
+
+void ChatHandler::forwardToRoomParticipants(const QString &roomId, const QByteArray &data, QTcpSocket *excludeSocket)
+{
+    if(!m_roomMembers.contains(roomId))
+    {
+        NetworkLogger::warning("Chat Handler",
+                               QString("Attempted to forward to non-existent room: %1").arg(roomId));
+        return;
+    }
+    QSet<QTcpSocket*>roomSockets = m_roomMembers[roomId];
+    for(QTcpSocket* targetSocket:roomSockets)
+    {
+        if(targetSocket==excludeSocket)continue;
+        if(targetSocket&&targetSocket->state()==QAbstractSocket::ConnectedState)
+        {
+            ForwardTask* task = new ForwardTask(targetSocket,data);
+            m_threadPool.start(task);
+        }
+    }
+}
 void ChatHandler::handleDeviceData(QTcpSocket* socket, const Packet& packet)
 {
     // 使用MessageValidator验证设备数据消息
@@ -110,8 +173,16 @@ void ChatHandler::handleDeviceData(QTcpSocket* socket, const Packet& packet)
         return;
     }
     
-    // 广播到房间
-    broadcastToRoom(socket, packet);
+    // 检查是否在正确的房间
+        QString currentRoom = connectionManager_-> getCurrentRoom(socket);
+        if (currentRoom != roomId) {
+            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            return;
+        }
+
+        // 构建数据包并转发到房间
+        QByteArray packetData = buildPacket(packet.type, packet.json, packet.bin);
+        forwardToRoomParticipants(roomId, packetData, socket);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -327,8 +398,16 @@ void ChatHandler::handleControl(QTcpSocket* socket, const Packet& packet)
         return;
     }
     
-    // 广播到房间
-    broadcastToRoom(socket, packet);
+    // 检查是否在正确的房间
+        QString currentRoom = connectionManager_-> getCurrentRoom(socket);
+        if (currentRoom != roomId) {
+            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            return;
+        }
+
+        // 构建数据包并转发到房间
+        QByteArray packetData = buildPacket(packet.type, packet.json, packet.bin);
+        forwardToRoomParticipants(roomId, packetData, socket);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -341,20 +420,15 @@ void ChatHandler::handleControl(QTcpSocket* socket, const Packet& packet)
 
 void ChatHandler::broadcastToRoom(QTcpSocket* socket, const Packet& packet)
 {
-    if (!getConnectionManager()) {
-        sendErrorResponse(socket, 500, "Connection manager not available");
+    QString roomId = connectionManager_-> getCurrentRoom(socket);
+    if(roomId.isEmpty())
+    {
+        sendErrorResponse(socket,400,"Not in a room");
         return;
     }
-    
-    ClientContext* context = getClientContext(socket);
-    if (!context || context->currentRoom.isEmpty()) {
-        sendErrorResponse(socket, 400, "Not in a room");
-        return;
-    }
-    
     // 构建数据包
     QByteArray packetData = buildPacket(packet.type, packet.json, packet.bin);
     
     // 广播到房间内其他成员
-    getConnectionManager()->broadcastToRoom(context->currentRoom, packetData, socket);
+    forwardToRoomParticipants(roomId,packetData,socket);
 }
