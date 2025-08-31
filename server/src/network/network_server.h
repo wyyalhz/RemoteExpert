@@ -11,6 +11,7 @@
 #include "protocol/protocol_handlers/chat_handler.h"
 #include "../../business/services/user_service.h"
 #include "../../business/services/workorder_service.h"
+#include "../../business/services/session_service.h"
 
 // 网络服务器主类 - 整合所有网络组件
 class NetworkServer : public QObject
@@ -51,6 +52,7 @@ private:
     // 业务服务
     UserService* userService_;
     WorkOrderService* workOrderService_;
+    SessionService* sessionService_;
     
     // 注册消息处理器
     void registerMessageHandlers();

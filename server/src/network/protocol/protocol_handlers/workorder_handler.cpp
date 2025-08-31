@@ -110,17 +110,27 @@ void WorkOrderHandler::handleJoinWorkOrder(QTcpSocket* socket, const QJsonObject
         return;
     }
     
-    // 加入房间
+    // 获取用户ID
+    int userId = getUserIdFromContext(socket);
+    if (userId <= 0) {
+        sendErrorResponse(socket, 400, "Invalid user context");
+        return;
+    }
+    
+    // 加入房间并更新会话
     if (getConnectionManager()) {
         getConnectionManager()->joinRoom(socket, roomId);
+        
+        // 更新用户会话到工单房间
+        getConnectionManager()->createSessionForUser(socket, userId, roomId);
         
         QJsonObject responseData = MessageBuilder::buildWorkOrderJoinedResponse(
             roomId, workOrder.toJson());
         sendSuccessResponse(socket, "Joined work order successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
-                           QString("User joined work order '%1'")
-                           .arg(roomId));
+                           QString("User %1 joined work order '%2'")
+                           .arg(userId).arg(roomId));
     } else {
         sendErrorResponse(socket, 500, "Connection manager not available");
     }

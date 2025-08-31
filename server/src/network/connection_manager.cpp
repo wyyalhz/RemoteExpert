@@ -2,11 +2,13 @@
 #include "protocol/message_router.h"
 #include "logging/network_logger.h"
 #include "../../../common/protocol/protocol.h"
+#include "../business/services/session_service.h"
 #include <QDateTime>
 
 ConnectionManager::ConnectionManager(QObject *parent)
     : QObject(parent)
     , messageRouter_(nullptr)
+    , sessionService_(nullptr)
 {
 }
 
@@ -18,6 +20,8 @@ ConnectionManager::~ConnectionManager()
 void ConnectionManager::addConnection(QTcpSocket* socket)
 {
     if (!socket) return;
+    
+    QMutexLocker locker(&mutex_);
     
     auto* context = new ClientContext(socket);
     connections_[socket] = context;
@@ -35,12 +39,16 @@ void ConnectionManager::removeConnection(QTcpSocket* socket)
 {
     if (!socket) return;
     
+    QMutexLocker locker(&mutex_);
+    
     cleanupConnection(socket);
     socket->deleteLater();
 }
 
 void ConnectionManager::disconnectAll()
 {
+    QMutexLocker locker(&mutex_);
+    
     for (auto it = connections_.begin(); it != connections_.end(); ++it) {
         QTcpSocket* socket = it.key();
         if (socket) {
@@ -202,6 +210,11 @@ void ConnectionManager::cleanupConnection(QTcpSocket* socket)
     
     ClientContext* context = getContext(socket);
     if (context) {
+        // 过期会话
+        if (!context->sessionId.isEmpty()) {
+            expireSession(socket);
+        }
+        
         // 离开房间
         leaveRoom(socket);
         
@@ -236,6 +249,9 @@ void ConnectionManager::onReadyRead()
     if (!socket) return;
     
     updateLastActivity(socket);
+    
+    // 更新会话活动
+    updateSessionActivity(socket);
     
     QByteArray& buffer = buffers_[socket];
     QByteArray newData = socket->readAll();
@@ -283,4 +299,99 @@ void ConnectionManager::onError(QAbstractSocket::SocketError error)
                         .arg(socket->peerAddress().toString())
                         .arg(socket->peerPort());
     NetworkLogger::connectionError(clientInfo, socket->errorString());
+}
+
+// 会话管理相关方法
+void ConnectionManager::setSessionService(SessionService* sessionService)
+{
+    sessionService_ = sessionService;
+}
+
+bool ConnectionManager::createSessionForUser(QTcpSocket* socket, int userId, const QString& roomId)
+{
+    if (!sessionService_ || !socket) {
+        return false;
+    }
+    
+    QMutexLocker locker(&mutex_);
+    
+    ClientContext* context = getContext(socket);
+    if (!context) {
+        return false;
+    }
+    
+    // 创建会话
+    QString sessionId = sessionService_->createSession(userId, roomId);
+    if (sessionId.isEmpty()) {
+        NetworkLogger::error("Connection Manager", "Failed to create session for user");
+        return false;
+    }
+    
+    // 更新客户端上下文
+    context->sessionId = sessionId;
+    context->currentRoom = roomId;
+    
+    NetworkLogger::info("Connection Manager", 
+                       QString("Session created for user %1 in room %2: %3")
+                       .arg(userId).arg(roomId).arg(sessionId));
+    return true;
+}
+
+bool ConnectionManager::updateSessionActivity(QTcpSocket* socket)
+{
+    if (!sessionService_ || !socket) {
+        return false;
+    }
+    
+    QMutexLocker locker(&mutex_);
+    
+    ClientContext* context = getContext(socket);
+    if (!context || context->sessionId.isEmpty()) {
+        return false;
+    }
+    
+    bool success = sessionService_->updateSessionActivity(context->sessionId);
+    if (success) {
+        context->lastActivity = QDateTime::currentDateTime();
+    }
+    
+    return success;
+}
+
+bool ConnectionManager::expireSession(QTcpSocket* socket)
+{
+    if (!sessionService_ || !socket) {
+        return false;
+    }
+    
+    QMutexLocker locker(&mutex_);
+    
+    ClientContext* context = getContext(socket);
+    if (!context || context->sessionId.isEmpty()) {
+        return false;
+    }
+    
+    bool success = sessionService_->expireSession(context->sessionId);
+    if (success) {
+        context->sessionId.clear();
+        context->currentRoom.clear();
+    }
+    
+    return success;
+}
+
+bool ConnectionManager::isSessionValid(QTcpSocket* socket)
+{
+    if (!sessionService_ || !socket) {
+        return false;
+    }
+    
+    QMutexLocker locker(&mutex_);
+    
+    ClientContext* context = getContext(socket);
+    if (!context || context->sessionId.isEmpty()) {
+        return false;
+    }
+    
+    return sessionService_->isSessionValid(context->sessionId);
 }

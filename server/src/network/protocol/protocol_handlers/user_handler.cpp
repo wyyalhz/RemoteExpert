@@ -63,8 +63,17 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
     bool success = userService_->authenticateUser(username, password, userType);
     
     if (success) {
+        // 获取用户ID
+        int userId = userService_->getUserId(username);
+        
         // 更新客户端认证状态
         updateClientAuthentication(socket, username, true);
+        
+        // 创建用户会话（临时房间，后续加入工单时会更新）
+        QString tempRoomId = QString("temp_%1").arg(userId);
+        if (getConnectionManager()) {
+            getConnectionManager()->createSessionForUser(socket, userId, tempRoomId);
+        }
         
         // 使用MessageBuilder构建成功响应
         QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
@@ -87,6 +96,13 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
 
 void UserHandler::handleLogout(QTcpSocket* socket, const QJsonObject& data)
 {
+    // 获取客户端上下文
+    ClientContext* context = getClientContext(socket);
+    if (context && !context->username.isEmpty()) {
+        // 调用业务服务登出（会清理会话）
+        userService_->logoutUser(context->username);
+    }
+    
     // 更新客户端认证状态
     updateClientAuthentication(socket, QString(), false);
     

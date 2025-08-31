@@ -12,6 +12,7 @@ NetworkServer::NetworkServer(QObject *parent)
     , chatHandler_(nullptr)
     , userService_(nullptr)
     , workOrderService_(nullptr)
+    , sessionService_(nullptr)
 {
 }
 
@@ -37,6 +38,9 @@ bool NetworkServer::initialize(UserService* userService, WorkOrderService* workO
     
     userService_ = userService;
     workOrderService_ = workOrderService;
+    
+    // 获取会话服务
+    sessionService_ = userService_->getSessionService();
     
     // 创建网络组件
     tcpServer_ = new TCPServer(this);
@@ -161,6 +165,9 @@ void NetworkServer::setupConnections()
     userHandler_->setConnectionManager(connectionManager_);
     workOrderHandler_->setConnectionManager(connectionManager_);
     chatHandler_->setConnectionManager(connectionManager_);
+    
+    // 设置连接管理器的会话服务
+    connectionManager_->setSessionService(sessionService_);
     
     NetworkLogger::info("Network Server", "Component connections established");
 }
