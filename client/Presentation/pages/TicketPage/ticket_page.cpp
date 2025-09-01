@@ -233,6 +233,7 @@ void TicketPage::returnToTicketList(){
 
 void TicketPage::showLoading(bool loading)
 {
-    ui->btnAdd->setEnabled(!loading);
+    // 下面这条语句可能会造成工厂端创建工单按钮被异常禁用，因此暂时注释掉，后续需要优化
+    // ui->btnAdd->setEnabled(!loading);
     // 可以添加其他UI元素的加载状态控制
 }
