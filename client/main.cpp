@@ -79,6 +79,9 @@ int main(int argc, char *argv[])
     ensureTicketSchema();
 
     LoginDialog lg;
+    
+    // 设置认证服务到登录对话框
+    lg.setAuthService(authService);
 
     if (lg.exec() == QDialog::Accepted){
         HomeMainWindow *home = new HomeMainWindow(lg.getCurrentUser(), lg.getCurrentUserType());

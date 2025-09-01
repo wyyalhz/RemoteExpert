@@ -11,12 +11,15 @@
 #include <QScreen>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 LoginDialog::LoginDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::LoginDialog),
     currentUser(""),
-    currentUserType(0)
+    currentUserType(0),
+    authService_(nullptr)
 {
     ui->setupUi(this);
     setWindowTitle("远程技术支持系统 - 登录");
@@ -25,11 +28,18 @@ LoginDialog::LoginDialog(QWidget *parent) :
     LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION, 
                                    "LoginDialog", "登录对话框初始化完成");
 
+    // 设置验证器（如果需要为特定输入框添加验证，请在此处添加）
+
     // 连接信号槽
     connect(ui->loginButton, &QPushButton::clicked, this, &LoginDialog::onLoginClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &LoginDialog::onRegisterClicked);
     connect(ui->userTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &LoginDialog::onUserTypeChanged);
+
+    // 实时验证输入
+    connect(ui->usernameEdit, &QLineEdit::textChanged, this, &LoginDialog::on_usernameEdit_textChanged);
+    connect(ui->userTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &LoginDialog::on_userTypeCombo_currentIndexChanged);
 
     // 设置用户类型选项
     ui->userTypeCombo->addItem("工厂用户");
@@ -66,6 +76,11 @@ LoginDialog::~LoginDialog()
     delete ui;
 }
 
+void LoginDialog::setAuthService(AuthService* authService)
+{
+    authService_ = authService;
+}
+
 void LoginDialog::onLoginClicked()
 {
     QString username = ui->usernameEdit->text().trimmed();
@@ -91,6 +106,13 @@ void LoginDialog::onLoginClicked()
         return;
     }
 
+    if(password.length() < 6){
+        LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                          "LoginDialog", QString("登录失败: 密码长度不足 - %1").arg(password));
+        QMessageBox::warning(this, "错误", "密码长度至少6个字符");
+        return;
+    }
+
     // 兼容：优先用 QCheckBox#checkAgree；没有的话退回 QRadioButton#radioButton
     bool agreed = ui->LogAgreeButton->isChecked();
 
@@ -102,29 +124,35 @@ void LoginDialog::onLoginClicked()
         return; // 拦截，不继续登录流程
     }
 
-    // ✓ 已勾选，继续你的登录逻辑：
-//     doLogin();
-//     accept();  // 如果这是个对话框且登录成功
-
-//    // 本地验证
-//    if(DatabaseManager::instance().validateUser(username, password, userType)){
-//        QMessageBox::information(this, "成功", "登录成功");
-
-//        // 保存当前用户信息
-//        currentUser = username;
-//        currentUserType = userType;
-
-//        accept(); // 关闭对话框并返回Accepted
-//    } else {
-//        QMessageBox::warning(this, "错误", "用户名或密码错误");
-//    }
-    accept();
-
+    // 使用认证服务进行登录
+    if (authService_) {
+        bool success = authService_->login(username, password, userType);
+        if (success) {
+            LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                           "LoginDialog", QString("用户登录成功: %1, 类型: %2").arg(username).arg(userType));
+            QMessageBox::information(this, "成功", "登录成功");
+            accept();
+        } else {
+            LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                               "LoginDialog", QString("用户登录失败: %1, 类型: %2, 错误: %3").arg(username).arg(userType).arg(authService_->getLastError()));
+            QMessageBox::warning(this, "错误", authService_->getLastError());
+        }
+    } else {
+        LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                           "LoginDialog", "认证服务未初始化，无法执行登录");
+        QMessageBox::critical(this, "错误", "认证服务未初始化");
+    }
 }
 
 void LoginDialog::onRegisterClicked()
 {
     RegisterDialog registerDialog(this);
+    
+    // 设置认证服务
+    if (authService_) {
+        registerDialog.setAuthService(authService_);
+    }
+    
     if(registerDialog.exec() == QDialog::Accepted){
         QMessageBox::information(this, "提示", "注册成功，请使用新账号登录");
         ui->usernameEdit->setText(registerDialog.getUsername());

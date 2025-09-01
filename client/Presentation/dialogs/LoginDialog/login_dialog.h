@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QMessageBox>
 #include "Business/managers/database_manager.h"
+#include "Business/services/AuthService.h"
 #include <QMouseEvent>
 
 namespace Ui {
@@ -20,6 +21,9 @@ public:
 
     QString getCurrentUser() const { return currentUser; }
     int getCurrentUserType() const { return currentUserType; }
+
+    // 设置认证服务
+    void setAuthService(AuthService* authService);
 
 private slots:
     void onLoginClicked();
@@ -39,6 +43,9 @@ private:
     //ui
     QPoint m_dragStart;
     bool   m_dragging = false;
+    
+    // 认证服务引用
+    AuthService* authService_;
 
 //ui
 protected:

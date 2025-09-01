@@ -402,18 +402,92 @@ void AuthService::onSessionValidationResponse(const QJsonObject& response)
 // 响应解析方法（占位符，将在网络层实现后完善）
 bool AuthService::parseLoginResponse(const QJsonObject& response, User& user)
 {
-    // TODO: 解析登录响应
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "解析登录响应");
+    
+    // 检查响应状态
+    if (response.contains("success") && !response["success"].toBool()) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "登录失败";
+        setError(error);
+        return false;
+    }
+    
+    // 解析用户信息
+    if (response.contains("data")) {
+        QJsonObject userData = response["data"].toObject();
+        
+        user.setId(userData.value("id").toInt());
+        user.setUsername(userData.value("username").toString());
+        user.setEmail(userData.value("email").toString());
+        user.setPhone(userData.value("phone").toString());
+        user.setUserType(userData.value("user_type").toInt());
+        
+        // 设置会话ID
+        if (response.contains("session_id")) {
+            sessionId_ = response["session_id"].toString();
+        }
+        
+        LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                       "AuthService", QString("登录响应解析成功: %1").arg(user.getUsername()));
+        return true;
+    }
+    
+    setError("响应数据格式错误");
     return false;
 }
 
 bool AuthService::parseRegisterResponse(const QJsonObject& response, User& user)
 {
-    // TODO: 解析注册响应
-    return false;
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "解析注册响应");
+    
+    // 检查响应状态
+    if (response.contains("success") && !response["success"].toBool()) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "注册失败";
+        setError(error);
+        return false;
+    }
+    
+    // 注册成功，创建用户对象
+    // 注意：注册响应通常不包含完整的用户信息，我们创建一个基本用户对象
+    user.setUsername(""); // 用户名将在调用处设置
+    user.setUserType(0);  // 用户类型将在调用处设置
+    
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", "注册响应解析成功");
+    return true;
 }
 
 bool AuthService::parseUserInfoResponse(const QJsonObject& response, User& user)
 {
-    // TODO: 解析用户信息响应
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "解析用户信息响应");
+    
+    // 检查响应状态
+    if (response.contains("success") && !response["success"].toBool()) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "获取用户信息失败";
+        setError(error);
+        return false;
+    }
+    
+    // 解析用户信息
+    if (response.contains("data")) {
+        QJsonObject userData = response["data"].toObject();
+        
+        user.setId(userData.value("id").toInt());
+        user.setUsername(userData.value("username").toString());
+        user.setEmail(userData.value("email").toString());
+        user.setPhone(userData.value("phone").toString());
+        user.setUserType(userData.value("user_type").toInt());
+        
+        LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                       "AuthService", QString("用户信息响应解析成功: %1").arg(user.getUsername()));
+        return true;
+    }
+    
+    setError("响应数据格式错误");
     return false;
 }

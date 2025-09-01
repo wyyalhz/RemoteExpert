@@ -1,6 +1,5 @@
 #include "register_dialog.h"
 #include "ui_register_dialog.h"
-#include "Business/managers/database_manager.h"
 #include <QMessageBox>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
@@ -8,7 +7,8 @@
 RegisterDialog::RegisterDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::RegisterDialog),
-    m_userType(0)
+    m_userType(0),
+    authService_(nullptr)
 {
     ui->setupUi(this);
     setWindowTitle("用户注册");
@@ -41,8 +41,26 @@ RegisterDialog::~RegisterDialog()
     delete ui;
 }
 
+void RegisterDialog::setAuthService(AuthService* authService)
+{
+    authService_ = authService;
+    
+    if (authService_) {
+        // 连接认证服务的信号
+        connect(authService_, &AuthService::registerSuccess, 
+                this, &RegisterDialog::onRegisterSuccess);
+        connect(authService_, &AuthService::registerFailed, 
+                this, &RegisterDialog::onRegisterFailed);
+    }
+}
+
 void RegisterDialog::onRegisterClicked()
 {
+    if (!authService_) {
+        QMessageBox::critical(this, "错误", "认证服务未初始化");
+        return;
+    }
+
     m_username = ui->usernameEdit->text().trimmed();
     QString password = ui->passwordEdit->text();
     QString confirm = ui->confirmEdit->text();
@@ -81,19 +99,42 @@ void RegisterDialog::onRegisterClicked()
         return;
     }
 
-    // 检查用户是否存在
-    if(DatabaseManager::instance().userExists(m_username)){
-        QMessageBox::warning(this, "错误", "用户名已存在");
-        return;
+    // 显示加载状态
+    showLoading(true);
+    
+    // 通过认证服务发送注册请求
+    bool success = authService_->registerUser(m_username, password, m_email, m_phone, m_userType);
+    
+    if (!success) {
+        showLoading(false);
+        QMessageBox::warning(this, "错误", authService_->getLastError());
     }
+}
 
-    // 保存到本地数据库
-    if(DatabaseManager::instance().addUser(m_username, password, m_email, m_phone, m_userType)){
-        QMessageBox::information(this, "成功", "注册成功");
+void RegisterDialog::onRegisterSuccess(const User& user)
+{
+    showLoading(false);
+    
+    // 设置用户信息
+    if (user.getUsername().isEmpty()) {
+        // 如果服务器返回的用户对象没有用户名，使用本地输入的用户名
+        User localUser;
+        localUser.setUsername(m_username);
+        localUser.setEmail(m_email);
+        localUser.setPhone(m_phone);
+        localUser.setUserType(m_userType);
+        QMessageBox::information(this, "成功", "注册成功！");
         accept();
     } else {
-        QMessageBox::warning(this, "错误", "注册失败，请重试");
+        QMessageBox::information(this, "成功", "注册成功！");
+        accept();
     }
+}
+
+void RegisterDialog::onRegisterFailed(const QString& error)
+{
+    showLoading(false);
+    QMessageBox::warning(this, "注册失败", error);
 }
 
 void RegisterDialog::onCancelClicked()
@@ -117,4 +158,22 @@ void RegisterDialog::validateInput()
     if(!ui->phoneEdit->text().isEmpty() && !ui->phoneEdit->hasAcceptableInput()) valid = false;
 
     ui->registerButton->setEnabled(valid);
+}
+
+void RegisterDialog::showLoading(bool loading)
+{
+    ui->registerButton->setEnabled(!loading);
+    ui->cancelButton->setEnabled(!loading);
+    ui->usernameEdit->setEnabled(!loading);
+    ui->passwordEdit->setEnabled(!loading);
+    ui->confirmEdit->setEnabled(!loading);
+    ui->emailEdit->setEnabled(!loading);
+    ui->phoneEdit->setEnabled(!loading);
+    ui->userTypeCombo->setEnabled(!loading);
+    
+    if (loading) {
+        ui->registerButton->setText("注册中...");
+    } else {
+        ui->registerButton->setText("注册");
+    }
 }
