@@ -86,6 +86,9 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         NetworkLogger::authenticationSuccess(clientInfo, username);
     } else {
         sendErrorResponse(socket, 401, "Invalid username or password");
+        // [FIX]为了让客户端统一通过 MSG_LOGIN(不再用 MSG_ERROR)处理登录失败
+        QJsonObject fail = MessageBuilder::buildErrorResponse(401, "Invalid username or password");
+        sendResponse(socket, MSG_LOGIN, fail);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
