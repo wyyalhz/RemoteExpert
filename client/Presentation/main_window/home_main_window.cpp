@@ -7,6 +7,7 @@
 #include "Presentation/pages/TicketPage/ticket_page.h"
 #include "Presentation/pages/ThanksPage/thanks_page.h"
 #include "Presentation/pages/SettingPage/setting_page.h"
+#include "Presentation/utils/theme.h"
 #include "home_main_window.h"
 #include "ui_home_main_window.h"
 
@@ -22,6 +23,10 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
     , authService_(nullptr)
 {
     ui->setupUi(this);
+
+    // 确保初次进入主页时也能正确加载图标（先全局qss后刷新一次）
+    refreshThemedAssets();
+    QTimer::singleShot(0, this, [](){ refreshThemedAssets(); });
 
     // 初始化问候语
     updateGreeting();

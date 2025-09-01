@@ -9,6 +9,10 @@ QWidget { background: #0F141A; color: #E5E7EB; font-family: "Segoe UI"; font-siz
 QLabel#titleLabel { font-size: 20pt; font-weight: 700; color: #F3F4F6; }
 .QHint { color: #9CA3AF; font-size: 9pt; }
 
+QStackedWidget#stackWidget {
+background: #444444
+}
+
 QFrame#Card, QGroupBox {
     background: #171C22;
     border: 1px solid #2A323C;
@@ -72,19 +76,22 @@ QPushButton[variant="chip"], QToolButton[variant="chip"] {
 }
 
 /* Sidebar nav */
-QToolButton[sidebar="true"] {
+QFrame#side_nav QToolButton {
     background: transparent;
     color: #D1D5DB;
     border: 1px solid transparent;
     border-radius: 12px;
-    padding: 10px 12px;
+    padding-top: 10px; padding-bottom: 10px;
+    padding-left: 18px; padding-right: 14px;  /* ↑ 增大左内边距让文字更"居中感" */
     text-align: left;
+    qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+    qproperty-iconSize: 20 20;
 }
-QToolButton[sidebar="true"]:hover {
+QFrame#side_nav QToolButton:hover {
     background: #1B2430;
     border-color: #2E3C4A;
 }
-QToolButton[sidebar="true"]:checked {
+QFrame#side_nav QToolButton:checked {
     background: #18222E;
     border-color: #2E3C4A;
     color: #8EC4FF;
