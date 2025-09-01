@@ -262,7 +262,13 @@ int UserRepository::getUserId(const QString& username)
     query.prepare("SELECT id FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!executeUserQuery(query, "Get user ID") || !checkQueryResult(query, "User not found")) {
+    if (!executeUserQuery(query, "Get user ID")) {
+        return -1;
+    }
+
+    // 检查是否有结果记录
+    if (!query.next()) {
+        DBLogger::error("Get user ID", QString("User not found: %1").arg(username));
         return -1;
     }
 
@@ -279,7 +285,13 @@ int UserRepository::getUserType(const QString& username)
     query.prepare("SELECT user_type FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!executeUserQuery(query, "Get user type") || !checkQueryResult(query, "User not found")) {
+    if (!executeUserQuery(query, "Get user type")) {
+        return -1;
+    }
+
+    // 检查是否有结果记录
+    if (!query.next()) {
+        DBLogger::error("Get user type", QString("User not found: %1").arg(username));
         return -1;
     }
 
@@ -296,7 +308,13 @@ QString UserRepository::getUserEmail(const QString& username)
     query.prepare("SELECT email FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!executeUserQuery(query, "Get user email") || !checkQueryResult(query, "User not found")) {
+    if (!executeUserQuery(query, "Get user email")) {
+        return QString();
+    }
+
+    // 检查是否有结果记录
+    if (!query.next()) {
+        DBLogger::error("Get user email", QString("User not found: %1").arg(username));
         return QString();
     }
 
@@ -313,7 +331,13 @@ QString UserRepository::getUserPhone(const QString& username)
     query.prepare("SELECT phone FROM users WHERE username = ?");
     query.addBindValue(username);
 
-    if (!executeUserQuery(query, "Get user phone") || !checkQueryResult(query, "User not found")) {
+    if (!executeUserQuery(query, "Get user phone")) {
+        return QString();
+    }
+
+    // 检查是否有结果记录
+    if (!query.next()) {
+        DBLogger::error("Get user phone", QString("User not found: %1").arg(username));
         return QString();
     }
 
