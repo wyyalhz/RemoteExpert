@@ -246,15 +246,9 @@ void WorkOrderHandler::handleGetWorkOrderList(QTcpSocket* socket, const QJsonObj
 
 int WorkOrderHandler::getUserIdFromContext(QTcpSocket* socket)
 {
-    // 这里需要根据用户名获取用户ID
-    // 由于简化设计，暂时返回一个固定值或从其他地方获取
-    // 在实际实现中，应该从数据库或缓存中获取用户ID
-    
     ClientContext* context = getClientContext(socket);
-    if (context && !context->username.isEmpty()) {
-        // 这里应该调用UserService获取用户ID
-        // 暂时返回0表示需要实现
-        return 0;
+    if (context && context->isAuthenticated && context->userId > 0) {
+        return context->userId;
     }
     
     return -1;

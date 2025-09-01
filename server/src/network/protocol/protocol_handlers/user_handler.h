@@ -25,7 +25,7 @@ private:
     void handleHeartbeat(QTcpSocket* socket, const QJsonObject& data);
     
     // 辅助方法
-    void updateClientAuthentication(QTcpSocket* socket, const QString& username, bool authenticated);
+    void updateClientAuthentication(QTcpSocket* socket, const QString& username, int userId, bool authenticated);
 };
 
 #endif // USER_HANDLER_H

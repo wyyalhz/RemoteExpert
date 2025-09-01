@@ -649,7 +649,39 @@ bool TicketService::parseTicketResponse(const QJsonObject& response, Ticket& tic
 
 bool TicketService::parseTicketListResponse(const QJsonObject& response, QList<Ticket>& tickets)
 {
-    // TODO: 解析工单列表响应
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", "解析工单列表响应");
+    
+    // 检查响应状态 - 服务器返回格式：{"code": 0, "message": "...", "work_orders": [...]}
+    if (response.contains("code") && response["code"].toInt() != 0) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "获取工单列表失败";
+        setError(error);
+        return false;
+    }
+    
+    // 解析工单列表
+    if (response.contains("work_orders")) {
+        QJsonArray workOrdersArray = response["work_orders"].toArray();
+        tickets.clear();
+        
+        for (const QJsonValue& value : workOrdersArray) {
+            if (value.isObject()) {
+                QJsonObject ticketObj = value.toObject();
+                Ticket ticket(ticketObj);
+                if (ticket.isValid()) {
+                    tickets.append(ticket);
+                }
+            }
+        }
+        
+        int totalCount = response.value("total_count").toInt();
+        LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                       "TicketService", QString("工单列表解析成功: 共 %1 个工单").arg(tickets.size()));
+        return true;
+    }
+    
+    setError("响应数据格式错误");
     return false;
 }
 

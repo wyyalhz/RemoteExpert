@@ -5,14 +5,22 @@
 // MessageBuilder 实现
 QJsonObject MessageBuilder::buildLoginMessage(const QString& username, 
                                             const QString& password, 
-                                            int userType)
+                                            int userType,
+                                            int userId)
 {
-    return QJsonObject{
+    QJsonObject obj{
         {"username", username},
         {"password", password},
         {"user_type", userType},
         {"timestamp", QDateTime::currentMSecsSinceEpoch()}
     };
+    
+    // 如果提供了有效的用户ID，则添加到响应中
+    if (userId > 0) {
+        obj["id"] = userId;
+    }
+    
+    return obj;
 }
 
 QJsonObject MessageBuilder::buildRegisterMessage(const QString& username,

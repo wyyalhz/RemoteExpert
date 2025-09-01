@@ -15,6 +15,7 @@ class MessageRouter;
 struct ClientContext {
     QTcpSocket* socket = nullptr;
     QString username;
+    int userId = -1;  // 添加用户ID
     QString currentRoom;
     QString sessionId;  // 添加会话ID
     bool isAuthenticated = false;

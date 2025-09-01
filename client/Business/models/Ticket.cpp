@@ -66,8 +66,11 @@ Ticket Ticket::fromJson(const QJsonObject& json)
         ticket.id_ = json["id"].toInt();
     }
     
+    // 支持两种字段名：ticketId 和 ticket_id
     if (json.contains("ticketId")) {
         ticket.ticketId_ = json["ticketId"].toString();
+    } else if (json.contains("ticket_id")) {
+        ticket.ticketId_ = json["ticket_id"].toString();
     }
     
     if (json.contains("title")) {
@@ -78,8 +81,11 @@ Ticket Ticket::fromJson(const QJsonObject& json)
         ticket.description_ = json["description"].toString();
     }
     
+    // 支持两种字段名：creatorId 和 creator_id
     if (json.contains("creatorId")) {
         ticket.creatorId_ = json["creatorId"].toInt();
+    } else if (json.contains("creator_id")) {
+        ticket.creatorId_ = json["creator_id"].toInt();
     }
     
     if (json.contains("creatorName")) {
@@ -88,6 +94,8 @@ Ticket Ticket::fromJson(const QJsonObject& json)
     
     if (json.contains("assigneeId")) {
         ticket.assigneeId_ = json["assigneeId"].toInt();
+    } else if (json.contains("assigned_to")) {
+        ticket.assigneeId_ = json["assigned_to"].toInt();
     }
     
     if (json.contains("assigneeName")) {
@@ -106,16 +114,24 @@ Ticket Ticket::fromJson(const QJsonObject& json)
         ticket.category_ = json["category"].toString();
     }
     
+    // 支持两种字段名：createdTime 和 created_at
     if (json.contains("createdTime")) {
         ticket.createdTime_ = QDateTime::fromString(json["createdTime"].toString(), Qt::ISODate);
+    } else if (json.contains("created_at")) {
+        ticket.createdTime_ = QDateTime::fromString(json["created_at"].toString(), Qt::ISODate);
     }
     
+    // 支持两种字段名：updatedTime 和 updated_at
     if (json.contains("updatedTime")) {
         ticket.updatedTime_ = QDateTime::fromString(json["updatedTime"].toString(), Qt::ISODate);
+    } else if (json.contains("updated_at")) {
+        ticket.updatedTime_ = QDateTime::fromString(json["updated_at"].toString(), Qt::ISODate);
     }
     
     if (json.contains("closedTime")) {
         ticket.closedTime_ = QDateTime::fromString(json["closedTime"].toString(), Qt::ISODate);
+    } else if (json.contains("closed_at")) {
+        ticket.closedTime_ = QDateTime::fromString(json["closed_at"].toString(), Qt::ISODate);
     }
     
     if (json.contains("roomId")) {

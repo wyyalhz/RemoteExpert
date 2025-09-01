@@ -14,7 +14,8 @@ public:
     // 构建认证消息
     static QJsonObject buildLoginMessage(const QString& username, 
                                         const QString& password, 
-                                        int userType);
+                                        int userType,
+                                        int userId = -1);
     
     static QJsonObject buildRegisterMessage(const QString& username,
                                            const QString& password,

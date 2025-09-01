@@ -67,7 +67,7 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         int userId = userService_->getUserId(username);
         
         // 更新客户端认证状态
-        updateClientAuthentication(socket, username, true);
+        updateClientAuthentication(socket, username, userId, true);
         
         // 创建用户会话（临时房间，后续加入工单时会更新）
         QString tempRoomId = QString("temp_%1").arg(userId);
@@ -75,8 +75,8 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
             getConnectionManager()->createSessionForUser(socket, userId, tempRoomId);
         }
         
-        // 使用MessageBuilder构建成功响应
-        QJsonObject responseData = MessageBuilder::buildLoginMessage(username, password, userType);
+        // 使用MessageBuilder构建成功响应，包含用户ID
+        QJsonObject responseData = MessageBuilder::buildLoginMessage(username, password, userType, userId);
         sendSuccessResponse(socket, MSG_LOGIN, "Login successful", responseData);
         
         QString clientInfo = QString("%1:%2")
@@ -102,8 +102,8 @@ void UserHandler::handleLogout(QTcpSocket* socket, const QJsonObject& data)
         userService_->logoutUser(context->username);
     }
     
-    // 更新客户端认证状态
-    updateClientAuthentication(socket, QString(), false);
+            // 更新客户端认证状态
+        updateClientAuthentication(socket, QString(), -1, false);
     
     // 发送成功响应
     sendSuccessResponse(socket, MSG_LOGOUT, "Logout successful", QJsonObject{});
@@ -175,7 +175,7 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     }
 }
 
-void UserHandler::updateClientAuthentication(QTcpSocket* socket, const QString& username, bool authenticated)
+void UserHandler::updateClientAuthentication(QTcpSocket* socket, const QString& username, int userId, bool authenticated)
 {
     ConnectionManager* manager = getConnectionManager();
     if (!manager) {
@@ -186,6 +186,7 @@ void UserHandler::updateClientAuthentication(QTcpSocket* socket, const QString& 
     if (context) {
         context->isAuthenticated = authenticated;
         context->username = authenticated ? username : QString();
+        context->userId = authenticated ? userId : -1;
         
         if (authenticated) {
             // 将用户添加到用户映射中
