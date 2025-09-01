@@ -3,6 +3,7 @@
 
 #include "../models/User.h"
 #include "../../Logger/log_manager.h"
+#include "../../Network/client/network_client.h"
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -50,14 +51,7 @@ signals:
     void sessionExpired();
     void userInfoUpdated(const User& user);
 
-private slots:
-    // 网络响应处理
-    void onLoginResponse(const QJsonObject& response);
-    void onRegisterResponse(const QJsonObject& response);
-    void onLogoutResponse(const QJsonObject& response);
-    void onUpdateUserResponse(const QJsonObject& response);
-    void onChangePasswordResponse(const QJsonObject& response);
-    void onSessionValidationResponse(const QJsonObject& response);
+
 
 private:
     // 私有辅助方法
@@ -85,8 +79,20 @@ private:
     QString sessionId_;
     QString lastError_;
     
-    // 网络客户端引用（将在网络层实现后添加）
-    // NetworkClient* networkClient_;
+    // 网络客户端引用
+    NetworkClient* networkClient_;
+    
+    // 设置网络客户端
+    void setNetworkClient(NetworkClient* client);
+
+public slots:
+    // 网络响应处理
+    void onLoginResponse(const QJsonObject& response);
+    void onRegisterResponse(const QJsonObject& response);
+    void onLogoutResponse(const QJsonObject& response);
+    void onUpdateUserResponse(const QJsonObject& response);
+    void onChangePasswordResponse(const QJsonObject& response);
+    void onSessionValidationResponse(const QJsonObject& response);
 };
 
 #endif // AUTH_SERVICE_H

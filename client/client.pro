@@ -40,7 +40,15 @@ SOURCES += \
     Business/services/TicketService.cpp \
     # Business层 - 管理器
     Business/managers/database_manager.cpp \
-    Business/managers/SessionManager.cpp
+    Business/managers/SessionManager.cpp \
+    # Network层 - 客户端
+    Network/client/network_client.cpp \
+    # Network层 - 连接管理
+    Network/connection/connection_manager.cpp \
+    # Network层 - 协议处理
+    Network/protocol/handlers/message_handler.cpp \
+    # Network层 - 状态管理
+    Network/status/network_status.cpp
 
 # 头文件
 HEADERS += \
@@ -70,7 +78,15 @@ HEADERS += \
     Business/services/TicketService.h \
     # Business层 - 管理器
     Business/managers/database_manager.h \
-    Business/managers/SessionManager.h
+    Business/managers/SessionManager.h \
+    # Network层 - 客户端
+    Network/client/network_client.h \
+    # Network层 - 连接管理
+    Network/connection/connection_manager.h \
+    # Network层 - 协议处理
+    Network/protocol/handlers/message_handler.h \
+    # Network层 - 状态管理
+    Network/status/network_status.h
 
 # UI文件
 FORMS += \

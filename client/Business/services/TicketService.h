@@ -3,6 +3,7 @@
 
 #include "../models/Ticket.h"
 #include "../../Logger/log_manager.h"
+#include "../../Network/client/network_client.h"
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -84,17 +85,7 @@ signals:
     void participantJoined(int ticketId, const QString& username);
     void participantLeft(int ticketId, const QString& username);
 
-private slots:
-    // 网络响应处理
-    void onCreateTicketResponse(const QJsonObject& response);
-    void onUpdateTicketResponse(const QJsonObject& response);
-    void onDeleteTicketResponse(const QJsonObject& response);
-    void onGetTicketResponse(const QJsonObject& response);
-    void onGetTicketListResponse(const QJsonObject& response);
-    void onUpdateStatusResponse(const QJsonObject& response);
-    void onAssignTicketResponse(const QJsonObject& response);
-    void onJoinTicketResponse(const QJsonObject& response);
-    void onLeaveTicketResponse(const QJsonObject& response);
+
 
 private:
     // 私有辅助方法
@@ -122,8 +113,23 @@ private:
 private:
     QString lastError_;
     
-    // 网络客户端引用（将在网络层实现后添加）
-    // NetworkClient* networkClient_;
+    // 网络客户端引用
+    NetworkClient* networkClient_;
+    
+    // 设置网络客户端
+    void setNetworkClient(NetworkClient* client);
+
+public slots:
+    // 网络响应处理
+    void onCreateTicketResponse(const QJsonObject& response);
+    void onUpdateTicketResponse(const QJsonObject& response);
+    void onDeleteTicketResponse(const QJsonObject& response);
+    void onGetTicketResponse(const QJsonObject& response);
+    void onGetTicketListResponse(const QJsonObject& response);
+    void onUpdateStatusResponse(const QJsonObject& response);
+    void onAssignTicketResponse(const QJsonObject& response);
+    void onJoinTicketResponse(const QJsonObject& response);
+    void onLeaveTicketResponse(const QJsonObject& response);
 };
 
 #endif // TICKET_SERVICE_H

@@ -1,11 +1,20 @@
 #include "TicketService.h"
 #include "../../common/protocol/builders/message_builder.h"
+#include "../../Network/client/network_client.h"
 
 TicketService::TicketService(QObject *parent)
     : QObject(parent)
+    , networkClient_(nullptr)
 {
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
                                    "TicketService", "工单服务初始化完成");
+}
+
+void TicketService::setNetworkClient(NetworkClient* client)
+{
+    networkClient_ = client;
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                   "TicketService", "网络客户端已设置");
 }
 
 TicketService::~TicketService()
@@ -340,21 +349,39 @@ void TicketService::setError(const QString& error)
                                     "TicketService", QString("错误: %1").arg(error));
 }
 
-// 网络请求方法（占位符，将在网络层实现后完善）
+// 网络请求方法
 void TicketService::sendCreateTicketRequest(const QString& title, const QString& description, 
                                          const QString& priority, const QString& category, 
                                          const QJsonObject& deviceInfo)
 {
-    // 构建创建工单消息
-    int priorityInt = 2; // 默认中优先级
-    if (priority == "high") priorityInt = 3;
-    else if (priority == "low") priorityInt = 1;
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        emit ticketCreatedFailed(lastError_);
+        return;
+    }
     
-    QJsonObject createMessage = MessageBuilder::buildCreateWorkOrderMessage(title, description, priorityInt, category, deviceInfo);
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        emit ticketCreatedFailed(lastError_);
+        return;
+    }
     
-    // TODO: 通过网络客户端发送消息
+    // 通过网络客户端发送创建工单请求
+    bool success = networkClient_->sendCreateTicketRequest(title, description, priority, category, deviceInfo);
+    if (!success) {
+        setError("发送创建工单请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送创建工单请求失败");
+        emit ticketCreatedFailed(lastError_);
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送创建工单请求");
+                                    "TicketService", "创建工单请求已发送");
 }
 
 void TicketService::sendUpdateTicketRequest(const Ticket& ticket)
@@ -380,9 +407,34 @@ void TicketService::sendGetTicketRequest(int ticketId)
 
 void TicketService::sendGetTicketListRequest(const QString& status, int limit, int offset)
 {
-    // TODO: 构建获取工单列表消息并发送
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        emit ticketListFailed(lastError_);
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        emit ticketListFailed(lastError_);
+        return;
+    }
+    
+    // 通过网络客户端发送获取工单列表请求
+    bool success = networkClient_->sendGetTicketListRequest(status, limit, offset);
+    if (!success) {
+        setError("发送获取工单列表请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送获取工单列表请求失败");
+        emit ticketListFailed(lastError_);
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送获取工单列表请求");
+                                    "TicketService", "获取工单列表请求已发送");
 }
 
 void TicketService::sendUpdateStatusRequest(int ticketId, const QString& newStatus)
@@ -401,19 +453,60 @@ void TicketService::sendAssignTicketRequest(int ticketId, int assigneeId)
 
 void TicketService::sendJoinTicketRequest(const QString& ticketId, const QString& role)
 {
-    // 构建加入工单消息
-    QJsonObject joinMessage = MessageBuilder::buildJoinWorkOrderMessage(ticketId, role);
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        return;
+    }
     
-    // TODO: 通过网络客户端发送消息
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        return;
+    }
+    
+    // 通过网络客户端发送加入工单请求
+    bool success = networkClient_->sendJoinTicketRequest(ticketId, role);
+    if (!success) {
+        setError("发送加入工单请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送加入工单请求失败");
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送加入工单请求");
+                                    "TicketService", "加入工单请求已发送");
 }
 
 void TicketService::sendLeaveTicketRequest(const QString& ticketId)
 {
-    // TODO: 构建离开工单消息并发送
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        return;
+    }
+    
+    // 通过网络客户端发送离开工单请求
+    bool success = networkClient_->sendLeaveTicketRequest(ticketId);
+    if (!success) {
+        setError("发送离开工单请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送离开工单请求失败");
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送离开工单请求");
+                                    "TicketService", "离开工单请求已发送");
 }
 
 // 网络响应处理方法（占位符，将在网络层实现后完善）

@@ -1,12 +1,21 @@
 #include "AuthService.h"
 #include "../../common/protocol/builders/message_builder.h"
+#include "../../Network/client/network_client.h"
 
 AuthService::AuthService(QObject *parent)
     : QObject(parent)
     , isLoggedIn_(false)
+    , networkClient_(nullptr)
 {
     LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
                                    "AuthService", "认证服务初始化完成");
+}
+
+void AuthService::setNetworkClient(NetworkClient* client)
+{
+    networkClient_ = client;
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", "网络客户端已设置");
 }
 
 AuthService::~AuthService()
@@ -198,33 +207,102 @@ void AuthService::setError(const QString& error)
                                     "AuthService", QString("错误: %1").arg(error));
 }
 
-// 网络请求方法（占位符，将在网络层实现后完善）
+// 网络请求方法
 void AuthService::sendLoginRequest(const QString& username, const QString& password, int userType)
 {
-    // 构建登录消息
-    QJsonObject loginMessage = MessageBuilder::buildLoginMessage(username, password, userType);
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "网络客户端未初始化");
+        emit loginFailed(lastError_);
+        return;
+    }
     
-    // TODO: 通过网络客户端发送消息
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "未连接到服务器");
+        emit loginFailed(lastError_);
+        return;
+    }
+    
+    // 通过网络客户端发送登录请求
+    bool success = networkClient_->sendLoginRequest(username, password, userType);
+    if (!success) {
+        setError("发送登录请求失败");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "发送登录请求失败");
+        emit loginFailed(lastError_);
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
-                                    "AuthService", "发送登录请求");
+                                    "AuthService", "登录请求已发送");
 }
 
 void AuthService::sendRegisterRequest(const QString& username, const QString& password, 
                                     const QString& email, const QString& phone, int userType)
 {
-    // 构建注册消息
-    QJsonObject registerMessage = MessageBuilder::buildRegisterMessage(username, password, email, phone, userType);
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "网络客户端未初始化");
+        emit registerFailed(lastError_);
+        return;
+    }
     
-    // TODO: 通过网络客户端发送消息
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "未连接到服务器");
+        emit registerFailed(lastError_);
+        return;
+    }
+    
+    // 通过网络客户端发送注册请求
+    bool success = networkClient_->sendRegisterRequest(username, password, email, phone, userType);
+    if (!success) {
+        setError("发送注册请求失败");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "发送注册请求失败");
+        emit registerFailed(lastError_);
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
-                                    "AuthService", "发送注册请求");
+                                    "AuthService", "注册请求已发送");
 }
 
 void AuthService::sendLogoutRequest()
 {
-    // TODO: 构建登出消息并发送
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "网络客户端未初始化");
+        emit logoutFailed(lastError_);
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "未连接到服务器");
+        emit logoutFailed(lastError_);
+        return;
+    }
+    
+    // 通过网络客户端发送登出请求
+    bool success = networkClient_->sendLogoutRequest();
+    if (!success) {
+        setError("发送登出请求失败");
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", "发送登出请求失败");
+        emit logoutFailed(lastError_);
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
-                                    "AuthService", "发送登出请求");
+                                    "AuthService", "登出请求已发送");
 }
 
 void AuthService::sendUpdateUserRequest(const User& user)

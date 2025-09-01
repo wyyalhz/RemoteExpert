@@ -4,10 +4,14 @@
 #include "Presentation/dialogs/LoginDialog/login_dialog.h"
 #include "Presentation/utils/theme.h"
 #include "Logger/log_manager.h"
+#include "Network/client/network_client.h"
+#include "Business/services/AuthService.h"
+#include "Business/services/TicketService.h"
 
 #include <QApplication>
 #include <QDebug>
 #include <QStandardPaths>
+#include <QObject>
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +25,52 @@ int main(int argc, char *argv[])
     
     LogManager::getInstance()->info(LogModule::SYSTEM, LogLayer::BUSINESS, 
                                    "Main", "客户端应用程序启动");
+
+    // 初始化网络客户端
+    NetworkClient* networkClient = new NetworkClient();
+    
+    // 初始化业务服务
+    AuthService* authService = new AuthService();
+    TicketService* ticketService = new TicketService();
+    
+    // 设置网络客户端到业务服务
+    authService->setNetworkClient(networkClient);
+    ticketService->setNetworkClient(networkClient);
+    
+    // 连接网络客户端信号到业务服务槽
+    QObject::connect(networkClient, &NetworkClient::loginResponse, 
+                    authService, &AuthService::onLoginResponse);
+    QObject::connect(networkClient, &NetworkClient::registerResponse, 
+                    authService, &AuthService::onRegisterResponse);
+    QObject::connect(networkClient, &NetworkClient::logoutResponse, 
+                    authService, &AuthService::onLogoutResponse);
+    
+    QObject::connect(networkClient, &NetworkClient::createTicketResponse, 
+                    ticketService, &TicketService::onCreateTicketResponse);
+    QObject::connect(networkClient, &NetworkClient::joinTicketResponse, 
+                    ticketService, &TicketService::onJoinTicketResponse);
+    QObject::connect(networkClient, &NetworkClient::leaveTicketResponse, 
+                    ticketService, &TicketService::onLeaveTicketResponse);
+    QObject::connect(networkClient, &NetworkClient::getTicketListResponse, 
+                    ticketService, &TicketService::onGetTicketListResponse);
+    QObject::connect(networkClient, &NetworkClient::updateTicketResponse, 
+                    ticketService, &TicketService::onUpdateTicketResponse);
+    QObject::connect(networkClient, &NetworkClient::updateStatusResponse, 
+                    ticketService, &TicketService::onUpdateStatusResponse);
+    QObject::connect(networkClient, &NetworkClient::assignTicketResponse, 
+                    ticketService, &TicketService::onAssignTicketResponse);
+    
+    // 连接到服务器（这里使用默认配置，实际应用中应该从配置文件读取）
+    bool connected = networkClient->connectToServer("localhost", 8080);
+    if (connected) {
+        LogManager::getInstance()->info(LogModule::SYSTEM, LogLayer::BUSINESS, 
+                                       "Main", "网络客户端连接成功");
+        // 启动心跳
+        networkClient->startHeartbeat(30000); // 30秒心跳
+    } else {
+        LogManager::getInstance()->warning(LogModule::SYSTEM, LogLayer::BUSINESS, 
+                                          "Main", "网络客户端连接失败");
+    }
 
     // Ensure SQLite DB and ticket schema
     QSqlDatabase db = QSqlDatabase::database();
@@ -38,6 +88,10 @@ int main(int argc, char *argv[])
         const QString t = st.value("theme","light").toString();
         applyTheme(t == "dark" ? Theme::Dark : Theme::Light);
 
+        // 将网络客户端和业务服务传递给主窗口（如果需要的话）
+        // home->setNetworkClient(networkClient);
+        // home->setAuthService(authService);
+        // home->setTicketService(ticketService);
 
         home->show();
         return a.exec();
