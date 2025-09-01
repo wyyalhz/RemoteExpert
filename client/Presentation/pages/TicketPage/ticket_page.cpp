@@ -59,11 +59,26 @@ void TicketPage::setAuthService(AuthService* authService)
 
 int TicketPage::getCurrentUserId() const
 {
-    if (authService_ && authService_->isLoggedIn()) {
-        User currentUser = authService_->getCurrentUser();
-        return currentUser.getId();
+    if (!authService_) {
+        qDebug() << "AuthService is null";
+        return -1;
     }
-    return -1; // 返回-1表示未登录或无法获取用户ID
+    
+    if (!authService_->isLoggedIn()) {
+        qDebug() << "User is not logged in";
+        return -1;
+    }
+    
+    User currentUser = authService_->getCurrentUser();
+    int userId = currentUser.getId();
+    
+    qDebug() << "Current user ID:" << userId << "Username:" << currentUser.getUsername();
+    
+    if (userId == -1) {
+        qDebug() << "User ID is -1, this might indicate incomplete user data";
+    }
+    
+    return userId;
 }
 
 void TicketPage::searchTicket(bool isExpert, const QString& name){
@@ -77,9 +92,12 @@ void TicketPage::searchTicket(bool isExpert, const QString& name){
     
     // 获取当前用户ID
     int userId = getCurrentUserId();
+    qDebug() << "Searching tickets for user ID:" << userId;
+    
     if (userId == -1) {
         showLoading(false);
-        QMessageBox::warning(this, "错误", "无法获取用户信息，请重新登录");
+        qDebug() << "Cannot get user ID, skipping ticket search";
+        // 不显示错误对话框，只是跳过搜索
         return;
     }
     
