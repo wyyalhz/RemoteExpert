@@ -76,12 +76,8 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         }
         
         // 使用MessageBuilder构建成功响应
-        // QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
-        //     QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
-        // sendResponse(socket, MSG_LOGIN, responseData);
-
-        // sendSuccessResponse(socket, MSG_LOGIN, "Login successful", QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
-        sendSuccessResponse(socket, MSG_LOGIN, "Login successful", QJsonObject());
+        QJsonObject responseData = MessageBuilder::buildLoginMessage(username, password, userType);
+        sendSuccessResponse(socket, MSG_LOGIN, "Login successful", responseData);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
@@ -89,9 +85,6 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         NetworkLogger::authenticationSuccess(clientInfo, username);
     } else {
         sendErrorResponse(socket, MSG_LOGIN, 401, "Invalid username or password");
-        // [FIX]为了让客户端统一通过 MSG_LOGIN(不再用sendErrorResponse)处理登录失败
-        // QJsonObject fail = MessageBuilder::buildErrorResponse(401, "Invalid username or password");
-        // sendResponse(socket, MSG_LOGIN, fail);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
@@ -159,7 +152,8 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     bool success = userService_->registerUser(username, password, email, phone, userType);
     
     if (success) {
-        sendSuccessResponse(socket, MSG_REGISTER, "Registration successful", QJsonObject{});
+        QJsonObject responseData = MessageBuilder::buildRegisterMessage(username, password, email, phone, userType);
+        sendSuccessResponse(socket, MSG_REGISTER, "Registration successful", responseData);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())

@@ -84,11 +84,10 @@ bool AuthService::registerUser(const QString& username, const QString& password,
         return false;
     }
     
-    // 发送注册请求（将在网络层实现后调用）
+    // 发送注册请求
     sendRegisterRequest(username, password, email, phone, userType);
     
-    // 暂时返回false，等待网络响应
-    return false;
+    return true;
 }
 
 bool AuthService::logout()
@@ -102,11 +101,10 @@ bool AuthService::logout()
     LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
                                    "AuthService", QString("用户登出: %1").arg(currentUser_.getUsername()));
     
-    // 发送登出请求（将在网络层实现后调用）
+    // 发送登出请求
     sendLogoutRequest();
     
-    // 暂时返回false，等待网络响应
-    return false;
+    return true;
 }
 
 bool AuthService::updateUserInfo(const User& user)
@@ -124,10 +122,10 @@ bool AuthService::updateUserInfo(const User& user)
     LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
                                    "AuthService", QString("更新用户信息: %1").arg(user.getUsername()));
     
-    // 发送更新用户信息请求（将在网络层实现后调用）
+    // 发送更新用户信息请求
     sendUpdateUserRequest(user);
     
-    return false;
+    return true;
 }
 
 bool AuthService::changePassword(const QString& oldPassword, const QString& newPassword)
@@ -150,10 +148,10 @@ bool AuthService::changePassword(const QString& oldPassword, const QString& newP
     LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
                                    "AuthService", QString("用户修改密码: %1").arg(currentUser_.getUsername()));
     
-    // 发送修改密码请求（将在网络层实现后调用）
+    // 发送修改密码请求
     sendChangePasswordRequest(oldPassword, newPassword);
     
-    return false;
+    return true;
 }
 
 bool AuthService::refreshSession()
@@ -165,10 +163,10 @@ bool AuthService::refreshSession()
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
                                     "AuthService", "刷新会话");
     
-    // 发送会话验证请求（将在网络层实现后调用）
+    // 发送会话验证请求
     sendSessionValidationRequest();
     
-    return false;
+    return true;
 }
 
 bool AuthService::validateSession()
@@ -177,10 +175,10 @@ bool AuthService::validateSession()
         return false;
     }
     
-    // 发送会话验证请求（将在网络层实现后调用）
+    // 发送会话验证请求
     sendSessionValidationRequest();
     
-    return false;
+    return true;
 }
 
 void AuthService::setCurrentUser(const User& user)
@@ -465,12 +463,15 @@ bool AuthService::parseRegisterResponse(const QJsonObject& response, User& user)
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
                                     "AuthService", "解析注册响应");
     
-    // 检查响应状态
-    if (response.contains("success") && !response["success"].toBool()) {
-        QString error = response.value("message").toString();
-        if (error.isEmpty()) error = "注册失败";
-        setError(error);
-        return false;
+    // 兼容服务器响应格式 {"code": 0, "message": "..."}
+    if (response.contains("code")) {
+        int code = response.value("code").toInt();
+        if (code != 0) {
+            QString error = response.value("message").toString();
+            if (error.isEmpty()) error = "注册失败";
+            setError(error);
+            return false;
+        }
     }
     
     // 注册成功，创建用户对象
