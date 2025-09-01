@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/login">
+        <file>gear-wide-connected.svg</file>
+        <file>github.svg</file>
+        <file>x-circle.svg</file>
+        <file>x-circle-fill.svg</file>
+        <file>wrench-adjustable-circle.svg</file>
+    </qresource>
+</RCC>
