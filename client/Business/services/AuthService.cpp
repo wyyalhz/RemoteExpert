@@ -1,0 +1,341 @@
+#include "AuthService.h"
+#include "../../common/protocol/builders/message_builder.h"
+
+AuthService::AuthService(QObject *parent)
+    : QObject(parent)
+    , isLoggedIn_(false)
+{
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", "认证服务初始化完成");
+}
+
+AuthService::~AuthService()
+{
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", "认证服务销毁");
+}
+
+bool AuthService::login(const QString& username, const QString& password, int userType)
+{
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("用户尝试登录: %1").arg(username));
+    
+    // 输入验证
+    if (username.isEmpty() || password.isEmpty()) {
+        setError("用户名和密码不能为空");
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", "登录失败: 用户名或密码为空");
+        emit loginFailed(lastError_);
+        return false;
+    }
+    
+    if (username.length() < 3) {
+        setError("用户名长度至少3个字符");
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", QString("登录失败: 用户名长度不足 - %1").arg(username));
+        emit loginFailed(lastError_);
+        return false;
+    }
+    
+    // 发送登录请求（将在网络层实现后调用）
+    sendLoginRequest(username, password, userType);
+    
+    // 暂时返回false，等待网络响应
+    return false;
+}
+
+bool AuthService::registerUser(const QString& username, const QString& password, 
+                              const QString& email, const QString& phone, int userType)
+{
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("用户尝试注册: %1").arg(username));
+    
+    // 输入验证
+    if (username.isEmpty() || password.isEmpty()) {
+        setError("用户名和密码不能为空");
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", "注册失败: 用户名或密码为空");
+        emit registerFailed(lastError_);
+        return false;
+    }
+    
+    if (username.length() < 3) {
+        setError("用户名长度至少3个字符");
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", QString("注册失败: 用户名长度不足 - %1").arg(username));
+        emit registerFailed(lastError_);
+        return false;
+    }
+    
+    if (password.length() < 6) {
+        setError("密码长度至少6个字符");
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", "注册失败: 密码长度不足");
+        emit registerFailed(lastError_);
+        return false;
+    }
+    
+    // 发送注册请求（将在网络层实现后调用）
+    sendRegisterRequest(username, password, email, phone, userType);
+    
+    // 暂时返回false，等待网络响应
+    return false;
+}
+
+bool AuthService::logout()
+{
+    if (!isLoggedIn_) {
+        LogManager::getInstance()->warning(LogModule::USER, LogLayer::BUSINESS, 
+                                          "AuthService", "登出失败: 用户未登录");
+        return false;
+    }
+    
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("用户登出: %1").arg(currentUser_.getUsername()));
+    
+    // 发送登出请求（将在网络层实现后调用）
+    sendLogoutRequest();
+    
+    // 暂时返回false，等待网络响应
+    return false;
+}
+
+bool AuthService::updateUserInfo(const User& user)
+{
+    if (!isLoggedIn_) {
+        setError("用户未登录");
+        return false;
+    }
+    
+    if (!user.isValid()) {
+        setError(user.getValidationError());
+        return false;
+    }
+    
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("更新用户信息: %1").arg(user.getUsername()));
+    
+    // 发送更新用户信息请求（将在网络层实现后调用）
+    sendUpdateUserRequest(user);
+    
+    return false;
+}
+
+bool AuthService::changePassword(const QString& oldPassword, const QString& newPassword)
+{
+    if (!isLoggedIn_) {
+        setError("用户未登录");
+        return false;
+    }
+    
+    if (oldPassword.isEmpty() || newPassword.isEmpty()) {
+        setError("旧密码和新密码不能为空");
+        return false;
+    }
+    
+    if (newPassword.length() < 6) {
+        setError("新密码长度至少6个字符");
+        return false;
+    }
+    
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("用户修改密码: %1").arg(currentUser_.getUsername()));
+    
+    // 发送修改密码请求（将在网络层实现后调用）
+    sendChangePasswordRequest(oldPassword, newPassword);
+    
+    return false;
+}
+
+bool AuthService::refreshSession()
+{
+    if (!isLoggedIn_ || sessionId_.isEmpty()) {
+        return false;
+    }
+    
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "刷新会话");
+    
+    // 发送会话验证请求（将在网络层实现后调用）
+    sendSessionValidationRequest();
+    
+    return false;
+}
+
+bool AuthService::validateSession()
+{
+    if (!isLoggedIn_ || sessionId_.isEmpty()) {
+        return false;
+    }
+    
+    // 发送会话验证请求（将在网络层实现后调用）
+    sendSessionValidationRequest();
+    
+    return false;
+}
+
+void AuthService::setCurrentUser(const User& user)
+{
+    currentUser_ = user;
+    isLoggedIn_ = true;
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", QString("设置当前用户: %1").arg(user.getUsername()));
+}
+
+void AuthService::clearCurrentUser()
+{
+    currentUser_ = User();
+    isLoggedIn_ = false;
+    sessionId_.clear();
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                   "AuthService", "清除当前用户");
+}
+
+void AuthService::setError(const QString& error)
+{
+    lastError_ = error;
+    LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", QString("错误: %1").arg(error));
+}
+
+// 网络请求方法（占位符，将在网络层实现后完善）
+void AuthService::sendLoginRequest(const QString& username, const QString& password, int userType)
+{
+    // 构建登录消息
+    QJsonObject loginMessage = MessageBuilder::buildLoginMessage(username, password, userType);
+    
+    // TODO: 通过网络客户端发送消息
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送登录请求");
+}
+
+void AuthService::sendRegisterRequest(const QString& username, const QString& password, 
+                                    const QString& email, const QString& phone, int userType)
+{
+    // 构建注册消息
+    QJsonObject registerMessage = MessageBuilder::buildRegisterMessage(username, password, email, phone, userType);
+    
+    // TODO: 通过网络客户端发送消息
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送注册请求");
+}
+
+void AuthService::sendLogoutRequest()
+{
+    // TODO: 构建登出消息并发送
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送登出请求");
+}
+
+void AuthService::sendUpdateUserRequest(const User& user)
+{
+    // TODO: 构建更新用户信息消息并发送
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送更新用户信息请求");
+}
+
+void AuthService::sendChangePasswordRequest(const QString& oldPassword, const QString& newPassword)
+{
+    // TODO: 构建修改密码消息并发送
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送修改密码请求");
+}
+
+void AuthService::sendSessionValidationRequest()
+{
+    // TODO: 构建会话验证消息并发送
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "发送会话验证请求");
+}
+
+// 网络响应处理方法（占位符，将在网络层实现后完善）
+void AuthService::onLoginResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到登录响应");
+    
+    // TODO: 解析登录响应
+    User user;
+    if (parseLoginResponse(response, user)) {
+        setCurrentUser(user);
+        emit loginSuccess(user);
+    } else {
+        emit loginFailed(lastError_);
+    }
+}
+
+void AuthService::onRegisterResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到注册响应");
+    
+    // TODO: 解析注册响应
+    User user;
+    if (parseRegisterResponse(response, user)) {
+        emit registerSuccess(user);
+    } else {
+        emit registerFailed(lastError_);
+    }
+}
+
+void AuthService::onLogoutResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到登出响应");
+    
+    // TODO: 解析登出响应
+    clearCurrentUser();
+    emit logoutSuccess();
+}
+
+void AuthService::onUpdateUserResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到更新用户信息响应");
+    
+    // TODO: 解析更新用户信息响应
+    User user;
+    if (parseUserInfoResponse(response, user)) {
+        setCurrentUser(user);
+        emit userInfoUpdated(user);
+    }
+}
+
+void AuthService::onChangePasswordResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到修改密码响应");
+    
+    // TODO: 解析修改密码响应
+}
+
+void AuthService::onSessionValidationResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "收到会话验证响应");
+    
+    // TODO: 解析会话验证响应
+    if (response.contains("valid") && !response["valid"].toBool()) {
+        clearCurrentUser();
+        emit sessionExpired();
+    }
+}
+
+// 响应解析方法（占位符，将在网络层实现后完善）
+bool AuthService::parseLoginResponse(const QJsonObject& response, User& user)
+{
+    // TODO: 解析登录响应
+    return false;
+}
+
+bool AuthService::parseRegisterResponse(const QJsonObject& response, User& user)
+{
+    // TODO: 解析注册响应
+    return false;
+}
+
+bool AuthService::parseUserInfoResponse(const QJsonObject& response, User& user)
+{
+    // TODO: 解析用户信息响应
+    return false;
+}

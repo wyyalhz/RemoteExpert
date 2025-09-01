@@ -32,8 +32,15 @@ SOURCES += \
     # Presentation层 - 工具类
     Presentation/utils/theme.cpp \
     Presentation/utils/ticket_schema.cpp \
+    # Business层 - 模型
+    Business/models/User.cpp \
+    Business/models/Ticket.cpp \
+    # Business层 - 服务
+    Business/services/AuthService.cpp \
+    Business/services/TicketService.cpp \
     # Business层 - 管理器
-    Business/managers/database_manager.cpp
+    Business/managers/database_manager.cpp \
+    Business/managers/SessionManager.cpp
 
 # 头文件
 HEADERS += \
@@ -55,8 +62,15 @@ HEADERS += \
     # Presentation层 - 工具类
     Presentation/utils/theme.h \
     Presentation/utils/ticket_schema.h \
+    # Business层 - 模型
+    Business/models/User.h \
+    Business/models/Ticket.h \
+    # Business层 - 服务
+    Business/services/AuthService.h \
+    Business/services/TicketService.h \
     # Business层 - 管理器
-    Business/managers/database_manager.h
+    Business/managers/database_manager.h \
+    Business/managers/SessionManager.h
 
 # UI文件
 FORMS += \
