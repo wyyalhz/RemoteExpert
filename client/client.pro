@@ -1,0 +1,177 @@
+QT += core gui sql widgets svg network multimedia multimediawidgets charts serialport
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+CONFIG += c++17
+
+# 包含协议模块
+include(../common/protocol.pri)
+
+# 定义输出目录
+DESTDIR = $$PWD/../bin
+
+# 源文件
+SOURCES += \
+    # 主程序入口
+    Presentation/dialogs/vedio/audiocapture.cpp \
+    Presentation/dialogs/vedio/audioplayer.cpp \
+    Presentation/dialogs/vedio/avreceiver.cpp \
+    Presentation/dialogs/vedio/avsender.cpp \
+    Presentation/dialogs/vedio/chatmodel.cpp \
+    Presentation/dialogs/vedio/mainwindow.cpp \
+    Presentation/dialogs/vedio/protocol.cpp \
+    Presentation/dialogs/vedio/screencapture.cpp \
+    Presentation/dialogs/vedio/videorecorder.cpp \
+    Presentation/pages/EquipmentPage/datamodel.cpp \
+    Presentation/pages/EquipmentPage/equipmentshow.cpp \
+    main.cpp \
+    # 日志模块
+    Logger/logger_base.cpp \
+    Logger/log_manager.cpp \
+    # Presentation层 - 对话框
+    Presentation/dialogs/LoginDialog/login_dialog.cpp \
+    Presentation/dialogs/RegisterDialog/register_dialog.cpp \
+    Presentation/dialogs/TicketDialog/ticket_dialog.cpp \
+    Presentation/dialogs/TicketDialogDetail/ticket_dialog_detail.cpp \
+    Presentation/dialogs/AddTicket/add_ticket.cpp \
+    # Presentation层 - 页面
+    Presentation/pages/TicketPage/ticket_page.cpp \
+    Presentation/pages/ThanksPage/thanks_page.cpp \
+    Presentation/pages/SettingPage/setting_page.cpp \
+    # Presentation层 - 主窗口
+    Presentation/main_window/home_main_window.cpp \
+    # Presentation层 - 工具类
+    Presentation/utils/theme.cpp \
+    Presentation/utils/ticket_schema.cpp \
+    # Business层 - 模型
+    Business/models/User.cpp \
+    Business/models/Ticket.cpp \
+    # Business层 - 服务
+    Business/services/AuthService.cpp \
+    Business/services/TicketService.cpp \
+    # Business层 - 管理器
+    Business/managers/database_manager.cpp \
+    Business/managers/SessionManager.cpp \
+    # Network层 - 客户端
+    Network/client/network_client.cpp \
+    # Network层 - 连接管理
+    Network/connection/connection_manager.cpp \
+    # Network层 - 协议处理
+    Network/protocol/handlers/message_handler.cpp \
+    # Network层 - 状态管理
+    Network/status/network_status.cpp
+
+# 头文件
+HEADERS += \
+    # 日志模块
+    Logger/logger_base.h \
+    Logger/log_manager.h \
+    # Presentation层 - 对话框
+    Presentation/dialogs/LoginDialog/login_dialog.h \
+    Presentation/dialogs/RegisterDialog/register_dialog.h \
+    Presentation/dialogs/TicketDialog/ticket_dialog.h \
+    Presentation/dialogs/TicketDialogDetail/ticket_dialog_detail.h \
+    Presentation/dialogs/AddTicket/add_ticket.h \
+    # Presentation层 - 页面
+    Presentation/dialogs/vedio/audiocapture.h \
+    Presentation/dialogs/vedio/audioplayer.h \
+    Presentation/dialogs/vedio/avreceiver.h \
+    Presentation/dialogs/vedio/avsender.h \
+    Presentation/dialogs/vedio/chatmodel.h \
+    Presentation/dialogs/vedio/mainwindow.h \
+    Presentation/dialogs/vedio/protocol.h \
+    Presentation/dialogs/vedio/screencapture.h \
+    Presentation/dialogs/vedio/videorecorder.h \
+    Presentation/pages/EquipmentPage/datamodel.h \
+    Presentation/pages/EquipmentPage/equipmentshow.h \
+    Presentation/pages/TicketPage/ticket_page.h \
+    Presentation/pages/ThanksPage/thanks_page.h \
+    Presentation/pages/SettingPage/setting_page.h \
+    # Presentation层 - 主窗口
+    Presentation/main_window/home_main_window.h \
+    # Presentation层 - 工具类
+    Presentation/utils/theme.h \
+    Presentation/utils/ticket_schema.h \
+    # Business层 - 模型
+    Business/models/User.h \
+    Business/models/Ticket.h \
+    # Business层 - 服务
+    Business/services/AuthService.h \
+    Business/services/TicketService.h \
+    # Business层 - 管理器
+    Business/managers/database_manager.h \
+    Business/managers/SessionManager.h \
+    # Network层 - 客户端
+    Network/client/network_client.h \
+    # Network层 - 连接管理
+    Network/connection/connection_manager.h \
+    # Network层 - 协议处理
+    Network/protocol/handlers/message_handler.h \
+    # Network层 - 状态管理
+    Network/status/network_status.h
+
+# UI文件
+FORMS += \
+    Presentation/dialogs/LoginDialog/login_dialog.ui \
+    Presentation/dialogs/RegisterDialog/register_dialog.ui \
+    Presentation/dialogs/TicketDialog/ticket_dialog.ui \
+    Presentation/dialogs/TicketDialogDetail/ticket_dialog_detail.ui \
+    Presentation/dialogs/AddTicket/add_ticket.ui \
+    Presentation/dialogs/vedio/mainwindow.ui \
+    Presentation/pages/EquipmentPage/equipmentshow.ui \
+    Presentation/pages/TicketPage/ticket_page.ui \
+    Presentation/pages/ThanksPage/thanks_page.ui \
+    Presentation/pages/SettingPage/setting_page.ui \
+    Presentation/main_window/home_main_window.ui
+
+# 资源文件
+RESOURCES += \
+    Resources/images/UiTool.qrc \
+    Resources/images/icons_dark.qrc \
+    Resources/images/icons_light.qrc \
+    Resources/styles/themes/themes.qrc
+
+# 包含路径
+INCLUDEPATH += \
+    . \
+    Presentation \
+    Presentation/dialogs \
+    Presentation/pages \
+    Presentation/main_window \
+    Presentation/utils \
+    Business \
+    Business/managers \
+    Business/models \
+    Business/services \
+    Network \
+    Network/client \
+    Network/connection \
+    Network/protocol \
+    Network/protocol/handlers \
+    Network/status \
+    Logger \
+    Resources
+
+# 编译警告设置
+DEFINES += QT_DEPRECATED_WARNINGS
+
+# 开发/运行时：把外部 themes 目录复制到可执行文件旁，方便覆盖qss
+win32 {
+    QMAKE_POST_LINK += xcopy /E /I /Y \"$$PWD\\Resources\\styles\\themes\" \"$$OUT_PWD\\themes\" & echo.
+}
+unix:!macx {
+    QMAKE_POST_LINK += mkdir -p \"$$OUT_PWD/themes\"; cp -R \"$$PWD/Resources/styles/themes/.\" \"$$OUT_PWD/themes/\"
+}
+macx {
+    QMAKE_POST_LINK += mkdir -p \"$$OUT_PWD/themes\"; cp -R \"$$PWD/Resources/styles/themes/.\" \"$$OUT_PWD/themes/\"
+}
+
+# make install 时把themes安装到可执行旁
+themes.files = $$files($$PWD/Resources/styles/themes/*)
+themes.path  = $$DESTDIR/themes
+INSTALLS    += themes
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target

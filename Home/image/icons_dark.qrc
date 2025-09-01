@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>dark/ticket-dark.svg</file>
+        <file>dark/setGeer-dark.svg</file>
+        <file>dark/man-dark.svg</file>
+        <file>dark/geer-dark.svg</file>
+        <file>dark/flower-dark.svg</file>
+    </qresource>
+</RCC>
