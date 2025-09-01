@@ -1,6 +1,7 @@
 #include "login_dialog.h"
 #include "ui_login_dialog.h"
 #include "Presentation/dialogs/RegisterDialog/register_dialog.h"
+#include "Logger/log_manager.h"
 #include <QSvgRenderer>
 #include <QPainter>
 
@@ -19,6 +20,10 @@ LoginDialog::LoginDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("远程技术支持系统 - 登录");
+    
+    // 初始化日志
+    LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION, 
+                                   "LoginDialog", "登录对话框初始化完成");
 
     // 连接信号槽
     connect(ui->loginButton, &QPushButton::clicked, this, &LoginDialog::onLoginClicked);
@@ -67,13 +72,21 @@ void LoginDialog::onLoginClicked()
     QString password = ui->passwordEdit->text();
     int userType = ui->userTypeCombo->currentIndex();
 
+    // 记录登录尝试
+    LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                   "LoginDialog", QString("用户尝试登录: %1, 类型: %2").arg(username).arg(userType));
+
     // 输入验证
     if(username.isEmpty() || password.isEmpty()){
+        LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                          "LoginDialog", "登录失败: 用户名或密码为空");
         QMessageBox::warning(this, "错误", "用户名和密码不能为空");
         return;
     }
 
     if(username.length() < 3){
+        LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                          "LoginDialog", QString("登录失败: 用户名长度不足 - %1").arg(username));
         QMessageBox::warning(this, "错误", "用户名长度至少3个字符");
         return;
     }
@@ -82,6 +95,8 @@ void LoginDialog::onLoginClicked()
     bool agreed = ui->LogAgreeButton->isChecked();
 
     if (!agreed) {
+        LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                          "LoginDialog", "登录失败: 用户未同意服务协议");
         QMessageBox::warning(this, tr("提示"),
                              tr("请先同意服务协议和隐私指导！"));
         return; // 拦截，不继续登录流程
@@ -148,7 +163,8 @@ void LoginDialog::onUserTypeChanged(int index)
 
 void LoginDialog::on_titleLabel_linkActivated(const QString &link)
 {
-
+    Q_UNUSED(link)
+    // 可以在这里添加链接激活时的处理逻辑
 }
 
 //ui

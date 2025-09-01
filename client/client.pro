@@ -14,6 +14,9 @@ DESTDIR = $$PWD/../bin
 SOURCES += \
     # 主程序入口
     main.cpp \
+    # 日志模块
+    Logger/logger_base.cpp \
+    Logger/log_manager.cpp \
     # Presentation层 - 对话框
     Presentation/dialogs/LoginDialog/login_dialog.cpp \
     Presentation/dialogs/RegisterDialog/register_dialog.cpp \
@@ -34,6 +37,9 @@ SOURCES += \
 
 # 头文件
 HEADERS += \
+    # 日志模块
+    Logger/logger_base.h \
+    Logger/log_manager.h \
     # Presentation层 - 对话框
     Presentation/dialogs/LoginDialog/login_dialog.h \
     Presentation/dialogs/RegisterDialog/register_dialog.h \

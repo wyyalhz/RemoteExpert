@@ -1,4 +1,5 @@
 #include "database_manager.h"
+#include "Logger/log_manager.h"
 #include <QApplication>
 #include <QDir>
 #include <QDebug>
@@ -15,7 +16,8 @@ DatabaseManager::DatabaseManager(QObject *parent) : QObject(parent)
     m_db = QSqlDatabase::addDatabase("QSQLITE");
     QString dbPath = QApplication::applicationDirPath() + "/data.db";
     m_db.setDatabaseName(dbPath);
-    qDebug() << "Database path:" << dbPath;
+    LogManager::getInstance()->info(LogModule::DATABASE, LogLayer::DATA, 
+                                   "DatabaseManager", QString("数据库路径: %1").arg(dbPath));
 }
 
 DatabaseManager::~DatabaseManager()
@@ -28,7 +30,8 @@ DatabaseManager::~DatabaseManager()
 bool DatabaseManager::initDatabase()
 {
     if(!m_db.open()){
-        qDebug() << "Error opening database:" << m_db.lastError().text();
+        LogManager::getInstance()->error(LogModule::DATABASE, LogLayer::DATA,
+                                        "DatabaseManager", QString("数据库打开失败: %1").arg(m_db.lastError().text()));
         return false;
     }
 
@@ -45,11 +48,13 @@ bool DatabaseManager::initDatabase()
         "created_time DATETIME DEFAULT CURRENT_TIMESTAMP)";
 
     if(!query.exec(createTableSql)){
-        qDebug() << "Error creating table:" << query.lastError().text();
+        LogManager::getInstance()->error(LogModule::DATABASE, LogLayer::DATA,
+                                        "DatabaseManager", QString("创建用户表失败: %1").arg(query.lastError().text()));
         return false;
     }
 
-    qDebug() << "Database initialized successfully";
+    LogManager::getInstance()->info(LogModule::DATABASE, LogLayer::DATA,
+                                   "DatabaseManager", "数据库初始化成功");
     return true;
 }
 
