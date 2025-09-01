@@ -14,6 +14,14 @@ QMainWindow#HomeMainWindow, QWidget#HomeMainWindow {
 }
 */
 
+QFrame#appbar {
+background: #FFFFFF;
+}
+
+QStackedWidget#stackWidget {
+background: #F2F7FF;
+}
+
 /* Cards / GroupBox */
 QFrame#Card, QGroupBox {
     background: #FFFFFF;

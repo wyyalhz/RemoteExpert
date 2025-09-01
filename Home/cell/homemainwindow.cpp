@@ -7,6 +7,7 @@
 #include "tickets/ticketpage.h"
 #include "homemainwindow.h"
 #include "ui_homemainwindow.h"
+#include "theme.h"
 
 HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +19,10 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
     , currentUserType(currentUserType)
 {
     ui->setupUi(this);
+
+    // 确保初次进入主页时也能正确加载图标（先全局qss后刷新一次）
+    refreshThemedAssets();
+    QTimer::singleShot(0, this, [](){ refreshThemedAssets(); });
 
     // 初始化问候语
     updateGreeting();
