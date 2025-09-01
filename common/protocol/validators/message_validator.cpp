@@ -209,3 +209,23 @@ bool MessageValidator::validateIntegerRange(int value,
     }
     return true;
 }
+
+bool MessageValidator::validatePacket(const Packet& packet)
+{
+    // 验证数据包的基本结构
+    if (packet.type == 0) {
+        return false; // 无效的消息类型
+    }
+    
+    // 验证JSON数据不为空
+    if (packet.json.isEmpty()) {
+        return false; // JSON数据不能为空
+    }
+    
+    // 验证二进制数据大小（如果有的话）
+    if (packet.bin.size() > ValidationRules::MAX_FILE_SIZE) {
+        return false; // 二进制数据过大
+    }
+    
+    return true;
+}

@@ -116,8 +116,11 @@ private:
     // 网络客户端引用
     NetworkClient* networkClient_;
     
+public:
     // 设置网络客户端
     void setNetworkClient(NetworkClient* client);
+
+private:
 
 public slots:
     // 网络响应处理

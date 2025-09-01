@@ -174,11 +174,29 @@ void NetworkStatus::updateUptime()
 
 void NetworkStatus::logStateChange(NetworkState oldState, NetworkState newState)
 {
-    QString oldStateStr = getStateString(oldState);
-    QString newStateStr = getStateString(newState);
+    QString oldStateStr = getStateStringFromEnum(oldState);
+    QString newStateStr = getStateStringFromEnum(newState);
     
     LogManager::getInstance()->info(LogModule::NETWORK, LogLayer::NETWORK, "NetworkStatus", 
                     QString("网络状态变化: %1 -> %2").arg(oldStateStr).arg(newStateStr));
+}
+
+QString NetworkStatus::getStateStringFromEnum(NetworkState state)
+{
+    switch (state) {
+        case NETWORK_DISCONNECTED:
+            return "未连接";
+        case NETWORK_CONNECTING:
+            return "连接中";
+        case NETWORK_CONNECTED:
+            return "已连接";
+        case NETWORK_RECONNECTING:
+            return "重连中";
+        case NETWORK_ERROR:
+            return "连接错误";
+        default:
+            return "未知状态";
+    }
 }
 
 void NetworkStatus::onUpdateTimer()

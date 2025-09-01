@@ -75,6 +75,7 @@ private:
     // 私有辅助方法
     void updateUptime();
     void logStateChange(NetworkState oldState, NetworkState newState);
+    QString getStateStringFromEnum(NetworkState state);
 
 private:
     // 当前状态

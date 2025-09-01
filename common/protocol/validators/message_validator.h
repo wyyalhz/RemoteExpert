@@ -8,6 +8,7 @@
 #include <QtNetwork>
 #include "../types/enums.h"
 #include "../types/validation_rules.h"
+#include "../serialization/packet.h"
 
 // 消息验证工具类
 class MessageValidator {
@@ -49,4 +50,7 @@ public:
                                     int maxValue, 
                                     const QString& fieldName, 
                                     QString& error);
+    
+    // 验证整个数据包
+    static bool validatePacket(const Packet& packet);
 };

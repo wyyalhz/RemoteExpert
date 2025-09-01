@@ -1,6 +1,7 @@
 #include "connection_manager.h"
 #include "../../Logger/log_manager.h"
 #include "../../../common/protocol/protocol.h"
+#include "../../../common/protocol/serialization/serializer.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QHostInfo>
@@ -211,14 +212,14 @@ void ConnectionManager::processReceivedData()
             }
             
             // 解析JSON数据
-            QJsonObject jsonData = fromJsonBytes(packet.jsonBytes);
+            QJsonObject jsonData = packet.json;
             
             // 发送消息接收信号
-            emit messageReceived(packet.type, jsonData, packet.binary);
+            emit messageReceived(packet.type, jsonData, packet.bin);
             
             LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", 
                                            QString("解析数据包成功: 类型=%1, JSON大小=%2, 二进制大小=%3")
-                                           .arg(packet.type).arg(packet.jsonBytes.size()).arg(packet.binary.size()));
+                                           .arg(packet.type).arg(toJsonBytes(packet.json).size()).arg(packet.bin.size()));
         }
     }
 }
