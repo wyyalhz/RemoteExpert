@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>light/ticket-light.svg</file>
-        <file>light/setGeer-light.svg</file>
-        <file>light/man-light.svg</file>
-        <file>light/geer-light.svg</file>
-        <file>light/flower-light.svg</file>
-    </qresource>
-</RCC>
