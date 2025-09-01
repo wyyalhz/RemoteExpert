@@ -69,7 +69,7 @@ void ChatHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
             handleSystemControl(socket, packet);
             break;
         default:
-            sendErrorResponse(socket, 404, QString("Unknown chat message type: %1").arg(packet.type));
+            sendErrorResponse(socket, MSG_ERROR, 404, QString("Unknown chat message type: %1").arg(packet.type));
             break;
     }
 }
@@ -79,7 +79,7 @@ void ChatHandler::handleTextMessage(QTcpSocket* socket, const Packet& packet)
     // 使用MessageValidator验证文本消息
     QString validationError;
     if (!MessageValidator::validateTextMessage(packet.json, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_TEXT, 400, validationError);
         return;
     }
     
@@ -87,7 +87,7 @@ void ChatHandler::handleTextMessage(QTcpSocket* socket, const Packet& packet)
     QString roomId, text, messageId;
     qint64 timestamp;
     if (!MessageParser::parseTextMessage(packet.json, roomId, text, timestamp, messageId)) {
-        sendErrorResponse(socket, 400, "Invalid text message format");
+        sendErrorResponse(socket, MSG_TEXT, 400, "Invalid text message format");
         return;
     }
     
@@ -95,7 +95,7 @@ void ChatHandler::handleTextMessage(QTcpSocket* socket, const Packet& packet)
     // 检查是否在正确的房间
     QString currentRoom = connectionManager_-> getCurrentRoom(socket);
         if (currentRoom != roomId) {
-            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            sendErrorResponse(socket, MSG_TEXT, 400, "Not in the correct room for this message");
             return;
         }
     // 构建数据包并转发到房间
@@ -115,14 +115,14 @@ void ChatHandler::handleRealTimeMedia(QTcpSocket *socket, const Packet &packet)
     QString roomId = connectionManager_-> getCurrentRoom(socket);
     if(roomId.isEmpty())
     {
-        sendErrorResponse(socket,400,"Not in a room");
+        sendErrorResponse(socket, MSG_ERROR, 400, "Not in a room");
         return;
     }
 
     // 极简验证 - 只验证必要字段以降低延迟
     if(packet.bin.isEmpty())
     {
-        sendErrorResponse(socket, 400, "Media data cannot be empty");
+        sendErrorResponse(socket, MSG_ERROR, 400, "Media data cannot be empty");
         return;
     }
 
@@ -160,7 +160,7 @@ void ChatHandler::handleDeviceData(QTcpSocket* socket, const Packet& packet)
     // 使用MessageValidator验证设备数据消息
     QString validationError;
     if (!MessageValidator::validateDeviceDataMessage(packet.json, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_DEVICE_DATA, 400, validationError);
         return;
     }
     
@@ -169,14 +169,14 @@ void ChatHandler::handleDeviceData(QTcpSocket* socket, const Packet& packet)
     QJsonObject deviceData;
     qint64 timestamp;
     if (!MessageParser::parseDeviceDataMessage(packet.json, roomId, deviceType, deviceData, timestamp)) {
-        sendErrorResponse(socket, 400, "Invalid device data message format");
+        sendErrorResponse(socket, MSG_DEVICE_DATA, 400, "Invalid device data message format");
         return;
     }
     
     // 检查是否在正确的房间
         QString currentRoom = connectionManager_-> getCurrentRoom(socket);
         if (currentRoom != roomId) {
-            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            sendErrorResponse(socket, MSG_DEVICE_DATA, 400, "Not in the correct room for this message");
             return;
         }
 
@@ -197,7 +197,7 @@ void ChatHandler::handleVideoFrame(QTcpSocket* socket, const Packet& packet)
     // 使用MessageValidator验证视频帧消息
     QString validationError;
     if (!MessageValidator::validateVideoFrameMessage(packet.json, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_VIDEO_FRAME, 400, validationError);
         return;
     }
     
@@ -206,13 +206,13 @@ void ChatHandler::handleVideoFrame(QTcpSocket* socket, const Packet& packet)
     int width, height, fps;
     qint64 timestamp;
     if (!MessageParser::parseVideoFrameMessage(packet.json, roomId, frameId, width, height, fps, timestamp)) {
-        sendErrorResponse(socket, 400, "Invalid video frame message format");
+        sendErrorResponse(socket, MSG_VIDEO_FRAME, 400, "Invalid video frame message format");
         return;
     }
     
     // 验证二进制数据
     if (packet.bin.isEmpty()) {
-        sendErrorResponse(socket, 400, "Video frame data cannot be empty");
+        sendErrorResponse(socket, MSG_VIDEO_FRAME, 400, "Video frame data cannot be empty");
         return;
     }
     
@@ -233,7 +233,7 @@ void ChatHandler::handleAudioFrame(QTcpSocket* socket, const Packet& packet)
     // 使用MessageValidator验证音频帧消息
     QString validationError;
     if (!MessageValidator::validateAudioFrameMessage(packet.json, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_AUDIO_FRAME, 400, validationError);
         return;
     }
     
@@ -242,13 +242,13 @@ void ChatHandler::handleAudioFrame(QTcpSocket* socket, const Packet& packet)
     int sampleRate, channels;
     qint64 timestamp;
     if (!MessageParser::parseAudioFrameMessage(packet.json, roomId, frameId, sampleRate, channels, timestamp)) {
-        sendErrorResponse(socket, 400, "Invalid audio frame message format");
+        sendErrorResponse(socket, MSG_AUDIO_FRAME, 400, "Invalid audio frame message format");
         return;
     }
     
     // 验证二进制数据
     if (packet.bin.isEmpty()) {
-        sendErrorResponse(socket, 400, "Audio frame data cannot be empty");
+        sendErrorResponse(socket, MSG_AUDIO_FRAME, 400, "Audio frame data cannot be empty");
         return;
     }
     
@@ -268,7 +268,7 @@ void ChatHandler::handleFileTransfer(QTcpSocket* socket, const Packet& packet)
 {
     // 验证文件传输数据
     if (packet.bin.isEmpty()) {
-        sendErrorResponse(socket, 400, "File transfer data cannot be empty");
+        sendErrorResponse(socket, MSG_FILE_TRANSFER, 400, "File transfer data cannot be empty");
         return;
     }
     
@@ -288,7 +288,7 @@ void ChatHandler::handleScreenshot(QTcpSocket* socket, const Packet& packet)
 {
     // 验证截图数据
     if (packet.bin.isEmpty()) {
-        sendErrorResponse(socket, 400, "Screenshot data cannot be empty");
+        sendErrorResponse(socket, MSG_SCREENSHOT, 400, "Screenshot data cannot be empty");
         return;
     }
     
@@ -308,7 +308,7 @@ void ChatHandler::handleVideoControl(QTcpSocket* socket, const Packet& packet)
 {
     // 验证视频控制数据
     if (packet.json.isEmpty()) {
-        sendErrorResponse(socket, 400, "Video control data cannot be empty");
+        sendErrorResponse(socket, MSG_VIDEO_CONTROL, 400, "Video control data cannot be empty");
         return;
     }
     
@@ -327,7 +327,7 @@ void ChatHandler::handleAudioControl(QTcpSocket* socket, const Packet& packet)
 {
     // 验证音频控制数据
     if (packet.json.isEmpty()) {
-        sendErrorResponse(socket, 400, "Audio control data cannot be empty");
+        sendErrorResponse(socket, MSG_AUDIO_CONTROL, 400, "Audio control data cannot be empty");
         return;
     }
     
@@ -346,7 +346,7 @@ void ChatHandler::handleDeviceControl(QTcpSocket* socket, const Packet& packet)
 {
     // 验证设备控制数据
     if (packet.json.isEmpty()) {
-        sendErrorResponse(socket, 400, "Device control data cannot be empty");
+        sendErrorResponse(socket, MSG_DEVICE_CONTROL, 400, "Device control data cannot be empty");
         return;
     }
     
@@ -365,7 +365,7 @@ void ChatHandler::handleSystemControl(QTcpSocket* socket, const Packet& packet)
 {
     // 验证系统控制数据
     if (packet.json.isEmpty()) {
-        sendErrorResponse(socket, 400, "System control data cannot be empty");
+        sendErrorResponse(socket, MSG_SYSTEM_CONTROL, 400, "System control data cannot be empty");
         return;
     }
     
@@ -385,7 +385,7 @@ void ChatHandler::handleControl(QTcpSocket* socket, const Packet& packet)
     // 使用MessageValidator验证控制消息
     QString validationError;
     if (!MessageValidator::validateControlMessage(packet.json, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_CONTROL, 400, validationError);
         return;
     }
     
@@ -394,14 +394,14 @@ void ChatHandler::handleControl(QTcpSocket* socket, const Packet& packet)
     QJsonObject params;
     qint64 timestamp;
     if (!MessageParser::parseControlMessage(packet.json, roomId, controlType, target, params, timestamp)) {
-        sendErrorResponse(socket, 400, "Invalid control message format");
+        sendErrorResponse(socket, MSG_CONTROL, 400, "Invalid control message format");
         return;
     }
     
     // 检查是否在正确的房间
         QString currentRoom = connectionManager_-> getCurrentRoom(socket);
         if (currentRoom != roomId) {
-            sendErrorResponse(socket, 400, "Not in the correct room for this message");
+            sendErrorResponse(socket, MSG_CONTROL, 400, "Not in the correct room for this message");
             return;
         }
 
@@ -423,7 +423,7 @@ void ChatHandler::broadcastToRoom(QTcpSocket* socket, const Packet& packet)
     QString roomId = connectionManager_-> getCurrentRoom(socket);
     if(roomId.isEmpty())
     {
-        sendErrorResponse(socket,400,"Not in a room");
+        sendErrorResponse(socket, MSG_ERROR, 400, "Not in a room");
         return;
     }
     // 构建数据包

@@ -25,6 +25,7 @@ ConnectionManager* ProtocolHandler::getConnectionManager() const
 
 void ProtocolHandler::sendResponse(QTcpSocket* socket, const QJsonObject& response)
 {
+    // 没有填写具体消息类型的默认情况，使用MSG_SERVER_EVENT发送响应
     sendResponse(socket, MSG_SERVER_EVENT, response);
 }
 
@@ -44,12 +45,12 @@ void ProtocolHandler::sendResponse(QTcpSocket* socket, quint16 msgType, const QJ
     NetworkLogger::messageSent(clientInfo, msgType, packetData.size());
 }
 
-void ProtocolHandler::sendErrorResponse(QTcpSocket* socket, int errorCode, const QString& message)
+void ProtocolHandler::sendErrorResponse(QTcpSocket* socket, quint16 msgType, int errorCode, const QString& message)
 {
     // 使用MessageBuilder构建错误响应
     QJsonObject response = MessageBuilder::buildErrorResponse(errorCode, message);
     
-    sendResponse(socket, response);
+    sendResponse(socket, msgType, response);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -57,12 +58,12 @@ void ProtocolHandler::sendErrorResponse(QTcpSocket* socket, int errorCode, const
     NetworkLogger::protocolError(clientInfo, "Error Response", QString("%1 - %2").arg(errorCode).arg(message));
 }
 
-void ProtocolHandler::sendSuccessResponse(QTcpSocket* socket, const QString& message, const QJsonObject& data)
+void ProtocolHandler::sendSuccessResponse(QTcpSocket* socket, quint16 msgType, const QString& message, const QJsonObject& data)
 {
     // 使用MessageBuilder构建成功响应
     QJsonObject response = MessageBuilder::buildSuccessResponse(message, data);
     
-    sendResponse(socket, response);
+    sendResponse(socket, msgType, response);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -94,7 +95,7 @@ bool ProtocolHandler::checkAuthentication(QTcpSocket* socket)
                             .arg(socket->peerAddress().toString())
                             .arg(socket->peerPort());
         NetworkLogger::authenticationFailed(clientInfo, "Authentication required");
-        sendErrorResponse(socket, 403, "Authentication required. Please login first.");
+        sendErrorResponse(socket, MSG_ERROR, 403, "Authentication required. Please login first.");
         return false;
     }
     
@@ -113,7 +114,7 @@ bool ProtocolHandler::checkRoomMembership(QTcpSocket* socket)
                             .arg(socket->peerAddress().toString())
                             .arg(socket->peerPort());
         NetworkLogger::authorizationFailed(clientInfo, "Room Membership", "Please join a room first");
-        sendErrorResponse(socket, 403, "Please join a room first.");
+        sendErrorResponse(socket, MSG_ERROR, 403, "Please join a room first.");
         return false;
     }
     

@@ -30,7 +30,7 @@ void UserHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
             handleHeartbeat(socket, packet.json);
             break;
         default:
-            sendErrorResponse(socket, 404, QString("Unknown user message type: %1").arg(packet.type));
+            sendErrorResponse(socket, MSG_ERROR, 404, QString("Unknown user message type: %1").arg(packet.type));
             break;
     }
 }
@@ -40,7 +40,7 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
     // 使用MessageValidator验证登录消息
     QString validationError;
     if (!MessageValidator::validateLoginMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_LOGIN, 400, validationError);
         return;
     }
     
@@ -48,14 +48,14 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
     QString username, password;
     int userType;
     if (!MessageParser::parseLoginMessage(data, username, password, userType)) {
-        sendErrorResponse(socket, 400, "Invalid login message format");
+        sendErrorResponse(socket, MSG_LOGIN, 400, "Invalid login message format");
         return;
     }
     
     // 检查是否已经登录
     ClientContext* context = getClientContext(socket);
     if (context && context->isAuthenticated) {
-        sendErrorResponse(socket, 400, "Already logged in");
+        sendErrorResponse(socket, MSG_LOGIN, 400, "Already logged in");
         return;
     }
     
@@ -76,19 +76,22 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         }
         
         // 使用MessageBuilder构建成功响应
-        QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
-            QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
-        sendResponse(socket, MSG_LOGIN, responseData);
+        // QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
+        //     QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
+        // sendResponse(socket, MSG_LOGIN, responseData);
+
+        // sendSuccessResponse(socket, MSG_LOGIN, "Login successful", QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
+        sendSuccessResponse(socket, MSG_LOGIN, "Login successful", QJsonObject());
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
                             .arg(socket->peerPort());
         NetworkLogger::authenticationSuccess(clientInfo, username);
     } else {
-        sendErrorResponse(socket, 401, "Invalid username or password");
+        sendErrorResponse(socket, MSG_LOGIN, 401, "Invalid username or password");
         // [FIX]为了让客户端统一通过 MSG_LOGIN(不再用sendErrorResponse)处理登录失败
-        QJsonObject fail = MessageBuilder::buildErrorResponse(401, "Invalid username or password");
-        sendResponse(socket, MSG_LOGIN, fail);
+        // QJsonObject fail = MessageBuilder::buildErrorResponse(401, "Invalid username or password");
+        // sendResponse(socket, MSG_LOGIN, fail);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
@@ -110,7 +113,7 @@ void UserHandler::handleLogout(QTcpSocket* socket, const QJsonObject& data)
     updateClientAuthentication(socket, QString(), false);
     
     // 发送成功响应
-    sendSuccessResponse(socket, "Logout successful", QJsonObject{});
+    sendSuccessResponse(socket, MSG_LOGOUT, "Logout successful", QJsonObject{});
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -125,7 +128,7 @@ void UserHandler::handleHeartbeat(QTcpSocket* socket, const QJsonObject& data)
     // 发送心跳响应
     QJsonObject responseData = MessageBuilder::buildHeartbeatResponse(
         QDateTime::currentMSecsSinceEpoch());
-    sendSuccessResponse(socket, "Heartbeat received", responseData);
+    sendSuccessResponse(socket, MSG_HEARTBEAT, "Heartbeat received", responseData);
     
     QString clientInfo = QString("%1:%2")
                         .arg(socket->peerAddress().toString())
@@ -140,7 +143,7 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     // 使用MessageValidator验证注册消息
     QString validationError;
     if (!MessageValidator::validateRegisterMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_REGISTER, 400, validationError);
         return;
     }
     
@@ -148,7 +151,7 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     QString username, password, email, phone;
     int userType;
     if (!MessageParser::parseRegisterMessage(data, username, password, email, phone, userType)) {
-        sendErrorResponse(socket, 400, "Invalid register message format");
+        sendErrorResponse(socket, MSG_REGISTER, 400, "Invalid register message format");
         return;
     }
     
@@ -156,7 +159,7 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
     bool success = userService_->registerUser(username, password, email, phone, userType);
     
     if (success) {
-        sendSuccessResponse(socket, "Registration successful", QJsonObject{});
+        sendSuccessResponse(socket, MSG_REGISTER, "Registration successful", QJsonObject{});
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())
@@ -166,7 +169,7 @@ void UserHandler::handleRegister(QTcpSocket* socket, const QJsonObject& data)
                            .arg(username)
                            .arg(clientInfo));
     } else {
-        sendErrorResponse(socket, 500, "Registration failed");
+        sendErrorResponse(socket, MSG_REGISTER, 500, "Registration failed");
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())

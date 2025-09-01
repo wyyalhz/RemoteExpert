@@ -37,7 +37,7 @@ void WorkOrderHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
             handleListWorkOrders(socket, packet.json);
             break;
         default:
-            sendErrorResponse(socket, 404, QString("Unknown work order message type: %1").arg(packet.type));
+            sendErrorResponse(socket, MSG_ERROR, 404, QString("Unknown work order message type: %1").arg(packet.type));
             break;
     }
 }
@@ -47,7 +47,7 @@ void WorkOrderHandler::handleCreateWorkOrder(QTcpSocket* socket, const QJsonObje
     // 使用MessageValidator验证创建工单消息
     QString validationError;
     if (!MessageValidator::validateCreateWorkOrderMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_CREATE_WORKORDER, 400, validationError);
         return;
     }
     
@@ -56,13 +56,13 @@ void WorkOrderHandler::handleCreateWorkOrder(QTcpSocket* socket, const QJsonObje
     int priority;
     QJsonObject deviceInfo;
     if (!MessageParser::parseCreateWorkOrderMessage(data, title, description, priority, category, deviceInfo)) {
-        sendErrorResponse(socket, 400, "Invalid create work order message format");
+        sendErrorResponse(socket, MSG_CREATE_WORKORDER, 400, "Invalid create work order message format");
         return;
     }
     
     int creatorId = getUserIdFromContext(socket);
     if (creatorId <= 0) {
-        sendErrorResponse(socket, 400, "Invalid user context");
+        sendErrorResponse(socket, MSG_CREATE_WORKORDER, 400, "Invalid user context");
         return;
     }
     
@@ -73,13 +73,13 @@ void WorkOrderHandler::handleCreateWorkOrder(QTcpSocket* socket, const QJsonObje
     if (success) {
         QJsonObject responseData = MessageBuilder::buildWorkOrderCreatedResponse(
             generatedTicketId, title, QString::number(priority), category);
-        sendSuccessResponse(socket, "Work order created successfully", responseData);
+        sendSuccessResponse(socket, MSG_CREATE_WORKORDER, "Work order created successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
                            QString("Work order '%1' created successfully by user %2")
                            .arg(generatedTicketId).arg(creatorId));
     } else {
-        sendErrorResponse(socket, 500, "Failed to create work order");
+        sendErrorResponse(socket, MSG_CREATE_WORKORDER, 500, "Failed to create work order");
         
         NetworkLogger::error("Work Order Handler", 
                             QString("Failed to create work order for user %1")
@@ -92,28 +92,28 @@ void WorkOrderHandler::handleJoinWorkOrder(QTcpSocket* socket, const QJsonObject
     // 使用MessageValidator验证加入工单消息
     QString validationError;
     if (!MessageValidator::validateJoinWorkOrderMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_JOIN_WORKORDER, 400, validationError);
         return;
     }
     
     // 使用MessageParser解析加入工单消息
     QString roomId, role;
     if (!MessageParser::parseJoinWorkOrderMessage(data, roomId, role)) {
-        sendErrorResponse(socket, 400, "Invalid join work order message format");
+        sendErrorResponse(socket, MSG_JOIN_WORKORDER, 400, "Invalid join work order message format");
         return;
     }
     
     // 检查工单是否存在
     WorkOrderModel workOrder = workOrderService_->getWorkOrderByTicketId(roomId);
     if (!workOrder.isValid()) {
-        sendErrorResponse(socket, 404, "Work order not found");
+        sendErrorResponse(socket, MSG_JOIN_WORKORDER, 404, "Work order not found");
         return;
     }
     
     // 获取用户ID
     int userId = getUserIdFromContext(socket);
     if (userId <= 0) {
-        sendErrorResponse(socket, 400, "Invalid user context");
+        sendErrorResponse(socket, MSG_JOIN_WORKORDER, 400, "Invalid user context");
         return;
     }
     
@@ -126,13 +126,13 @@ void WorkOrderHandler::handleJoinWorkOrder(QTcpSocket* socket, const QJsonObject
         
         QJsonObject responseData = MessageBuilder::buildWorkOrderJoinedResponse(
             roomId, workOrder.toJson());
-        sendSuccessResponse(socket, "Joined work order successfully", responseData);
+        sendSuccessResponse(socket, MSG_JOIN_WORKORDER, "Joined work order successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
                            QString("User %1 joined work order '%2'")
                            .arg(userId).arg(roomId));
     } else {
-        sendErrorResponse(socket, 500, "Connection manager not available");
+        sendErrorResponse(socket, MSG_JOIN_WORKORDER, 500, "Connection manager not available");
     }
 }
 
@@ -148,16 +148,16 @@ void WorkOrderHandler::handleGetWorkOrderInfo(QTcpSocket* socket, const QJsonObj
     } else if (workOrderId > 0) {
         workOrder = workOrderService_->getWorkOrderById(workOrderId);
     } else {
-        sendErrorResponse(socket, 400, "Either ticket_id or work_order_id must be provided");
+        sendErrorResponse(socket, MSG_ERROR, 400, "Either ticket_id or work_order_id must be provided");
         return;
     }
     
     if (!workOrder.isValid()) {
-        sendErrorResponse(socket, 404, "Work order not found");
+        sendErrorResponse(socket, MSG_ERROR, 404, "Work order not found");
         return;
     }
     
-    sendSuccessResponse(socket, "Work order info retrieved", workOrder.toJson());
+            sendSuccessResponse(socket, MSG_ERROR, "Work order info retrieved", workOrder.toJson());
 }
 
 void WorkOrderHandler::handleUpdateWorkOrderStatus(QTcpSocket* socket, const QJsonObject& data)
@@ -166,7 +166,7 @@ void WorkOrderHandler::handleUpdateWorkOrderStatus(QTcpSocket* socket, const QJs
     QString newStatus = data.value("status").toString();
     
     if (workOrderId <= 0 || newStatus.isEmpty()) {
-        sendErrorResponse(socket, 400, "Work order ID and status are required");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, "Work order ID and status are required");
         return;
     }
     
@@ -174,9 +174,9 @@ void WorkOrderHandler::handleUpdateWorkOrderStatus(QTcpSocket* socket, const QJs
     bool success = workOrderService_->updateWorkOrderStatus(workOrderId, newStatus, userId);
     
     if (success) {
-        sendSuccessResponse(socket, "Work order status updated successfully");
+        sendSuccessResponse(socket, MSG_UPDATE_WORKORDER, "Work order status updated successfully");
     } else {
-        sendErrorResponse(socket, 500, "Failed to update work order status");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 500, "Failed to update work order status");
     }
 }
 
@@ -186,7 +186,7 @@ void WorkOrderHandler::handleAssignWorkOrder(QTcpSocket* socket, const QJsonObje
     int assigneeId = data.value("assignee_id").toInt();
     
     if (workOrderId <= 0 || assigneeId <= 0) {
-        sendErrorResponse(socket, 400, "Work order ID and assignee ID are required");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, "Work order ID and assignee ID are required");
         return;
     }
     
@@ -194,9 +194,9 @@ void WorkOrderHandler::handleAssignWorkOrder(QTcpSocket* socket, const QJsonObje
     bool success = workOrderService_->assignWorkOrder(workOrderId, assigneeId, assignerId);
     
     if (success) {
-        sendSuccessResponse(socket, "Work order assigned successfully");
+        sendSuccessResponse(socket, MSG_UPDATE_WORKORDER, "Work order assigned successfully");
     } else {
-        sendErrorResponse(socket, 500, "Failed to assign work order");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 500, "Failed to assign work order");
     }
 }
 
@@ -205,7 +205,7 @@ void WorkOrderHandler::handleCloseWorkOrder(QTcpSocket* socket, const QJsonObjec
     int workOrderId = data.value("work_order_id").toInt();
     
     if (workOrderId <= 0) {
-        sendErrorResponse(socket, 400, "Work order ID is required");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, "Work order ID is required");
         return;
     }
     
@@ -213,9 +213,9 @@ void WorkOrderHandler::handleCloseWorkOrder(QTcpSocket* socket, const QJsonObjec
     bool success = workOrderService_->closeWorkOrder(workOrderId, userId);
     
     if (success) {
-        sendSuccessResponse(socket, "Work order closed successfully");
+        sendSuccessResponse(socket, MSG_UPDATE_WORKORDER, "Work order closed successfully");
     } else {
-        sendErrorResponse(socket, 500, "Failed to close work order");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 500, "Failed to close work order");
     }
 }
 
@@ -241,7 +241,7 @@ void WorkOrderHandler::handleGetWorkOrderList(QTcpSocket* socket, const QJsonObj
     QJsonObject responseData = MessageBuilder::buildWorkOrderListResponse(
         workOrderArray, workOrderArray.size());
     
-    sendSuccessResponse(socket, "Work order list retrieved", responseData);
+    sendSuccessResponse(socket, MSG_LIST_WORKORDERS, "Work order list retrieved", responseData);
 }
 
 int WorkOrderHandler::getUserIdFromContext(QTcpSocket* socket)
@@ -265,14 +265,14 @@ void WorkOrderHandler::handleLeaveWorkOrder(QTcpSocket* socket, const QJsonObjec
     // 使用MessageValidator验证离开工单消息
     QString validationError;
     if (!MessageValidator::validateLeaveWorkOrderMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_LEAVE_WORKORDER, 400, validationError);
         return;
     }
     
     // 使用MessageParser解析离开工单消息
     QString roomId;
     if (!MessageParser::parseLeaveWorkOrderMessage(data, roomId)) {
-        sendErrorResponse(socket, 400, "Invalid leave work order message format");
+        sendErrorResponse(socket, MSG_LEAVE_WORKORDER, 400, "Invalid leave work order message format");
         return;
     }
     
@@ -281,13 +281,13 @@ void WorkOrderHandler::handleLeaveWorkOrder(QTcpSocket* socket, const QJsonObjec
         getConnectionManager()->leaveRoom(socket);
         
         QJsonObject responseData = MessageBuilder::buildWorkOrderLeftResponse(roomId);
-        sendSuccessResponse(socket, "Left work order successfully", responseData);
+        sendSuccessResponse(socket, MSG_LEAVE_WORKORDER, "Left work order successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
                            QString("User left work order '%1'")
                            .arg(roomId));
     } else {
-        sendErrorResponse(socket, 500, "Connection manager not available");
+        sendErrorResponse(socket, MSG_LEAVE_WORKORDER, 500, "Connection manager not available");
     }
 }
 
@@ -296,27 +296,27 @@ void WorkOrderHandler::handleUpdateWorkOrder(QTcpSocket* socket, const QJsonObje
     // 使用MessageValidator验证更新工单消息
     QString validationError;
     if (!MessageValidator::validateUpdateWorkOrderMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, validationError);
         return;
     }
     
     // 使用MessageParser解析更新工单消息
     QString ticketId, status, description;
     if (!MessageParser::parseUpdateWorkOrderMessage(data, ticketId, status, description)) {
-        sendErrorResponse(socket, 400, "Invalid update work order message format");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, "Invalid update work order message format");
         return;
     }
     
     int userId = getUserIdFromContext(socket);
     if (userId <= 0) {
-        sendErrorResponse(socket, 400, "Invalid user context");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 400, "Invalid user context");
         return;
     }
     
     // 获取现有工单并更新
     WorkOrderModel workOrder = workOrderService_->getWorkOrderByTicketId(ticketId);
     if (!workOrder.isValid()) {
-        sendErrorResponse(socket, 404, "Work order not found");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 404, "Work order not found");
         return;
     }
     
@@ -329,13 +329,13 @@ void WorkOrderHandler::handleUpdateWorkOrder(QTcpSocket* socket, const QJsonObje
     
     if (success) {
         QJsonObject responseData = MessageBuilder::buildWorkOrderUpdatedResponse(ticketId, status);
-        sendSuccessResponse(socket, "Work order updated successfully", responseData);
+        sendSuccessResponse(socket, MSG_UPDATE_WORKORDER, "Work order updated successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
                            QString("Work order '%1' updated by user %2")
                            .arg(ticketId).arg(userId));
     } else {
-        sendErrorResponse(socket, 500, "Failed to update work order");
+        sendErrorResponse(socket, MSG_UPDATE_WORKORDER, 500, "Failed to update work order");
         
         NetworkLogger::error("Work Order Handler", 
                             QString("Failed to update work order '%1' by user %2")
@@ -348,7 +348,7 @@ void WorkOrderHandler::handleListWorkOrders(QTcpSocket* socket, const QJsonObjec
     // 使用MessageValidator验证获取工单列表消息
     QString validationError;
     if (!MessageValidator::validateListWorkOrdersMessage(data, validationError)) {
-        sendErrorResponse(socket, 400, validationError);
+        sendErrorResponse(socket, MSG_LIST_WORKORDERS, 400, validationError);
         return;
     }
     
@@ -356,13 +356,13 @@ void WorkOrderHandler::handleListWorkOrders(QTcpSocket* socket, const QJsonObjec
     QString status;
     int limit, offset;
     if (!MessageParser::parseListWorkOrdersMessage(data, status, limit, offset)) {
-        sendErrorResponse(socket, 400, "Invalid list work orders message format");
+        sendErrorResponse(socket, MSG_LIST_WORKORDERS, 400, "Invalid list work orders message format");
         return;
     }
     
     int userId = getUserIdFromContext(socket);
     if (userId <= 0) {
-        sendErrorResponse(socket, 400, "Invalid user context");
+        sendErrorResponse(socket, MSG_LIST_WORKORDERS, 400, "Invalid user context");
         return;
     }
     
@@ -376,7 +376,7 @@ void WorkOrderHandler::handleListWorkOrders(QTcpSocket* socket, const QJsonObjec
     
     QJsonObject responseData = MessageBuilder::buildWorkOrderListResponse(
         workOrderArray, workOrderArray.size());
-    sendSuccessResponse(socket, "Work orders retrieved successfully", responseData);
+    sendSuccessResponse(socket, MSG_LIST_WORKORDERS, "Work orders retrieved successfully", responseData);
     
     NetworkLogger::info("Work Order Handler", 
                        QString("Retrieved %1 work orders for user %2")

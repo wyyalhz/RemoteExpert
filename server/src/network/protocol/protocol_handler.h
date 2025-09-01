@@ -29,8 +29,8 @@ protected:
     // 发送响应的辅助方法
     void sendResponse(QTcpSocket* socket, const QJsonObject& response);
     void sendResponse(QTcpSocket* socket, quint16 msgType, const QJsonObject& response);
-    void sendErrorResponse(QTcpSocket* socket, int errorCode, const QString& message);
-    void sendSuccessResponse(QTcpSocket* socket, const QString& message, const QJsonObject& data = QJsonObject());
+    void sendErrorResponse(QTcpSocket* socket, quint16 msgType, int errorCode, const QString& message);
+    void sendSuccessResponse(QTcpSocket* socket, quint16 msgType, const QString& message, const QJsonObject& data = QJsonObject());
     
     // 获取客户端上下文的辅助方法
     struct ClientContext* getClientContext(QTcpSocket* socket);
