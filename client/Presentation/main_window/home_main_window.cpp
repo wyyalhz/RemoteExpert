@@ -18,6 +18,8 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
     , m_settingPage(nullptr)
     , currentUser(currentUser)
     , currentUserType(currentUserType)
+    , ticketService_(nullptr)
+    , authService_(nullptr)
 {
     ui->setupUi(this);
 
@@ -35,6 +37,26 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
 HomeMainWindow::~HomeMainWindow()
 {
     delete ui;
+}
+
+void HomeMainWindow::setTicketService(TicketService* ticketService)
+{
+    ticketService_ = ticketService;
+    
+    // 如果TicketPage已经创建，设置TicketService
+    if (m_ticketPage) {
+        m_ticketPage->setTicketService(ticketService);
+    }
+}
+
+void HomeMainWindow::setAuthService(AuthService* authService)
+{
+    authService_ = authService;
+    
+    // 如果TicketPage已经创建，设置AuthService
+    if (m_ticketPage) {
+        m_ticketPage->setAuthService(authService);
+    }
 }
 
 // 设置问候语
@@ -74,6 +96,16 @@ void HomeMainWindow::initPage()
         m_ticketPage = new TicketPage(currentUser, false, this);
     }
     m_settingPage = new SettingPage(this);
+
+    // 如果TicketService已经设置，立即设置到TicketPage
+    if (ticketService_) {
+        m_ticketPage->setTicketService(ticketService_);
+    }
+    
+    // 如果AuthService已经设置，立即设置到TicketPage
+    if (authService_) {
+        m_ticketPage->setAuthService(authService_);
+    }
 
     //把这些页面加到stackWidget
     ui->stackWidget->addWidget(m_thanksPage);

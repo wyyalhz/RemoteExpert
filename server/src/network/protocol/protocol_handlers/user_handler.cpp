@@ -77,8 +77,8 @@ void UserHandler::handleLogin(QTcpSocket* socket, const QJsonObject& data)
         
         // 使用MessageBuilder构建成功响应
         QJsonObject responseData = MessageBuilder::buildSuccessResponse("Login successful", 
-            QJsonObject{{"username", username}, {"user_type", userType}});
-        sendResponse(socket, responseData);
+            QJsonObject{{"username", username}, {"user_type", userType}, {"id", userId}});
+        sendResponse(socket, MSG_LOGIN, responseData);
         
         QString clientInfo = QString("%1:%2")
                             .arg(socket->peerAddress().toString())

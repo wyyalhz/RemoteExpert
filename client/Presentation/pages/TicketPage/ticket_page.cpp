@@ -14,6 +14,7 @@ TicketPage::TicketPage(const QString& name, bool isExpert, QWidget *parent)
     , name(name)
     , isExpert(isExpert)
     , ticketService_(nullptr)
+    , authService_(nullptr)
 {
     ui->setupUi(this);
     ui->btnAdd->setVisible(!isExpert);
@@ -42,9 +43,27 @@ void TicketPage::setTicketService(TicketService* ticketService)
         connect(ticketService_, &TicketService::ticketDeletedFailed, 
                 this, &TicketPage::onTicketDeletedFailed);
         
-        // 设置完成后开始搜索工单
-        searchTicket(isExpert, name);
+        // 延迟获取工单列表，确保用户信息已经设置完成
+        QTimer::singleShot(100, this, [this]() {
+            if (authService_ && authService_->isLoggedIn()) {
+                searchTicket(isExpert, name);
+            }
+        });
     }
+}
+
+void TicketPage::setAuthService(AuthService* authService)
+{
+    authService_ = authService;
+}
+
+int TicketPage::getCurrentUserId() const
+{
+    if (authService_ && authService_->isLoggedIn()) {
+        User currentUser = authService_->getCurrentUser();
+        return currentUser.getId();
+    }
+    return -1; // 返回-1表示未登录或无法获取用户ID
 }
 
 void TicketPage::searchTicket(bool isExpert, const QString& name){
@@ -56,13 +75,21 @@ void TicketPage::searchTicket(bool isExpert, const QString& name){
     showLoading(true);
     ui->ticketListWidget->clear();
     
+    // 获取当前用户ID
+    int userId = getCurrentUserId();
+    if (userId == -1) {
+        showLoading(false);
+        QMessageBox::warning(this, "错误", "无法获取用户信息，请重新登录");
+        return;
+    }
+    
     // 根据用户类型和名称获取工单列表
     if (!isExpert) {
         // 工厂用户：获取自己创建的工单
-        ticketService_->getTicketsByCreator(0); // TODO: 需要传入实际的用户ID
+        ticketService_->getTicketsByCreator(userId);
     } else {
         // 技术专家：获取分配给自己的工单
-        ticketService_->getTicketsByAssignee(0); // TODO: 需要传入实际的用户ID
+        ticketService_->getTicketsByAssignee(userId);
     }
 }
 
@@ -114,6 +141,12 @@ void TicketPage::on_btnAdd_clicked()
     }
     this->hide();
     AddTicket *newTicket = new AddTicket(name);
+    
+    // 设置TicketService到AddTicket
+    if (ticketService_) {
+        newTicket->setTicketService(ticketService_);
+    }
+    
     connect(newTicket, &AddTicket::backRequested, this, &TicketPage::returnToTicketList);
     newTicket->show();
 }
@@ -165,8 +198,8 @@ void TicketPage::showTicketDetail(const QString& id){
         detailDialog->setTicketData(
             id,
             ticket.getStatus(),
-            ticket.getCreatorName(), // TODO: 需要确认字段名
-            ticket.getAssigneeName(), // TODO: 需要确认字段名
+            ticket.getCreatorName(),
+            ticket.getAssigneeName(),
             ticket.getTitle(),
             ticket.getDescription()
         );

@@ -59,8 +59,11 @@ User User::fromJson(const QJsonObject& json)
         user.phone_ = json["phone"].toString();
     }
     
+    // 支持两种字段名：userType 和 user_type
     if (json.contains("userType")) {
         user.userType_ = json["userType"].toInt();
+    } else if (json.contains("user_type")) {
+        user.userType_ = json["user_type"].toInt();
     }
     
     if (json.contains("createdTime")) {

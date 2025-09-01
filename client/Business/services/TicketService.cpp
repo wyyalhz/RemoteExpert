@@ -114,8 +114,17 @@ Ticket TicketService::getTicketByTicketId(const QString& ticketId)
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", QString("获取工单: %1").arg(ticketId));
     
-    // TODO: 实现通过工单编号获取工单
-    return Ticket();
+    // 将字符串ID转换为整数ID
+    bool ok;
+    int id = ticketId.toInt(&ok);
+    if (ok) {
+        // 发送获取工单详情请求
+        sendGetTicketRequest(id);
+    } else {
+        setError("工单ID格式无效");
+    }
+    
+    return Ticket(); // 返回空Ticket，实际数据将通过信号返回
 }
 
 QList<Ticket> TicketService::getTicketsByStatus(const QString& status, int limit, int offset)
@@ -134,8 +143,15 @@ QList<Ticket> TicketService::getTicketsByCreator(int creatorId, int limit, int o
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", QString("获取用户创建的工单: %1").arg(creatorId));
     
-    // TODO: 实现获取用户创建的工单
-    return QList<Ticket>();
+    if (creatorId <= 0) {
+        setError("创建者ID无效");
+        return QList<Ticket>();
+    }
+    
+    // 发送获取用户创建的工单请求
+    sendGetTicketListRequest("created", limit, offset); // 使用状态过滤
+    
+    return QList<Ticket>(); // 返回空列表，实际数据将通过信号返回
 }
 
 QList<Ticket> TicketService::getTicketsByAssignee(int assigneeId, int limit, int offset)
@@ -143,8 +159,15 @@ QList<Ticket> TicketService::getTicketsByAssignee(int assigneeId, int limit, int
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", QString("获取分配给用户的工单: %1").arg(assigneeId));
     
-    // TODO: 实现获取分配给用户的工单
-    return QList<Ticket>();
+    if (assigneeId <= 0) {
+        setError("分配用户ID无效");
+        return QList<Ticket>();
+    }
+    
+    // 发送获取分配给用户的工单请求
+    sendGetTicketListRequest("assigned", limit, offset); // 使用状态过滤
+    
+    return QList<Ticket>(); // 返回空列表，实际数据将通过信号返回
 }
 
 QList<Ticket> TicketService::getAllTickets(int limit, int offset)

@@ -34,6 +34,10 @@ private slots:
     void on_usernameEdit_textChanged(const QString &arg1);
 
     void on_userTypeCombo_currentIndexChanged(int index);
+    
+    // 认证服务响应槽
+    void onLoginSuccess(const User& user);
+    void onLoginFailed(const QString& error);
 
 private:
     Ui::LoginDialog *ui;

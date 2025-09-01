@@ -2,6 +2,8 @@
 #define HOMEMAINWINDOW_H
 
 #include <QMainWindow>
+#include "Business/services/TicketService.h"
+#include "Business/services/AuthService.h"
 
 #include "Presentation/pages/ThanksPage/thanks_page.h"
 #include "Presentation/pages/TicketPage/ticket_page.h"
@@ -22,6 +24,12 @@ public:
 
     void dealMenu();//
 
+    // 设置工单服务
+    void setTicketService(TicketService* ticketService);
+    
+    // 设置认证服务
+    void setAuthService(AuthService* authService);
+
 private:
     TicketPage *ticketPage = nullptr;
 
@@ -37,6 +45,13 @@ private:
 
     QString currentUser;
     int currentUserType;
+    
+    // 工单服务引用
+    TicketService* ticketService_;
+    
+    // 认证服务引用
+    AuthService* authService_;
+    
     void updateGreeting();
 };
 #endif // HOMEMAINWINDOW_H

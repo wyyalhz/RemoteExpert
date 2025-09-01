@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     // 初始化日志系统
     QString logDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/RemoteExpert/logs";
     QString logFile = logDir + "/client.log";
-    LogManager::getInstance()->initialize(LogLevel::INFO, logFile);
+    LogManager::getInstance()->initialize(LogLevel::DEBUG, logFile);
     
     LogManager::getInstance()->info(LogModule::SYSTEM, LogLayer::BUSINESS, 
                                    "Main", "客户端应用程序启动");
@@ -83,10 +83,9 @@ int main(int argc, char *argv[])
         const QString t = st.value("theme","light").toString();
         applyTheme(t == "dark" ? Theme::Dark : Theme::Light);
 
-        // 将网络客户端和业务服务传递给主窗口（如果需要的话）
-        // home->setNetworkClient(networkClient);
-        // home->setAuthService(authService);
-        // home->setTicketService(ticketService);
+        // 将网络客户端和业务服务传递给主窗口
+        home->setTicketService(ticketService);
+        home->setAuthService(authService);
 
         home->show();
         return a.exec();

@@ -4,6 +4,7 @@
 #include "Presentation/dialogs/TicketDialog/ticket_dialog.h"
 #include "Presentation/dialogs/TicketDialogDetail/ticket_dialog_detail.h"
 #include "Business/services/TicketService.h"
+#include "Business/services/AuthService.h"
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QStackedWidget>
@@ -22,6 +23,9 @@ public:
 
     // 设置工单服务
     void setTicketService(TicketService* ticketService);
+    
+    // 设置认证服务（用于获取用户信息）
+    void setAuthService(AuthService* authService);
 
 private slots:
     void on_btnAdd_clicked();
@@ -53,7 +57,13 @@ private:
     // 工单服务引用
     TicketService* ticketService_;
     
+    // 认证服务引用（用于获取用户信息）
+    AuthService* authService_;
+    
     // 显示加载状态
     void showLoading(bool loading);
+    
+    // 获取当前用户ID
+    int getCurrentUserId() const;
 };
 #endif // WIDGET_H

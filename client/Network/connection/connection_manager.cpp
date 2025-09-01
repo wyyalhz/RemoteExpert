@@ -98,18 +98,31 @@ bool ConnectionManager::isConnected() const
 
 bool ConnectionManager::sendMessage(quint16 type, const QJsonObject& data, const QByteArray& binary)
 {
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", 
+                                    QString("开始发送消息: 类型=%1").arg(type));
+    
     if (!isConnected_ || !socket_) {
         lastError_ = "未连接到服务器";
         LogManager::getInstance()->error(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", "发送消息失败: 未连接到服务器");
         return false;
     }
     
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", 
+                                    QString("连接状态正常，准备构建数据包"));
+    
     try {
         // 使用协议模块构建数据包
         QByteArray packet = buildPacket(type, data, binary);
         
+        LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", 
+                                        QString("数据包构建完成: 大小=%1字节").arg(packet.size()));
+        
         // 发送数据
         qint64 bytesWritten = socket_->write(packet);
+        
+        LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", 
+                                        QString("Socket写入结果: %1/%2 字节").arg(bytesWritten).arg(packet.size()));
+        
         if (bytesWritten != packet.size()) {
             lastError_ = QString("发送数据不完整: %1/%2 字节").arg(bytesWritten).arg(packet.size());
             LogManager::getInstance()->error(LogModule::NETWORK, LogLayer::NETWORK, "ConnectionManager", lastError_);

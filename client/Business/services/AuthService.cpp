@@ -210,6 +210,9 @@ void AuthService::setError(const QString& error)
 // 网络请求方法
 void AuthService::sendLoginRequest(const QString& username, const QString& password, int userType)
 {
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "开始发送登录请求");
+    
     if (!networkClient_) {
         setError("网络客户端未初始化");
         LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
@@ -217,6 +220,9 @@ void AuthService::sendLoginRequest(const QString& username, const QString& passw
         emit loginFailed(lastError_);
         return;
     }
+    
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", QString("检查网络连接状态: %1").arg(networkClient_->isConnected() ? "已连接" : "未连接"));
     
     if (!networkClient_->isConnected()) {
         setError("未连接到服务器");
@@ -226,8 +232,15 @@ void AuthService::sendLoginRequest(const QString& username, const QString& passw
         return;
     }
     
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", "准备调用网络客户端发送登录请求");
+    
     // 通过网络客户端发送登录请求
     bool success = networkClient_->sendLoginRequest(username, password, userType);
+    
+    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", QString("网络客户端发送登录请求结果: %1").arg(success ? "成功" : "失败"));
+    
     if (!success) {
         setError("发送登录请求失败");
         LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
@@ -329,15 +342,19 @@ void AuthService::sendSessionValidationRequest()
 // 网络响应处理方法（占位符，将在网络层实现后完善）
 void AuthService::onLoginResponse(const QJsonObject& response)
 {
-    LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
-                                    "AuthService", "收到登录响应");
+    LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                    "AuthService", QString("收到登录响应: %1").arg(QJsonDocument(response).toJson(QJsonDocument::Compact).constData()));
     
-    // TODO: 解析登录响应
+    // 解析登录响应
     User user;
     if (parseLoginResponse(response, user)) {
+        LogManager::getInstance()->info(LogModule::USER, LogLayer::BUSINESS, 
+                                       "AuthService", QString("登录响应解析成功，用户: %1").arg(user.getUsername()));
         setCurrentUser(user);
         emit loginSuccess(user);
     } else {
+        LogManager::getInstance()->error(LogModule::USER, LogLayer::BUSINESS, 
+                                        "AuthService", QString("登录响应解析失败: %1").arg(lastError_));
         emit loginFailed(lastError_);
     }
 }
@@ -405,25 +422,31 @@ bool AuthService::parseLoginResponse(const QJsonObject& response, User& user)
     LogManager::getInstance()->debug(LogModule::USER, LogLayer::BUSINESS, 
                                     "AuthService", "解析登录响应");
     
-    // 检查响应状态
-    if (response.contains("success") && !response["success"].toBool()) {
+    // 检查响应状态 - 服务器返回格式：{"code": 0, "message": "Login successful", ...}
+    if (response.contains("code") && response["code"].toInt() != 0) {
         QString error = response.value("message").toString();
         if (error.isEmpty()) error = "登录失败";
         setError(error);
         return false;
     }
     
-    // 解析用户信息
-    if (response.contains("data")) {
-        QJsonObject userData = response["data"].toObject();
+    // 解析用户信息 - 服务器直接返回用户信息，不在data字段中
+    if (response.contains("username")) {
+        user.setUsername(response.value("username").toString());
+        user.setUserType(response.value("user_type").toInt());
         
-        user.setId(userData.value("id").toInt());
-        user.setUsername(userData.value("username").toString());
-        user.setEmail(userData.value("email").toString());
-        user.setPhone(userData.value("phone").toString());
-        user.setUserType(userData.value("user_type").toInt());
+        // 可选字段
+        if (response.contains("email")) {
+            user.setEmail(response.value("email").toString());
+        }
+        if (response.contains("phone")) {
+            user.setPhone(response.value("phone").toString());
+        }
+        if (response.contains("id")) {
+            user.setId(response.value("id").toInt());
+        }
         
-        // 设置会话ID
+        // 设置会话ID（如果服务器返回了的话）
         if (response.contains("session_id")) {
             sessionId_ = response["session_id"].toString();
         }

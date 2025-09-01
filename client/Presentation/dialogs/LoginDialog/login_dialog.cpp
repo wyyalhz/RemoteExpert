@@ -79,6 +79,12 @@ LoginDialog::~LoginDialog()
 void LoginDialog::setAuthService(AuthService* authService)
 {
     authService_ = authService;
+    
+    // 连接认证服务的信号
+    if (authService_) {
+        connect(authService_, &AuthService::loginSuccess, this, &LoginDialog::onLoginSuccess);
+        connect(authService_, &AuthService::loginFailed, this, &LoginDialog::onLoginFailed);
+    }
 }
 
 void LoginDialog::onLoginClicked()
@@ -126,17 +132,11 @@ void LoginDialog::onLoginClicked()
 
     // 使用认证服务进行登录
     if (authService_) {
-        bool success = authService_->login(username, password, userType);
-        if (success) {
-            LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
-                                           "LoginDialog", QString("用户登录成功: %1, 类型: %2").arg(username).arg(userType));
-            QMessageBox::information(this, "成功", "登录成功");
-            accept();
-        } else {
-            LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
-                                               "LoginDialog", QString("用户登录失败: %1, 类型: %2, 错误: %3").arg(username).arg(userType).arg(authService_->getLastError()));
-            QMessageBox::warning(this, "错误", authService_->getLastError());
-        }
+        // 调用登录方法（它会发送网络请求，然后通过信号返回结果）
+        authService_->login(username, password, userType);
+        
+        // 注意：这里不再检查返回值，因为登录是异步的
+        // 结果将通过loginSuccess或loginFailed信号返回
     } else {
         LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
                                            "LoginDialog", "认证服务未初始化，无法执行登录");
@@ -232,4 +232,28 @@ void LoginDialog::on_usernameEdit_textChanged(const QString &arg1)
 void LoginDialog::on_userTypeCombo_currentIndexChanged(int index)
 {
     currentUserType = index;
+}
+
+// 添加新的槽函数来处理登录结果
+void LoginDialog::onLoginSuccess(const User& user)
+{
+    LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                   "LoginDialog", QString("用户登录成功: %1, 类型: %2").arg(user.getUsername()).arg(user.getUserType()));
+    
+    // 更新当前用户信息
+    currentUser = user.getUsername();
+    currentUserType = user.getUserType();
+    
+    // 显示成功消息
+    QMessageBox::information(this, "成功", "登录成功");
+    
+    // 关闭对话框并返回Accepted
+    accept();
+}
+
+void LoginDialog::onLoginFailed(const QString& error)
+{
+    LogManager::getInstance()->warning(LogModule::PRESENTATION, LogLayer::PRESENTATION,
+                                       "LoginDialog", QString("用户登录失败: %1, 类型: %2, 错误: %3").arg(currentUser).arg(currentUserType).arg(error));
+    QMessageBox::warning(this, "错误", error);
 }

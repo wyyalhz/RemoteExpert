@@ -82,20 +82,43 @@ bool NetworkClient::isConnected() const
 
 bool NetworkClient::sendMessage(quint16 type, const QJsonObject& data, const QByteArray& binary)
 {
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("准备发送消息: 类型=%1").arg(type));
+    
     if (!isConnected_) {
         lastError_ = "未连接到服务器";
         LogManager::getInstance()->error(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", "发送消息失败: 未连接到服务器");
         return false;
     }
     
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("网络已连接，准备调用连接管理器发送消息"));
+    
     logMessage(type, data, true);
-    return connectionManager_->sendMessage(type, data, binary);
+    bool result = connectionManager_->sendMessage(type, data, binary);
+    
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("连接管理器发送消息结果: %1").arg(result ? "成功" : "失败"));
+    
+    return result;
 }
 
 bool NetworkClient::sendLoginRequest(const QString& username, const QString& password, int userType)
 {
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("准备发送登录请求: 用户名=%1, 用户类型=%2").arg(username).arg(userType));
+    
     QJsonObject data = MessageBuilder::buildLoginMessage(username, password, userType);
-    return sendMessage(MSG_LOGIN, data);
+    
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("登录消息构建完成: %1").arg(QJsonDocument(data).toJson(QJsonDocument::Compact).constData()));
+    
+    bool result = sendMessage(MSG_LOGIN, data);
+    
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                    QString("登录请求发送结果: %1").arg(result ? "成功" : "失败"));
+    
+    return result;
 }
 
 bool NetworkClient::sendRegisterRequest(const QString& username, const QString& password, 
@@ -320,7 +343,14 @@ void NetworkClient::onMessageReceived(quint16 type, const QJsonObject& data, con
             emit updateTicketResponse(data);
             break;
         case MSG_SERVER_EVENT:
-            emit serverEvent(data);
+            // 检查是否是登录相关的服务器事件
+            if (data.contains("message") && data["message"].toString().contains("Login successful")) {
+                LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                               "检测到登录成功的服务器事件，转发为登录响应");
+                emit loginResponse(data);
+            } else {
+                emit serverEvent(data);
+            }
             break;
         case MSG_ERROR:
             emit errorMessage(data);
