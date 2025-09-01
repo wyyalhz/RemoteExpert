@@ -3,7 +3,6 @@
 
 #include <QDialog>
 #include <QMessageBox>
-#include "Business/managers/database_manager.h"
 #include "Business/services/AuthService.h"
 #include <QMouseEvent>
 

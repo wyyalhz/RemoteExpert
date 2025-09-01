@@ -3,9 +3,8 @@
 #include "Presentation/dialogs/TicketDialog/ticket_dialog.h"
 #include "Presentation/dialogs/TicketDialogDetail/ticket_dialog_detail.h"
 #include "Presentation/dialogs/AddTicket/add_ticket.h"
-#include <QSqlQuery>
-#include <QSqlRecord>
 #include <QGridLayout>
+#include <QMessageBox>
 
 #include <QDebug>
 
@@ -14,12 +13,13 @@ TicketPage::TicketPage(const QString& name, bool isExpert, QWidget *parent)
     , ui(new Ui::TicketPage)
     , name(name)
     , isExpert(isExpert)
+    , ticketService_(nullptr)
 {
     ui->setupUi(this);
     ui->btnAdd->setVisible(!isExpert);
     layout()->activate();
 
-    searchTicket(isExpert, name);
+    // 初始时不自动搜索，等待TicketService设置后再搜索
 }
 
 TicketPage::~TicketPage()
@@ -27,29 +27,74 @@ TicketPage::~TicketPage()
     delete ui;
 }
 
-void TicketPage::searchTicket(bool isExpert, const QString& name){
-    ui->ticketListWidget->clear();
-    QString sql;
-    if (!isExpert) {
-        sql = "select sid from tickets where factory = '" + name + "'";
-    } else {
-        sql = "select sid from tickets where expert = '" + name + "'";
-    }
-    QSqlQuery query;
-    query.exec(sql);
-    while(query.next()){
-        createTicketDialog(query.record().value("sid").toString());
+void TicketPage::setTicketService(TicketService* ticketService)
+{
+    ticketService_ = ticketService;
+    
+    if (ticketService_) {
+        // 连接工单服务的信号
+        connect(ticketService_, &TicketService::ticketListReceived, 
+                this, &TicketPage::onTicketListReceived);
+        connect(ticketService_, &TicketService::ticketListFailed, 
+                this, &TicketPage::onTicketListFailed);
+        connect(ticketService_, &TicketService::ticketDeleted, 
+                this, &TicketPage::onTicketDeleted);
+        connect(ticketService_, &TicketService::ticketDeletedFailed, 
+                this, &TicketPage::onTicketDeletedFailed);
+        
+        // 设置完成后开始搜索工单
+        searchTicket(isExpert, name);
     }
 }
 
+void TicketPage::searchTicket(bool isExpert, const QString& name){
+    if (!ticketService_) {
+        qDebug() << "TicketService not initialized";
+        return;
+    }
+    
+    showLoading(true);
+    ui->ticketListWidget->clear();
+    
+    // 根据用户类型和名称获取工单列表
+    if (!isExpert) {
+        // 工厂用户：获取自己创建的工单
+        ticketService_->getTicketsByCreator(0); // TODO: 需要传入实际的用户ID
+    } else {
+        // 技术专家：获取分配给自己的工单
+        ticketService_->getTicketsByAssignee(0); // TODO: 需要传入实际的用户ID
+    }
+}
+
+void TicketPage::onTicketListReceived(const QList<Ticket>& tickets)
+{
+    showLoading(false);
+    ui->ticketListWidget->clear();
+    
+    for (const Ticket& ticket : tickets) {
+        createTicketDialog(ticket.getTicketId());
+    }
+}
+
+void TicketPage::onTicketListFailed(const QString& error)
+{
+    showLoading(false);
+    QMessageBox::warning(this, "错误", QString("获取工单列表失败: %1").arg(error));
+}
+
 void TicketPage::createTicketDialog(const QString& id){
-    QSqlQuery query("select title from tickets where sid = '" + id + "'");
-    if (!query.exec() || !query.next()) {
+    if (!ticketService_) {
+        return;
+    }
+    
+    // 获取工单详情
+    Ticket ticket = ticketService_->getTicketByTicketId(id);
+    if (ticket.getTicketId().isEmpty()) {
         return;
     }
 
     TicketDialog *dialog = new TicketDialog(isExpert, this);
-    dialog->setTicket(id, query.value("title").toString());
+    dialog->setTicket(id, ticket.getTitle());
     dialog->setWindowFlags(Qt::Widget);
 
     connect(dialog, &TicketDialog::enterRequested, this, &TicketPage::showTicketDetail);
@@ -74,29 +119,56 @@ void TicketPage::on_btnAdd_clicked()
 }
 
 void TicketPage::deleteTicket(const QString& id){
-    QSqlQuery query;
-    query.prepare("delete from tickets where sid = :id");
-    query.bindValue(":id", id);
-    query.exec();
-    searchTicket(isExpert, name);
+    if (!ticketService_) {
+        QMessageBox::warning(this, "错误", "工单服务未初始化");
+        return;
+    }
+    
+    showLoading(true);
+    // 将字符串ID转换为整数ID（TODO: 需要确认ID格式）
+    bool ok;
+    int ticketId = id.toInt(&ok);
+    if (ok) {
+        ticketService_->deleteTicket(ticketId);
+    } else {
+        showLoading(false);
+        QMessageBox::warning(this, "错误", "无效的工单ID");
+    }
+}
+
+void TicketPage::onTicketDeleted(int ticketId)
+{
+    showLoading(false);
+    QMessageBox::information(this, "成功", "工单删除成功");
+    searchTicket(isExpert, name); // 刷新列表
+}
+
+void TicketPage::onTicketDeletedFailed(const QString& error)
+{
+    showLoading(false);
+    QMessageBox::warning(this, "错误", QString("删除工单失败: %1").arg(error));
 }
 
 void TicketPage::showTicketDetail(const QString& id){
+    if (!ticketService_) {
+        QMessageBox::warning(this, "错误", "工单服务未初始化");
+        return;
+    }
+    
     this->hide();
     TicketDialogDetail *detailDialog = new TicketDialogDetail(isExpert);
     connect(detailDialog, &TicketDialogDetail::backRequest, this, &TicketPage::returnToTicketList);
 
-    QSqlQuery query;
-    query.prepare("select status, factory, expert, title, description from tickets where sid = :id");
-    query.bindValue(":id", id);
-    if (query.exec() && query.next()) {
+    // 获取工单详情
+    Ticket ticket = ticketService_->getTicketByTicketId(id);
+    if (!ticket.getTicketId().isEmpty()) {
         detailDialog->setTicketData(
             id,
-            query.value("status").toString(),
-            query.value("factory").toString(),
-            query.value("expert").toString(),
-            query.value("title").toString(),
-            query.value("description").toString()
+            ticket.getStatus(),
+            ticket.getCreatorName(), // TODO: 需要确认字段名
+            ticket.getAssigneeName(), // TODO: 需要确认字段名
+            ticket.getTitle(),
+            ticket.getDescription()
         );
     }
 
@@ -106,4 +178,10 @@ void TicketPage::showTicketDetail(const QString& id){
 void TicketPage::returnToTicketList(){
     this->show();
     searchTicket(isExpert, name);
+}
+
+void TicketPage::showLoading(bool loading)
+{
+    ui->btnAdd->setEnabled(!loading);
+    // 可以添加其他UI元素的加载状态控制
 }

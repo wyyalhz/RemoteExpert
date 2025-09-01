@@ -1,5 +1,3 @@
-#include <QtSql>
-#include "Presentation/utils/ticket_schema.h"
 #include "Presentation/main_window/home_main_window.h"
 #include "Presentation/dialogs/LoginDialog/login_dialog.h"
 #include "Presentation/utils/theme.h"
@@ -71,12 +69,6 @@ int main(int argc, char *argv[])
         LogManager::getInstance()->warning(LogModule::SYSTEM, LogLayer::BUSINESS, 
                                           "Main", "网络客户端连接失败");
     }
-
-    // Ensure SQLite DB and ticket schema
-    QSqlDatabase db = QSqlDatabase::database();
-    if (!db.isValid()) db = QSqlDatabase::addDatabase("QSQLITE");
-    if (!db.isOpen()) { db.setDatabaseName("app.db"); db.open(); }
-    ensureTicketSchema();
 
     LoginDialog lg;
     
