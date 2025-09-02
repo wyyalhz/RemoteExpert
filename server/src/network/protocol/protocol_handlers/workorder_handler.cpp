@@ -66,13 +66,16 @@ void WorkOrderHandler::handleCreateWorkOrder(QTcpSocket* socket, const QJsonObje
         return;
     }
     
+    // 将数字优先级转换为字符串优先级
+    QString priorityString = convertPriorityToString(priority);
+    
     // 调用业务服务创建工单
     QString generatedTicketId;
-    bool success = workOrderService_->createWorkOrder(title, description, creatorId, QString::number(priority), category, generatedTicketId);
+    bool success = workOrderService_->createWorkOrder(title, description, creatorId, priorityString, category, generatedTicketId);
     
     if (success) {
         QJsonObject responseData = MessageBuilder::buildWorkOrderCreatedResponse(
-            generatedTicketId, title, QString::number(priority), category);
+            generatedTicketId, title, priorityString, category);
         sendSuccessResponse(socket, MSG_CREATE_WORKORDER, "Work order created successfully", responseData);
         
         NetworkLogger::info("Work Order Handler", 
@@ -252,6 +255,22 @@ int WorkOrderHandler::getUserIdFromContext(QTcpSocket* socket)
     }
     
     return -1;
+}
+
+QString WorkOrderHandler::convertPriorityToString(int priority)
+{
+    // 将数字优先级转换为字符串优先级
+    switch (priority) {
+        case 1:
+            return "low";
+        case 2:
+            return "normal";
+        case 3:
+            return "high";
+        default:
+            // 默认返回中等优先级
+            return "normal";
+    }
 }
 
 void WorkOrderHandler::handleLeaveWorkOrder(QTcpSocket* socket, const QJsonObject& data)

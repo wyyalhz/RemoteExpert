@@ -47,10 +47,10 @@ bool TicketService::createTicket(const QString& title, const QString& descriptio
         return false;
     }
     
-    // 发送创建工单请求（将在网络层实现后调用）
+    // 发送创建工单请求
     sendCreateTicketRequest(title, description, priority, category, deviceInfo);
     
-    return false;
+    return true; // 返回true表示请求已发送，等待响应
 }
 
 bool TicketService::updateTicket(const Ticket& ticket)
@@ -66,10 +66,10 @@ bool TicketService::updateTicket(const Ticket& ticket)
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
                                    "TicketService", QString("更新工单: %1").arg(ticket.getTitle()));
     
-    // 发送更新工单请求（将在网络层实现后调用）
+    // 发送更新工单请求
     sendUpdateTicketRequest(ticket);
     
-    return false;
+    return true;
 }
 
 bool TicketService::deleteTicket(int ticketId)
@@ -82,10 +82,10 @@ bool TicketService::deleteTicket(int ticketId)
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
                                    "TicketService", QString("删除工单: %1").arg(ticketId));
     
-    // 发送删除工单请求（将在网络层实现后调用）
+    // 发送删除工单请求
     sendDeleteTicketRequest(ticketId);
     
-    return false;
+    return true;
 }
 
 Ticket TicketService::getTicketById(int ticketId)
@@ -98,10 +98,10 @@ Ticket TicketService::getTicketById(int ticketId)
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", QString("获取工单: %1").arg(ticketId));
     
-    // 发送获取工单请求（将在网络层实现后调用）
+    // 发送获取工单请求
     sendGetTicketRequest(ticketId);
     
-    return Ticket();
+    return Ticket(); // 返回空Ticket，实际数据将通过信号返回
 }
 
 Ticket TicketService::getTicketByTicketId(const QString& ticketId)
@@ -132,7 +132,7 @@ QList<Ticket> TicketService::getTicketsByStatus(const QString& status, int limit
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", QString("获取工单列表，状态: %1").arg(status));
     
-    // 发送获取工单列表请求（将在网络层实现后调用）
+    // 发送获取工单列表请求
     sendGetTicketListRequest(status, limit, offset);
     
     return QList<Ticket>();
@@ -643,8 +643,37 @@ void TicketService::onLeaveTicketResponse(const QJsonObject& response)
 // 响应解析方法（占位符，将在网络层实现后完善）
 bool TicketService::parseTicketResponse(const QJsonObject& response, Ticket& ticket)
 {
-    // TODO: 解析工单响应
-    return false;
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", "解析工单响应");
+    
+    // 检查响应状态 - 服务器返回格式：{"code": 0, "message": "...", ...}
+    if (response.contains("code") && response["code"].toInt() != 0) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "操作失败";
+        setError(error);
+        return false;
+    }
+    
+    // 解析工单信息
+    if (response.contains("ticket_id")) {
+        ticket.setTicketId(response["ticket_id"].toString());
+    }
+    
+    if (response.contains("title")) {
+        ticket.setTitle(response["title"].toString());
+    }
+    
+    if (response.contains("priority")) {
+        ticket.setPriority(response["priority"].toString());
+    }
+    
+    if (response.contains("category")) {
+        ticket.setCategory(response["category"].toString());
+    }
+    
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                   "TicketService", QString("工单响应解析成功: %1").arg(ticket.getTitle()));
+    return true;
 }
 
 bool TicketService::parseTicketListResponse(const QJsonObject& response, QList<Ticket>& tickets)
@@ -668,9 +697,17 @@ bool TicketService::parseTicketListResponse(const QJsonObject& response, QList<T
         for (const QJsonValue& value : workOrdersArray) {
             if (value.isObject()) {
                 QJsonObject ticketObj = value.toObject();
+                LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                                "TicketService", QString("解析工单对象: %1").arg(QString(QJsonDocument(ticketObj).toJson())));
+                
                 Ticket ticket(ticketObj);
                 if (ticket.isValid()) {
                     tickets.append(ticket);
+                    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                                    "TicketService", QString("工单验证通过: %1").arg(ticket.getTitle()));
+                } else {
+                    LogManager::getInstance()->warning(LogModule::TICKET, LogLayer::BUSINESS, 
+                                                      "TicketService", QString("工单验证失败: %1").arg(ticket.getValidationError()));
                 }
             }
         }

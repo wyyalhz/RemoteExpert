@@ -139,8 +139,10 @@ bool NetworkClient::sendCreateTicketRequest(const QString& title, const QString&
                                            const QString& priority, const QString& category, 
                                            const QJsonObject& deviceInfo)
 {
+    // 将字符串优先级转换为数字优先级
+    int priorityValue = convertPriorityToInt(priority);
     QJsonObject data = MessageBuilder::buildCreateWorkOrderMessage(title, description, 
-                                                                 priority.toInt(), category, deviceInfo);
+                                                                 priorityValue, category, deviceInfo);
     return sendMessage(MSG_CREATE_WORKORDER, data);
 }
 
@@ -374,5 +376,24 @@ void NetworkClient::onHeartbeatTimeout()
         QJsonObject heartbeatData;
         heartbeatData["timestamp"] = QDateTime::currentMSecsSinceEpoch();
         sendMessage(MSG_HEARTBEAT, heartbeatData);
+    }
+}
+
+int NetworkClient::convertPriorityToInt(const QString& priority)
+{
+    // 将字符串优先级转换为数字优先级
+    if (priority == "low" || priority == "低") {
+        return 1;
+    } else if (priority == "normal" || priority == "中" || priority == "medium") {
+        return 2;
+    } else if (priority == "high" || priority == "高") {
+        return 3;
+    } else if (priority == "urgent" || priority == "紧急") {
+        return 3; // 紧急也映射为高优先级
+    } else {
+        // 默认返回中等优先级
+        LogManager::getInstance()->warning(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                         QString("未知优先级值: %1，使用默认优先级2").arg(priority));
+        return 2;
     }
 }

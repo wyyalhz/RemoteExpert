@@ -117,7 +117,7 @@ void TicketPage::onTicketListReceived(const QList<Ticket>& tickets)
     ui->ticketListWidget->clear();
     
     for (const Ticket& ticket : tickets) {
-        createTicketDialog(ticket.getTicketId());
+        createTicketDialog(ticket);
     }
 }
 
@@ -127,19 +127,18 @@ void TicketPage::onTicketListFailed(const QString& error)
     QMessageBox::warning(this, "错误", QString("获取工单列表失败: %1").arg(error));
 }
 
-void TicketPage::createTicketDialog(const QString& id){
+void TicketPage::createTicketDialog(const Ticket& ticket){
     if (!ticketService_) {
         return;
     }
     
-    // 获取工单详情
-    Ticket ticket = ticketService_->getTicketByTicketId(id);
-    if (ticket.getTicketId().isEmpty()) {
+    // 检查工单是否有效
+    if (!ticket.isValid()) {
         return;
     }
 
     TicketDialog *dialog = new TicketDialog(isExpert, this);
-    dialog->setTicket(id, ticket.getTitle());
+    dialog->setTicket(ticket.getTicketId(), ticket.getTitle());
     dialog->setWindowFlags(Qt::Widget);
 
     connect(dialog, &TicketDialog::enterRequested, this, &TicketPage::showTicketDetail);
@@ -210,18 +209,16 @@ void TicketPage::showTicketDetail(const QString& id){
     TicketDialogDetail *detailDialog = new TicketDialogDetail(isExpert);
     connect(detailDialog, &TicketDialogDetail::backRequest, this, &TicketPage::returnToTicketList);
 
-    // 获取工单详情
-    Ticket ticket = ticketService_->getTicketByTicketId(id);
-    if (!ticket.getTicketId().isEmpty()) {
-        detailDialog->setTicketData(
-            id,
-            ticket.getStatus(),
-            ticket.getCreatorName(),
-            ticket.getAssigneeName(),
-            ticket.getTitle(),
-            ticket.getDescription()
-        );
-    }
+    // TODO: 这里需要从缓存或重新获取工单详情
+    // 暂时使用空数据，后续可以优化为从缓存获取
+    detailDialog->setTicketData(
+        id,
+        "open", // 默认状态
+        "",     // 创建者名称
+        "",     // 分配者名称
+        "工单详情", // 标题
+        ""      // 描述
+    );
 
     detailDialog->show();
 }

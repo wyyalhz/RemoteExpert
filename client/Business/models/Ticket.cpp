@@ -1,5 +1,6 @@
 #include "Ticket.h"
 #include <QJsonArray>
+#include <QDebug>
 
 Ticket::Ticket()
     : id_(-1)
@@ -26,7 +27,7 @@ Ticket::Ticket(const QJsonObject& json)
     , creatorId_(-1)
     , assigneeId_(-1)
 {
-    fromJson(json);
+    *this = fromJson(json);
 }
 
 QJsonObject Ticket::toJson() const

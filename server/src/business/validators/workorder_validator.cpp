@@ -175,10 +175,6 @@ void WorkOrderValidator::validateTitle(const QString& title)
         throw ValidationException("Title cannot be empty", "title", "Title Validation");
     }
     
-    if (title.length() < 5) {
-        throw ValidationException("Title must be at least 5 characters long", "title", "Title Validation");
-    }
-    
     if (title.length() > 200) {
         throw ValidationException("Title cannot exceed 200 characters", "title", "Title Validation");
     }
@@ -188,10 +184,6 @@ void WorkOrderValidator::validateDescription(const QString& description)
 {
     if (description.isEmpty()) {
         throw ValidationException("Description cannot be empty", "description", "Description Validation");
-    }
-    
-    if (description.length() < 10) {
-        throw ValidationException("Description must be at least 10 characters long", "description", "Description Validation");
     }
     
     if (description.length() > 2000) {

@@ -32,6 +32,7 @@ private:
     
     // 辅助方法
     int getUserIdFromContext(QTcpSocket* socket);
+    QString convertPriorityToString(int priority);
 };
 
 #endif // WORKORDER_HANDLER_H

@@ -90,6 +90,7 @@ private:
     void setupConnections();
     void setupMessageHandlers();
     void logMessage(quint16 type, const QJsonObject& data, bool isOutgoing);
+    int convertPriorityToInt(const QString& priority);
 
 private:
     ConnectionManager* connectionManager_;

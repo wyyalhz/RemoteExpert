@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QObject>
+#include <QSettings>
 
 int main(int argc, char *argv[])
 {
@@ -58,8 +59,13 @@ int main(int argc, char *argv[])
     QObject::connect(networkClient, &NetworkClient::assignTicketResponse, 
                     ticketService, &TicketService::onAssignTicketResponse);
     
-    // 连接到服务器（这里使用默认配置，实际应用中应该从配置文件读取）
-    bool connected = networkClient->connectToServer("localhost", 8080);
+    // 从配置文件读取服务器连接信息
+    QSettings config(QCoreApplication::applicationDirPath() + "/config.ini", QSettings::IniFormat);
+    QString serverHost = config.value("Server/host", "localhost").toString();
+    quint16 serverPort = config.value("Server/port", 8080).toUInt();
+    
+    // 连接到服务器
+    bool connected = networkClient->connectToServer(serverHost, serverPort);
     if (connected) {
         LogManager::getInstance()->info(LogModule::SYSTEM, LogLayer::BUSINESS, 
                                        "Main", "网络客户端连接成功");

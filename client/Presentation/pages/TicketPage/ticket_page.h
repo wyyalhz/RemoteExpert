@@ -31,7 +31,7 @@ private slots:
     void on_btnAdd_clicked();
 
     void searchTicket(bool isExpert, const QString& name);
-    void createTicketDialog(const QString& id);
+    void createTicketDialog(const Ticket& ticket);
 
     void showTicketDetail(const QString& id);
     void returnToTicketList();
