@@ -3,13 +3,16 @@
 
 #include <QObject>
 #include <QJsonObject>
-#include <QJsonArray>
+#include <QByteArray>
 #include "../../../Logger/log_manager.h"
 
 // 前向声明
 class NetworkClient;
+class UserMessageHandler;
+class WorkOrderMessageHandler;
+class OtherMessageHandler;
 
-// 消息处理器 - 负责处理各种类型的消息
+// 主消息处理器 - 负责消息路由和分发到各个子模块
 class MessageHandler : public QObject
 {
     Q_OBJECT
@@ -24,48 +27,24 @@ public:
     void handleMessage(quint16 type, const QJsonObject& data, const QByteArray& binary);
 
 private:
-    // 认证消息处理
-    void handleLoginResponse(const QJsonObject& data);
-    void handleRegisterResponse(const QJsonObject& data);
-    void handleLogoutResponse(const QJsonObject& data);
-    void handleHeartbeatResponse(const QJsonObject& data);
+    // 初始化子模块
+    void initializeSubHandlers();
     
-    // 工单消息处理
-    void handleCreateWorkOrderResponse(const QJsonObject& data);
-    void handleJoinWorkOrderResponse(const QJsonObject& data);
-    void handleLeaveWorkOrderResponse(const QJsonObject& data);
-    void handleUpdateWorkOrderResponse(const QJsonObject& data);
-    void handleListWorkOrdersResponse(const QJsonObject& data);
-    
-    // 聊天消息处理
-    void handleTextMessage(const QJsonObject& data);
-    void handleDeviceDataMessage(const QJsonObject& data);
-    void handleFileTransferMessage(const QJsonObject& data);
-    void handleScreenshotMessage(const QJsonObject& data);
-    
-    // 音视频消息处理
-    void handleVideoFrameMessage(const QJsonObject& data, const QByteArray& binary);
-    void handleAudioFrameMessage(const QJsonObject& data, const QByteArray& binary);
-    void handleVideoControlMessage(const QJsonObject& data);
-    void handleAudioControlMessage(const QJsonObject& data);
-    
-    // 控制消息处理
-    void handleControlMessage(const QJsonObject& data);
-    void handleDeviceControlMessage(const QJsonObject& data);
-    void handleSystemControlMessage(const QJsonObject& data);
-    
-    // 系统消息处理
-    void handleServerEventMessage(const QJsonObject& data);
-    void handleErrorMessage(const QJsonObject& data);
-    void handleNotificationMessage(const QJsonObject& data);
+    // 消息路由分发
+    void routeUserMessage(quint16 type, const QJsonObject& data);
+    void routeWorkOrderMessage(quint16 type, const QJsonObject& data);
+    void routeOtherMessage(quint16 type, const QJsonObject& data, const QByteArray& binary);
     
     // 辅助方法
     void logMessageHandling(quint16 type, const QString& action);
-    bool validateMessageData(const QJsonObject& data, const QStringList& requiredFields);
-    QString extractErrorMessage(const QJsonObject& data);
 
 private:
     NetworkClient* networkClient_;
+    
+    // 子模块处理器
+    UserMessageHandler* userHandler_;
+    WorkOrderMessageHandler* workOrderHandler_;
+    OtherMessageHandler* otherHandler_;
 };
 
 #endif // MESSAGE_HANDLER_H

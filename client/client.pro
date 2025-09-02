@@ -50,6 +50,9 @@ SOURCES += \
     Network/connection/connection_manager.cpp \
     # Network层 - 协议处理
     Network/protocol/handlers/message_handler.cpp \
+    Network/protocol/handlers/user_message_handler.cpp \
+    Network/protocol/handlers/workorder_message_handler.cpp \
+    Network/protocol/handlers/other_message_handler.cpp \
     # Network层 - 状态管理
     Network/status/network_status.cpp
 
@@ -91,6 +94,9 @@ HEADERS += \
     Network/connection/connection_manager.h \
     # Network层 - 协议处理
     Network/protocol/handlers/message_handler.h \
+    Network/protocol/handlers/user_message_handler.h \
+    Network/protocol/handlers/workorder_message_handler.h \
+    Network/protocol/handlers/other_message_handler.h \
     # Network层 - 状态管理
     Network/status/network_status.h
 
