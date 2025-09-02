@@ -137,12 +137,12 @@ bool NetworkClient::sendLogoutRequest()
 
 bool NetworkClient::sendCreateTicketRequest(const QString& title, const QString& description, 
                                            const QString& priority, const QString& category, 
-                                           const QJsonObject& deviceInfo)
+                                           const QString& expertUsername, const QJsonObject& deviceInfo)
 {
     // 将字符串优先级转换为数字优先级
     int priorityValue = convertPriorityToInt(priority);
     QJsonObject data = MessageBuilder::buildCreateWorkOrderMessage(title, description, 
-                                                                 priorityValue, category, deviceInfo);
+                                                                 priorityValue, category, expertUsername, deviceInfo);
     return sendMessage(MSG_CREATE_WORKORDER, data);
 }
 
@@ -271,6 +271,7 @@ void NetworkClient::logMessage(quint16 type, const QJsonObject& data, bool isOut
         case MSG_LEAVE_WORKORDER: messageType = "离开工单"; break;
         case MSG_UPDATE_WORKORDER: messageType = "更新工单"; break;
         case MSG_LIST_WORKORDERS: messageType = "获取工单列表"; break;
+        case MSG_DELETE_WORKORDER: messageType = "删除工单"; break;
         case MSG_TEXT: messageType = "文本消息"; break;
         case MSG_SERVER_EVENT: messageType = "服务器事件"; break;
         case MSG_ERROR: messageType = "错误消息"; break;
@@ -343,6 +344,9 @@ void NetworkClient::onMessageReceived(quint16 type, const QJsonObject& data, con
             break;
         case MSG_UPDATE_WORKORDER:
             emit updateTicketResponse(data);
+            break;
+        case MSG_DELETE_WORKORDER:
+            emit deleteTicketResponse(data);
             break;
         case MSG_SERVER_EVENT:
             // 检查是否是登录相关的服务器事件

@@ -32,13 +32,14 @@ public:
     bool sendLogoutRequest();
     bool sendCreateTicketRequest(const QString& title, const QString& description, 
                                const QString& priority, const QString& category, 
-                               const QJsonObject& deviceInfo = QJsonObject());
+                               const QString& expertUsername, const QJsonObject& deviceInfo = QJsonObject());
     bool sendJoinTicketRequest(const QString& ticketId, const QString& role);
     bool sendLeaveTicketRequest(const QString& ticketId);
     bool sendGetTicketListRequest(const QString& status = QString(), int limit = -1, int offset = 0);
     bool sendUpdateTicketRequest(const QJsonObject& ticketData);
     bool sendUpdateStatusRequest(int ticketId, const QString& newStatus);
     bool sendAssignTicketRequest(int ticketId, int assigneeId);
+    bool sendDeleteTicketRequest(int ticketId);
     
     // 状态查询
     QString getLastError() const;
@@ -67,6 +68,7 @@ signals:
     void updateTicketResponse(const QJsonObject& response);
     void updateStatusResponse(const QJsonObject& response);
     void assignTicketResponse(const QJsonObject& response);
+    void deleteTicketResponse(const QJsonObject& response);
     
     // 系统消息信号
     void serverEvent(const QJsonObject& event);

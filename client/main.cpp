@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
                     ticketService, &TicketService::onUpdateStatusResponse);
     QObject::connect(networkClient, &NetworkClient::assignTicketResponse, 
                     ticketService, &TicketService::onAssignTicketResponse);
+    QObject::connect(networkClient, &NetworkClient::deleteTicketResponse, 
+                    ticketService, &TicketService::onDeleteTicketResponse);
     
     // 从配置文件读取服务器连接信息
     QSettings config(QCoreApplication::applicationDirPath() + "/config.ini", QSettings::IniFormat);

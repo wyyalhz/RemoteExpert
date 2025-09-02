@@ -61,6 +61,7 @@ void AddTicket::on_btnAdd_clicked()
         description, 
         "normal", // 默认优先级
         "general", // 默认分类
+        expert, // 专家用户名
         QJsonObject() // 设备信息（暂时为空）
     );
     

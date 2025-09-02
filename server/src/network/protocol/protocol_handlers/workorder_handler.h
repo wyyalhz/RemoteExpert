@@ -3,13 +3,14 @@
 
 #include "../protocol_handler.h"
 #include "../../../business/services/workorder_service.h"
+#include "../../../business/services/user_service.h"
 
 // 工单协议处理器 - 处理工单相关的消息
 class WorkOrderHandler : public ProtocolHandler
 {
     Q_OBJECT
 public:
-    explicit WorkOrderHandler(WorkOrderService* workOrderService, QObject *parent = nullptr);
+    explicit WorkOrderHandler(WorkOrderService* workOrderService, UserService* userService, QObject *parent = nullptr);
     ~WorkOrderHandler();
 
     // 实现基类的消息处理方法
@@ -17,6 +18,7 @@ public:
 
 private:
     WorkOrderService* workOrderService_;
+    UserService* userService_;
     
     // 处理具体的工单消息
     void handleCreateWorkOrder(QTcpSocket* socket, const QJsonObject& data);
@@ -29,6 +31,7 @@ private:
     void handleAssignWorkOrder(QTcpSocket* socket, const QJsonObject& data);
     void handleCloseWorkOrder(QTcpSocket* socket, const QJsonObject& data);
     void handleGetWorkOrderList(QTcpSocket* socket, const QJsonObject& data);
+    void handleDeleteWorkOrder(QTcpSocket* socket, const QJsonObject& data);
     
     // 辅助方法
     int getUserIdFromContext(QTcpSocket* socket);

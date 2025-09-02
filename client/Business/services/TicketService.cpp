@@ -25,10 +25,10 @@ TicketService::~TicketService()
 
 bool TicketService::createTicket(const QString& title, const QString& description, 
                                const QString& priority, const QString& category, 
-                               const QJsonObject& deviceInfo)
+                               const QString& expertUsername, const QJsonObject& deviceInfo)
 {
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
-                                   "TicketService", QString("创建工单: %1").arg(title));
+                                   "TicketService", QString("创建工单: %1, 指派给专家: %2").arg(title).arg(expertUsername));
     
     // 输入验证
     if (title.isEmpty()) {
@@ -47,8 +47,16 @@ bool TicketService::createTicket(const QString& title, const QString& descriptio
         return false;
     }
     
+    if (expertUsername.isEmpty()) {
+        setError("专家用户名不能为空");
+        LogManager::getInstance()->warning(LogModule::TICKET, LogLayer::BUSINESS, 
+                                          "TicketService", "创建工单失败: 专家用户名为空");
+        emit ticketCreatedFailed(lastError_);
+        return false;
+    }
+    
     // 发送创建工单请求
-    sendCreateTicketRequest(title, description, priority, category, deviceInfo);
+    sendCreateTicketRequest(title, description, priority, category, expertUsername, deviceInfo);
     
     return true; // 返回true表示请求已发送，等待响应
 }
@@ -74,8 +82,14 @@ bool TicketService::updateTicket(const Ticket& ticket)
 
 bool TicketService::deleteTicket(int ticketId)
 {
+    // 添加调试日志
+    qDebug() << "TicketService::deleteTicket - 接收到的工单ID:" << ticketId;
+    qDebug() << "工单ID类型:" << QVariant(ticketId).typeName();
+    
     if (ticketId <= 0) {
-        setError("工单ID无效");
+        QString errorMsg = QString("工单ID无效: %1 (必须大于0)").arg(ticketId);
+        qDebug() << "TicketService::deleteTicket - 验证失败:" << errorMsg;
+        setError(errorMsg);
         return false;
     }
     
@@ -375,7 +389,7 @@ void TicketService::setError(const QString& error)
 // 网络请求方法
 void TicketService::sendCreateTicketRequest(const QString& title, const QString& description, 
                                          const QString& priority, const QString& category, 
-                                         const QJsonObject& deviceInfo)
+                                         const QString& expertUsername, const QJsonObject& deviceInfo)
 {
     if (!networkClient_) {
         setError("网络客户端未初始化");
@@ -394,7 +408,7 @@ void TicketService::sendCreateTicketRequest(const QString& title, const QString&
     }
     
     // 通过网络客户端发送创建工单请求
-    bool success = networkClient_->sendCreateTicketRequest(title, description, priority, category, deviceInfo);
+    bool success = networkClient_->sendCreateTicketRequest(title, description, priority, category, expertUsername, deviceInfo);
     if (!success) {
         setError("发送创建工单请求失败");
         LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
@@ -416,9 +430,37 @@ void TicketService::sendUpdateTicketRequest(const Ticket& ticket)
 
 void TicketService::sendDeleteTicketRequest(int ticketId)
 {
-    // TODO: 构建删除工单消息并发送
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        return;
+    }
+    
+    // 构建删除工单消息
+    QJsonObject messageData;
+    messageData["id"] = ticketId;
+    messageData["ticketId"] = QString::number(ticketId); // 同时发送字符串格式的ID
+    messageData["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    
+    // 通过网络客户端发送删除工单请求
+    bool success = networkClient_->sendMessage(MSG_DELETE_WORKORDER, messageData);
+    if (!success) {
+        setError("发送删除工单请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送删除工单请求失败");
+        return;
+    }
+    
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送删除工单请求");
+                                    "TicketService", QString("删除工单请求已发送: 工单ID=%1").arg(ticketId));
 }
 
 void TicketService::sendGetTicketRequest(int ticketId)
@@ -566,11 +608,31 @@ void TicketService::onDeleteTicketResponse(const QJsonObject& response)
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", "收到删除工单响应");
     
-    // TODO: 解析删除工单响应
-    if (response.contains("success") && response["success"].toBool()) {
-        int ticketId = response["ticketId"].toInt();
+    // 检查响应状态
+    if (response.contains("code") && response["code"].toInt() != 0) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "删除工单失败";
+        setError(error);
+        emit ticketDeletedFailed(lastError_);
+        return;
+    }
+    
+    // 解析删除的工单ID
+    int ticketId = -1;
+    if (response.contains("workOrderId")) {
+        ticketId = response["workOrderId"].toInt();
+    } else if (response.contains("ticketId")) {
+        ticketId = response["ticketId"].toInt();
+    } else if (response.contains("id")) {
+        ticketId = response["id"].toInt();
+    }
+    
+    if (ticketId > 0) {
+        LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                       "TicketService", QString("工单删除成功: %1").arg(ticketId));
         emit ticketDeleted(ticketId);
     } else {
+        setError("删除工单响应中未找到有效的工单ID");
         emit ticketDeletedFailed(lastError_);
     }
 }

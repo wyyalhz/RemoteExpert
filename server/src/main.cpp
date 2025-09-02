@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     
     // 创建业务服务
     UserService* userService = new UserService(dbManager, &app);
-    WorkOrderService* workOrderService = new WorkOrderService(dbManager, &app);
+    WorkOrderService* workOrderService = new WorkOrderService(dbManager, userService, &app);
     qInfo() << "业务服务初始化成功";
     
     // 创建网络服务器

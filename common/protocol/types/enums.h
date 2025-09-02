@@ -20,6 +20,7 @@ enum MsgType : quint16 {
     MSG_LEAVE_WORKORDER  = 12,  // 离开工单
     MSG_UPDATE_WORKORDER = 13,  // 更新工单状态
     MSG_LIST_WORKORDERS  = 14,  // 获取工单列表
+    MSG_DELETE_WORKORDER = 15,  // 删除工单
     
     // 聊天类消息 (20-29)
     MSG_TEXT             = 20,  // 文本消息

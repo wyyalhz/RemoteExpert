@@ -188,6 +188,7 @@ QString NetworkLogger::formatMessageType(quint16 msgType)
         case MSG_LEAVE_WORKORDER: return "LEAVE_WORKORDER";
         case MSG_UPDATE_WORKORDER: return "UPDATE_WORKORDER";
         case MSG_LIST_WORKORDERS: return "LIST_WORKORDERS";
+        case MSG_DELETE_WORKORDER: return "DELETE_WORKORDER";
         case MSG_TEXT: return "TEXT";
         case MSG_DEVICE_DATA: return "DEVICE_DATA";
         case MSG_FILE_TRANSFER: return "FILE_TRANSFER";
@@ -209,4 +210,51 @@ QString NetworkLogger::formatMessageType(quint16 msgType)
 QString NetworkLogger::formatRoomInfo(const QString &roomId, int memberCount)
 {
     return QString("Room '%1' (%2 members)").arg(roomId).arg(memberCount);
+}
+
+// 工单操作日志实现
+void NetworkLogger::workOrderCreated(const QString &clientInfo, const QString &ticketId, int userId)
+{
+    QString message = QString("Work order created by %1: Ticket '%2', User ID %3")
+                     .arg(formatClientInfo(clientInfo))
+                     .arg(ticketId)
+                     .arg(userId);
+    LOG_INFO(LogModule::WORKORDER, LogLayer::NETWORK, "Work Order Created", message);
+}
+
+void NetworkLogger::workOrderUpdated(const QString &clientInfo, const QString &ticketId, int userId)
+{
+    QString message = QString("Work order updated by %1: Ticket '%2', User ID %3")
+                     .arg(formatClientInfo(clientInfo))
+                     .arg(ticketId)
+                     .arg(userId);
+    LOG_INFO(LogModule::WORKORDER, LogLayer::NETWORK, "Work Order Updated", message);
+}
+
+void NetworkLogger::workOrderDeleted(const QString &clientInfo, const QString &ticketId, int userId)
+{
+    QString message = QString("Work order deleted by %1: Ticket '%2', User ID %3")
+                     .arg(formatClientInfo(clientInfo))
+                     .arg(ticketId)
+                     .arg(userId);
+    LOG_INFO(LogModule::WORKORDER, LogLayer::NETWORK, "Work Order Deleted", message);
+}
+
+void NetworkLogger::workOrderAssigned(const QString &clientInfo, const QString &ticketId, int assigneeId)
+{
+    QString message = QString("Work order assigned by %1: Ticket '%2', Assignee ID %3")
+                     .arg(formatClientInfo(clientInfo))
+                     .arg(ticketId)
+                     .arg(assigneeId);
+    LOG_INFO(LogModule::WORKORDER, LogLayer::NETWORK, "Work Order Assigned", message);
+}
+
+void NetworkLogger::workOrderStatusChanged(const QString &clientInfo, const QString &ticketId, const QString &oldStatus, const QString &newStatus)
+{
+    QString message = QString("Work order status changed by %1: Ticket '%2', %3 -> %4")
+                     .arg(formatClientInfo(clientInfo))
+                     .arg(ticketId)
+                     .arg(oldStatus)
+                     .arg(newStatus);
+    LOG_INFO(LogModule::WORKORDER, LogLayer::NETWORK, "Work Order Status Changed", message);
 }

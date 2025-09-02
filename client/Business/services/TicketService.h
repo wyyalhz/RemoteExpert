@@ -21,7 +21,7 @@ public:
     // 工单创建和管理
     bool createTicket(const QString& title, const QString& description, 
                      const QString& priority, const QString& category, 
-                     const QJsonObject& deviceInfo = QJsonObject());
+                     const QString& expertUsername, const QJsonObject& deviceInfo = QJsonObject());
     bool updateTicket(const Ticket& ticket);
     bool deleteTicket(int ticketId);
     
@@ -94,7 +94,7 @@ private:
     // 网络请求方法（将在网络层实现后调用）
     void sendCreateTicketRequest(const QString& title, const QString& description, 
                                const QString& priority, const QString& category, 
-                               const QJsonObject& deviceInfo);
+                               const QString& expertUsername, const QJsonObject& deviceInfo);
     void sendUpdateTicketRequest(const Ticket& ticket);
     void sendDeleteTicketRequest(int ticketId);
     void sendGetTicketRequest(int ticketId);

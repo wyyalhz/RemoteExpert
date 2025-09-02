@@ -1,7 +1,9 @@
 #include "workorder_service.h"
+#include "../../../common/protocol/types/enums.h"
+#include "../../data/models/user_model.h"
 
-WorkOrderService::WorkOrderService(DatabaseManager* dbManager, QObject *parent)
-    : QObject(parent), dbManager_(dbManager), workOrderRepo_(dbManager->workOrderRepository())
+WorkOrderService::WorkOrderService(DatabaseManager* dbManager, UserService* userService, QObject *parent)
+    : QObject(parent), dbManager_(dbManager), workOrderRepo_(dbManager->workOrderRepository()), userService_(userService)
 {
     BusinessLogger::info("Work Order Service", "Work order service initialized");
 }
@@ -13,16 +15,38 @@ WorkOrderService::~WorkOrderService()
 
 // 工单创建和管理
 bool WorkOrderService::createWorkOrder(const QString& title, const QString& description, 
-                                     int creatorId, const QString& priority, const QString& category, QString& generatedTicketId)
+                                     int creatorId, const QString& priority, const QString& category, 
+                                     const QString& expertUsername, QString& generatedTicketId)
 {
-    BusinessLogger::businessOperationStart("Work Order Creation", QString("Creator: %1").arg(creatorId));
+    BusinessLogger::businessOperationStart("Work Order Creation", QString("Creator: %1, Expert: %2").arg(creatorId).arg(expertUsername));
     
     try {
         // 数据验证
         WorkOrderValidator::validateCreation(title, description, creatorId, priority, category);
         
+        // 根据专家用户名查找专家ID
+        BusinessLogger::info("Work Order Service", QString("Looking up expert by username: %1").arg(expertUsername));
+        UserModel expert = userService_->getUserInfo(expertUsername);
+        
+        if (!expert.isValid()) {
+            BusinessLogger::error("Work Order Service", QString("Expert user not found: %1").arg(expertUsername));
+            BusinessLogger::workOrderCreated("", creatorId, false, QString("Expert not found: %1").arg(expertUsername));
+            BusinessLogger::businessOperationFailed("Work Order Creation", QString("Expert not found: %1").arg(expertUsername));
+            return false;
+        }
+        
+        if (expert.userType != USER_TYPE_EXPERT) {
+            BusinessLogger::error("Work Order Service", QString("User %1 is not an expert (userType: %2)").arg(expertUsername).arg(expert.userType));
+            BusinessLogger::workOrderCreated("", creatorId, false, QString("User %1 is not an expert").arg(expertUsername));
+            BusinessLogger::businessOperationFailed("Work Order Creation", QString("User %1 is not an expert").arg(expertUsername));
+            return false;
+        }
+        
+        BusinessLogger::info("Work Order Service", QString("Expert found: ID=%1, Username=%2, UserType=%3").arg(expert.id).arg(expert.username).arg(expert.userType));
+        
         // 生成工单号
         generatedTicketId = generateTicketId();
+        BusinessLogger::info("Work Order Service", QString("Generated ticket ID: %1").arg(generatedTicketId));
         
         // 创建工单模型
         WorkOrderModel workOrder;
@@ -33,6 +57,9 @@ bool WorkOrderService::createWorkOrder(const QString& title, const QString& desc
         workOrder.priority = priority;
         workOrder.category = category;
         workOrder.status = WorkOrderStatusManager::OPEN; // 初始状态为待处理
+        workOrder.assignedTo = expert.id; // 设置指派专家
+        
+        BusinessLogger::info("Work Order Service", QString("Work order model prepared - AssignedTo: %1, Status: %2").arg(workOrder.assignedTo).arg(workOrder.status));
         
         // 保存工单
         int workOrderId = -1;
@@ -43,7 +70,7 @@ bool WorkOrderService::createWorkOrder(const QString& title, const QString& desc
             workOrderRepo_->addParticipant(workOrderId, creatorId, ParticipantModel::ROLE_CREATOR);
             
             BusinessLogger::workOrderCreated(generatedTicketId, creatorId, true);
-            BusinessLogger::businessOperationSuccess("Work Order Creation", QString("Work order ID: %1, Ticket ID: %2").arg(workOrderId).arg(generatedTicketId));
+            BusinessLogger::businessOperationSuccess("Work Order Creation", QString("Work order ID: %1, Ticket ID: %2, Expert: %3").arg(workOrderId).arg(generatedTicketId).arg(expertUsername));
         } else {
             BusinessLogger::workOrderCreated(generatedTicketId, creatorId, false, "Database operation failed");
             BusinessLogger::businessOperationFailed("Work Order Creation", "Database operation failed");

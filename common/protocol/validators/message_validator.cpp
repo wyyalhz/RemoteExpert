@@ -62,14 +62,17 @@ bool MessageValidator::validateCreateWorkOrderMessage(const QJsonObject& data, Q
     if (!validateRequiredField(data, "description", error)) return false;
     if (!validateRequiredField(data, "priority", error)) return false;
     if (!validateRequiredField(data, "category", error)) return false;
+    if (!validateRequiredField(data, "expert_username", error)) return false;
     
     QString title = data["title"].toString();
     QString description = data["description"].toString();
     int priority = data["priority"].toInt();
+    QString expertUsername = data["expert_username"].toString();
     
     if (!validateStringLength(title, ValidationRules::MAX_TITLE_LENGTH, "title", error)) return false;
     if (!validateStringLength(description, ValidationRules::MAX_DESCRIPTION_LENGTH, "description", error)) return false;
     if (!validateIntegerRange(priority, 1, 3, "priority", error)) return false;
+    if (!validateStringLength(expertUsername, ValidationRules::MAX_USERNAME_LENGTH, "expert_username", error)) return false;
     
     return true;
 }

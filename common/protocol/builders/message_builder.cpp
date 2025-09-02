@@ -46,6 +46,7 @@ QJsonObject MessageBuilder::buildCreateWorkOrderMessage(const QString& title,
                                                       const QString& description,
                                                       int priority,
                                                       const QString& category,
+                                                      const QString& expertUsername,
                                                       const QJsonObject& deviceInfo)
 {
     QJsonObject obj{
@@ -53,6 +54,7 @@ QJsonObject MessageBuilder::buildCreateWorkOrderMessage(const QString& title,
         {"description", description},
         {"priority", priority},
         {"category", category},
+        {"expert_username", expertUsername},
         {"timestamp", QDateTime::currentMSecsSinceEpoch()}
     };
     

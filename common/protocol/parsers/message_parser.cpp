@@ -42,10 +42,11 @@ bool MessageParser::parseCreateWorkOrderMessage(const QJsonObject& data,
                                                QString& description,
                                                int& priority,
                                                QString& category,
+                                               QString& expertUsername,
                                                QJsonObject& deviceInfo)
 {
     if (!data.contains("title") || !data.contains("description") || 
-        !data.contains("priority") || !data.contains("category")) {
+        !data.contains("priority") || !data.contains("category") || !data.contains("expert_username")) {
         return false;
     }
     
@@ -53,9 +54,10 @@ bool MessageParser::parseCreateWorkOrderMessage(const QJsonObject& data,
     description = data["description"].toString();
     priority = data["priority"].toInt();
     category = data["category"].toString();
+    expertUsername = data["expert_username"].toString();
     deviceInfo = data["device_info"].toObject();
     
-    return !title.isEmpty() && !description.isEmpty() && !category.isEmpty();
+    return !title.isEmpty() && !description.isEmpty() && !category.isEmpty() && !expertUsername.isEmpty();
 }
 
 bool MessageParser::parseJoinWorkOrderMessage(const QJsonObject& data,

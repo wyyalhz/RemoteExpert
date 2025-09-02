@@ -49,7 +49,7 @@ bool NetworkServer::initialize(UserService* userService, WorkOrderService* workO
     
     // 创建协议处理器
     userHandler_ = new UserHandler(userService_, this);
-    workOrderHandler_ = new WorkOrderHandler(workOrderService_, this);
+    workOrderHandler_ = new WorkOrderHandler(workOrderService_, userService_, this);
     chatHandler_ = new ChatHandler(workOrderService_,this);
     
     // 设置组件间的连接
@@ -132,6 +132,7 @@ void NetworkServer::registerMessageHandlers()
     messageRouter_->registerHandler(MSG_LEAVE_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_UPDATE_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_LIST_WORKORDERS, workOrderHandler_);
+    messageRouter_->registerHandler(MSG_DELETE_WORKORDER, workOrderHandler_);
     
     // 注册聊天相关消息处理器
     messageRouter_->registerHandler(MSG_TEXT, chatHandler_);

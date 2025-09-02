@@ -38,6 +38,13 @@ public:
     static void authenticationFailed(const QString &clientInfo, const QString &reason);
     static void authorizationFailed(const QString &clientInfo, const QString &operation, const QString &reason);
     
+    // 工单操作日志
+    static void workOrderCreated(const QString &clientInfo, const QString &ticketId, int userId);
+    static void workOrderUpdated(const QString &clientInfo, const QString &ticketId, int userId);
+    static void workOrderDeleted(const QString &clientInfo, const QString &ticketId, int userId);
+    static void workOrderAssigned(const QString &clientInfo, const QString &ticketId, int assigneeId);
+    static void workOrderStatusChanged(const QString &clientInfo, const QString &ticketId, const QString &oldStatus, const QString &newStatus);
+    
     // 服务器状态日志
     static void serverStarted(const QHostAddress &address, quint16 port);
     static void serverStopped();

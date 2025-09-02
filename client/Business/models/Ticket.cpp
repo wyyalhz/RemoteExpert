@@ -63,8 +63,13 @@ Ticket Ticket::fromJson(const QJsonObject& json)
 {
     Ticket ticket;
     
+    // 支持多种ID字段名：id, work_order_id, workorder_id
     if (json.contains("id")) {
         ticket.id_ = json["id"].toInt();
+    } else if (json.contains("work_order_id")) {
+        ticket.id_ = json["work_order_id"].toInt();
+    } else if (json.contains("workorder_id")) {
+        ticket.id_ = json["workorder_id"].toInt();
     }
     
     // 支持两种字段名：ticketId 和 ticket_id
@@ -155,11 +160,15 @@ Ticket Ticket::fromJson(const QJsonObject& json)
 
 bool Ticket::isValid() const
 {
-    return !title_.isEmpty() && !description_.isEmpty() && creatorId_ > 0;
+    return id_ > 0 && !title_.isEmpty() && !description_.isEmpty() && creatorId_ > 0;
 }
 
 QString Ticket::getValidationError() const
 {
+    if (id_ <= 0) {
+        return "工单ID无效";
+    }
+    
     if (title_.isEmpty()) {
         return "工单标题不能为空";
     }

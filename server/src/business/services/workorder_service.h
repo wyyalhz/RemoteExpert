@@ -8,6 +8,7 @@
 #include "../../data/databasemanager.h"
 #include "../../data/models/workorder_model.h"
 #include "../../data/repositories/workorder_repository.h"
+#include "user_service.h"
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -19,12 +20,13 @@ class WorkOrderService : public QObject
 {
     Q_OBJECT
 public:
-    explicit WorkOrderService(DatabaseManager* dbManager, QObject *parent = nullptr);
+    explicit WorkOrderService(DatabaseManager* dbManager, UserService* userService, QObject *parent = nullptr);
     ~WorkOrderService();
 
     // 工单创建和管理
     bool createWorkOrder(const QString& title, const QString& description, 
-                        int creatorId, const QString& priority, const QString& category, QString& generatedTicketId);
+                        int creatorId, const QString& priority, const QString& category, 
+                        const QString& expertUsername, QString& generatedTicketId);
     bool updateWorkOrder(const WorkOrderModel& workOrder);
     bool deleteWorkOrder(int workOrderId, int userId);
     
@@ -70,6 +72,7 @@ public:
 private:
     DatabaseManager* dbManager_;
     WorkOrderRepository* workOrderRepo_;
+    UserService* userService_;
     
     // 私有辅助方法
     bool validateWorkOrderExists(int workOrderId);

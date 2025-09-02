@@ -30,6 +30,7 @@ public:
                                            QString& description,
                                            int& priority,
                                            QString& category,
+                                           QString& expertUsername,
                                            QJsonObject& deviceInfo);
     
     static bool parseJoinWorkOrderMessage(const QJsonObject& data,

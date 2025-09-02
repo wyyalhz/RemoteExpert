@@ -28,6 +28,7 @@ public:
                                                   const QString& description,
                                                   int priority,
                                                   const QString& category,
+                                                  const QString& expertUsername,
                                                   const QJsonObject& deviceInfo = QJsonObject());
     
     static QJsonObject buildJoinWorkOrderMessage(const QString& workorderId,

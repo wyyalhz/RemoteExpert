@@ -94,10 +94,14 @@ void HomeMainWindow::updateGreeting() {
 void HomeMainWindow::initPage()
 {
     m_thanksPage = new ThanksWidget(this);//加上this就不用析构了
-    qDebug() << currentUserType;
+    qDebug() << "HomeMainWindow::initPage - currentUserType:" << currentUserType;
+    qDebug() << "HomeMainWindow::initPage - currentUser:" << currentUser;
+    
     if (currentUserType == 1) {
+        qDebug() << "Creating TicketPage for EXPERT user";
         m_ticketPage = new TicketPage(currentUser, true, this);
     } else {
+        qDebug() << "Creating TicketPage for FACTORY user";
         m_ticketPage = new TicketPage(currentUser, false, this);
     }
     m_settingPage = new SettingPage(this);

@@ -14,10 +14,17 @@ bool WorkOrderRepository::create(const WorkOrderModel& workOrder, int& workOrder
         return false;
     }
 
+    DBLogger::info("Create work order", QString("Creating work order - Ticket: %1, Title: %2, Creator: %3, AssignedTo: %4, Status: %5")
+                   .arg(workOrder.ticketId)
+                   .arg(workOrder.title)
+                   .arg(workOrder.creatorId)
+                   .arg(workOrder.assignedTo)
+                   .arg(workOrder.status));
+
     QSqlQuery query(database());
     query.prepare(R"(
-        INSERT INTO work_orders (ticket_id, title, description, creator_id, priority, category, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO work_orders (ticket_id, title, description, creator_id, priority, category, status, assigned_to, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     )");
     
     query.addBindValue(workOrder.ticketId);
@@ -26,15 +33,25 @@ bool WorkOrderRepository::create(const WorkOrderModel& workOrder, int& workOrder
     query.addBindValue(workOrder.creatorId);
     query.addBindValue(workOrder.priority);
     query.addBindValue(workOrder.category);
+    query.addBindValue(workOrder.status);
+    query.addBindValue(workOrder.assignedTo);
+
+    DBLogger::debug("Create work order", QString("SQL prepared with values - AssignedTo: %1, Status: %2")
+                    .arg(workOrder.assignedTo)
+                    .arg(workOrder.status));
 
     if (!executeWorkOrderQuery(query, "Create work order")) {
+        DBLogger::error("Create work order", "Failed to execute create work order query");
         return false;
     }
 
     // 获取新创建的工单ID
     workOrderId = query.lastInsertId().toInt();
 
-    DBLogger::info("Create work order", QString("Work order created successfully: %1 ID: %2").arg(workOrder.ticketId).arg(workOrderId));
+    DBLogger::info("Create work order", QString("Work order created successfully: %1 ID: %2, AssignedTo: %3")
+                   .arg(workOrder.ticketId)
+                   .arg(workOrderId)
+                   .arg(workOrder.assignedTo));
     return true;
 }
 

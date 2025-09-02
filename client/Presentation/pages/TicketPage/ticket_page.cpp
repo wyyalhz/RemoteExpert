@@ -93,6 +93,8 @@ void TicketPage::searchTicket(bool isExpert, const QString& name){
     // 获取当前用户ID
     int userId = getCurrentUserId();
     qDebug() << "Searching tickets for user ID:" << userId;
+    qDebug() << "isExpert parameter:" << isExpert;
+    qDebug() << "User name:" << name;
     
     if (userId == -1) {
         showLoading(false);
@@ -104,9 +106,11 @@ void TicketPage::searchTicket(bool isExpert, const QString& name){
     // 根据用户类型和名称获取工单列表
     if (!isExpert) {
         // 工厂用户：获取自己创建的工单
+        qDebug() << "User is factory user, calling getTicketsByCreator";
         ticketService_->getTicketsByCreator(userId);
     } else {
         // 技术专家：获取分配给自己的工单
+        qDebug() << "User is expert, calling getTicketsByAssignee";
         ticketService_->getTicketsByAssignee(userId);
     }
 }
@@ -138,7 +142,8 @@ void TicketPage::createTicketDialog(const Ticket& ticket){
     }
 
     TicketDialog *dialog = new TicketDialog(isExpert, this);
-    dialog->setTicket(ticket.getTicketId(), ticket.getTitle());
+    // 修复：使用getId()返回int类型，而不是getTicketId()返回QString类型
+    dialog->setTicket(QString::number(ticket.getId()), ticket.getTitle());
     dialog->setWindowFlags(Qt::Widget);
 
     connect(dialog, &TicketDialog::enterRequested, this, &TicketPage::showTicketDetail);
@@ -178,11 +183,18 @@ void TicketPage::deleteTicket(const QString& id){
     // 将字符串ID转换为整数ID（TODO: 需要确认ID格式）
     bool ok;
     int ticketId = id.toInt(&ok);
-    if (ok) {
+    
+    // 添加调试日志
+    qDebug() << "删除工单 - 原始ID字符串:" << id;
+    qDebug() << "转换后的整数ID:" << ticketId;
+    qDebug() << "转换是否成功:" << ok;
+    
+    if (ok && ticketId > 0) {
         ticketService_->deleteTicket(ticketId);
     } else {
         showLoading(false);
-        QMessageBox::warning(this, "错误", "无效的工单ID");
+        QString errorMsg = ok ? "工单ID必须大于0" : "无效的工单ID格式";
+        QMessageBox::warning(this, "错误", errorMsg);
     }
 }
 

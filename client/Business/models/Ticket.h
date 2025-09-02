@@ -40,6 +40,9 @@ public:
     QString getAssigneeName() const { return assigneeName_; }
     void setAssigneeName(const QString& name) { assigneeName_ = name; }
     
+    QString getExpert() const { return expert_; }
+    void setExpert(const QString& expert) { expert_ = expert; }
+    
     QString getStatus() const { return status_; }
     void setStatus(const QString& status) { status_ = status; }
     
@@ -109,6 +112,7 @@ private:
     QString creatorName_;
     int assigneeId_;
     QString assigneeName_;
+    QString expert_;        // 专家用户名
     QString status_;      // created, assigned, in_progress, resolved, closed
     QString priority_;    // low, medium, high
     QString category_;

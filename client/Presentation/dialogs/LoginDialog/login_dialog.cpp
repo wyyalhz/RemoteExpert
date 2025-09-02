@@ -93,6 +93,9 @@ void LoginDialog::onLoginClicked()
     QString password = ui->passwordEdit->text();
     int userType = ui->userTypeCombo->currentIndex();
 
+    qDebug() << "LoginDialog::onLoginClicked - ComboBox index:" << userType;
+    qDebug() << "LoginDialog::onLoginClicked - currentUserType before login:" << currentUserType;
+
     // 记录登录尝试
     LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
                                    "LoginDialog", QString("用户尝试登录: %1, 类型: %2").arg(username).arg(userType));
@@ -232,6 +235,7 @@ void LoginDialog::on_usernameEdit_textChanged(const QString &arg1)
 void LoginDialog::on_userTypeCombo_currentIndexChanged(int index)
 {
     currentUserType = index;
+    qDebug() << "LoginDialog::on_userTypeCombo_currentIndexChanged - index:" << index << "currentUserType:" << currentUserType;
 }
 
 // 添加新的槽函数来处理登录结果
@@ -240,9 +244,14 @@ void LoginDialog::onLoginSuccess(const User& user)
     LogManager::getInstance()->info(LogModule::PRESENTATION, LogLayer::PRESENTATION,
                                    "LoginDialog", QString("用户登录成功: %1, 类型: %2").arg(user.getUsername()).arg(user.getUserType()));
     
+    qDebug() << "LoginDialog::onLoginSuccess - Before update: currentUserType:" << currentUserType;
+    qDebug() << "LoginDialog::onLoginSuccess - Server returned user type:" << user.getUserType();
+    
     // 更新当前用户信息
     currentUser = user.getUsername();
     currentUserType = user.getUserType();
+    
+    qDebug() << "LoginDialog::onLoginSuccess - After update: currentUserType:" << currentUserType;
     
     // 显示成功消息
     QMessageBox::information(this, "成功", "登录成功");
