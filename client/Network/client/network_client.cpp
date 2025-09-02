@@ -189,12 +189,19 @@ bool NetworkClient::sendUpdateTicketRequest(const QJsonObject& ticketData)
     return sendMessage(MSG_UPDATE_WORKORDER, data);
 }
 
-bool NetworkClient::sendUpdateStatusRequest(int ticketId, const QString& newStatus)
+bool NetworkClient::sendUpdateStatusRequest(const QString& ticketId, const QString& newStatus)
 {
+    LogManager::getInstance()->info(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                   QString("发送状态更新请求: 工单%1 -> %2").arg(ticketId).arg(newStatus));
+    
     QJsonObject data;
-    data["workorderId"] = QString::number(ticketId);
+    data["ticket_id"] = ticketId;  // 使用ticket_id字段，与服务器端保持一致
     data["status"] = newStatus;
     data["timestamp"] = QDateTime::currentMSecsSinceEpoch();
+    
+    LogManager::getInstance()->debug(LogModule::NETWORK, LogLayer::NETWORK, "NetworkClient", 
+                                   QString("状态更新请求数据: %1").arg(QString(QJsonDocument(data).toJson())));
+    
     return sendMessage(MSG_UPDATE_WORKORDER, data);
 }
 

@@ -35,11 +35,15 @@ public:
     QList<Ticket> getAllTickets(int limit = -1, int offset = 0);
     
     // 工单状态管理
-    bool updateTicketStatus(int ticketId, const QString& newStatus);
-    bool closeTicket(int ticketId);
-    bool startProcessing(int ticketId);
-    bool refuseTicket(int ticketId, const QString& reason = QString());
+    bool updateTicketStatus(const QString& ticketId, const QString& newStatus);
+    bool closeTicket(const QString& ticketId);
+    bool startProcessing(const QString& ticketId);
     
+    // 新增：具体的状态更新方法
+    bool acceptTicket(const QString& ticketId);
+    bool refuseTicket(const QString& ticketId, const QString& reason = QString());
+    bool finishTicket(const QString& ticketId);
+
     // 工单分配
     bool assignTicket(int ticketId, int assigneeId);
     bool unassignTicket(int ticketId);
@@ -79,6 +83,10 @@ signals:
     void ticketDeleted(int ticketId);
     void ticketDeletedFailed(const QString& error);
     void ticketStatusChanged(int ticketId, const QString& oldStatus, const QString& newStatus);
+    void ticketAccepted(int ticketId);
+    void ticketRefused(int ticketId);
+    void ticketFinished(int ticketId);
+    void ticketStatusUpdateFailed(int ticketId, const QString& error);
     void ticketAssigned(int ticketId, int assigneeId);
     void ticketClosed(int ticketId);
     void ticketListReceived(const QList<Ticket>& tickets);
@@ -103,7 +111,7 @@ private:
     void sendGetTicketRequest(int ticketId);
     void sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType);
     void sendGetTicketListRequest(const QString& status = QString(), int limit = -1, int offset = 0);
-    void sendUpdateStatusRequest(int ticketId, const QString& newStatus);
+    void sendUpdateStatusRequest(const QString& ticketId, const QString& newStatus);
     void sendAssignTicketRequest(int ticketId, int assigneeId);
     void sendJoinTicketRequest(const QString& ticketId, const QString& role);
     void sendLeaveTicketRequest(const QString& ticketId);

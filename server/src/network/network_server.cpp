@@ -132,6 +132,7 @@ void NetworkServer::registerMessageHandlers()
     messageRouter_->registerHandler(MSG_LEAVE_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_UPDATE_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_LIST_WORKORDERS, workOrderHandler_);
+    messageRouter_->registerHandler(MSG_GET_WORKORDER, workOrderHandler_);
     messageRouter_->registerHandler(MSG_DELETE_WORKORDER, workOrderHandler_);
     
     // 注册聊天相关消息处理器

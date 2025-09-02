@@ -38,7 +38,7 @@ public:
     bool sendGetTicketListRequest(const QString& status = QString(), int limit = -1, int offset = 0);
     bool sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType);
     bool sendUpdateTicketRequest(const QJsonObject& ticketData);
-    bool sendUpdateStatusRequest(int ticketId, const QString& newStatus);
+    bool sendUpdateStatusRequest(const QString& ticketId, const QString& newStatus);
     bool sendAssignTicketRequest(int ticketId, int assigneeId);
     bool sendDeleteTicketRequest(int ticketId);
     

@@ -15,6 +15,7 @@ TicketPage::TicketPage(const QString& name, bool isExpert, QWidget *parent)
     , isExpert(isExpert)
     , ticketService_(nullptr)
     , authService_(nullptr)
+    , currentDetailDialog_(nullptr)
 {
     ui->setupUi(this);
     ui->btnAdd->setVisible(!isExpert);
@@ -223,6 +224,11 @@ void TicketPage::onTicketDetailReceived(const Ticket& ticket)
     TicketDialogDetail *detailDialog = new TicketDialogDetail(isExpert);
     connect(detailDialog, &TicketDialogDetail::backRequest, this, &TicketPage::returnToTicketList);
     
+    // 连接状态更新信号到业务逻辑层
+    connect(detailDialog, &TicketDialogDetail::acceptProcess, this, &TicketPage::onAcceptTicket);
+    connect(detailDialog, &TicketDialogDetail::refuseProcess, this, &TicketPage::onRefuseTicket);
+    connect(detailDialog, &TicketDialogDetail::finishProcess, this, &TicketPage::onFinishTicket);
+    
     // 设置工单数据
     detailDialog->setTicketData(
         ticket.getTicketId(),
@@ -232,6 +238,9 @@ void TicketPage::onTicketDetailReceived(const Ticket& ticket)
         ticket.getTitle(),
         ticket.getDescription()
     );
+    
+    // 保存当前工单详情对话框的引用
+    currentDetailDialog_ = detailDialog;
     
     detailDialog->show();
 }
@@ -276,6 +285,11 @@ void TicketPage::showTicketDetail(const QString& id){
 }
 
 void TicketPage::returnToTicketList(){
+    // 清理工单详情对话框引用
+    if (currentDetailDialog_) {
+        currentDetailDialog_ = nullptr;
+    }
+    
     this->show();
     searchTicket(isExpert, name);
 }
@@ -285,4 +299,95 @@ void TicketPage::showLoading(bool loading)
     // 下面这条语句可能会造成工厂端创建工单按钮被异常禁用，因此暂时注释掉，后续需要优化
     // ui->btnAdd->setEnabled(!loading);
     // 可以添加其他UI元素的加载状态控制
+}
+
+// 工单状态更新处理
+void TicketPage::onAcceptTicket(const QString& ticketId)
+{
+    if (!ticketService_) {
+        QMessageBox::warning(this, "错误", "工单服务未初始化");
+        return;
+    }
+    
+    if (ticketId.isEmpty()) {
+        QMessageBox::warning(this, "错误", "工单编号不能为空");
+        return;
+    }
+    
+    bool success = ticketService_->acceptTicket(ticketId);
+    if (success) {
+        QMessageBox::information(this, "成功", "工单已接受，状态更新为处理中");
+        
+        // 关闭工单详情对话框
+        if (currentDetailDialog_) {
+            currentDetailDialog_->close();
+            currentDetailDialog_ = nullptr;
+        }
+        
+        // 刷新工单列表并返回到主界面
+        this->show();
+        searchTicket(isExpert, name);
+    } else {
+        QMessageBox::warning(this, "错误", QString("接受工单失败: %1").arg(ticketService_->getLastError()));
+    }
+}
+
+void TicketPage::onRefuseTicket(const QString& ticketId)
+{
+    if (!ticketService_) {
+        QMessageBox::warning(this, "错误", "工单服务未初始化");
+        return;
+    }
+    
+    if (ticketId.isEmpty()) {
+        QMessageBox::warning(this, "错误", "工单编号不能为空");
+        return;
+    }
+    
+    bool success = ticketService_->refuseTicket(ticketId);
+    if (success) {
+        QMessageBox::information(this, "成功", "工单已拒绝，状态更新为已拒绝");
+        
+        // 关闭工单详情对话框
+        if (currentDetailDialog_) {
+            currentDetailDialog_->close();
+            currentDetailDialog_ = nullptr;
+        }
+        
+        // 刷新工单列表并返回到主界面
+        this->show();
+        searchTicket(isExpert, name);
+    } else {
+        QMessageBox::warning(this, "错误", QString("拒绝工单失败: %1").arg(ticketService_->getLastError()));
+    }
+}
+
+void TicketPage::onFinishTicket(const QString& ticketId)
+{
+    if (!ticketService_) {
+        QMessageBox::warning(this, "错误", "工单服务未初始化");
+        return;
+    }
+    
+    if (ticketId.isEmpty()) {
+        QMessageBox::warning(this, "错误", "工单编号不能为空");
+        return;
+    }
+    
+    bool success = ticketService_->finishTicket(ticketId);
+    if (success) {
+        QMessageBox::information(this, "成功", "工单已完成，状态更新为已关闭");
+        
+        // 关闭工单详情对话框
+        if (currentDetailDialog_) {
+            currentDetailDialog_->close();
+            currentDetailDialog_ = nullptr;
+        }
+        
+        // 刷新工单列表并返回到主界面
+        this->show();
+        searchTicket(isExpert, name);
+    } else {
+        QMessageBox::warning(this, "错误", QString("完成工单失败: %1").arg(ticketService_->getLastError()));
+    }
 }

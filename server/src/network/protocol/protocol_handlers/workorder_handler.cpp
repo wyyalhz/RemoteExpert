@@ -41,6 +41,9 @@ void WorkOrderHandler::handleMessage(QTcpSocket* socket, const Packet& packet)
         case MSG_LIST_WORKORDERS:
             handleListWorkOrders(socket, packet.json);
             break;
+        case MSG_GET_WORKORDER:
+            handleGetWorkOrderDetail(socket, packet.json);
+            break;
         case MSG_DELETE_WORKORDER:
             handleDeleteWorkOrder(socket, packet.json);
             break;
@@ -520,4 +523,94 @@ void WorkOrderHandler::handleDeleteWorkOrder(QTcpSocket* socket, const QJsonObje
                             QString("Failed to delete work order %1 (ticket: %2) by user %3")
                             .arg(workOrderId).arg(ticketId).arg(userId));
     }
+}
+
+void WorkOrderHandler::handleGetWorkOrderDetail(QTcpSocket* socket, const QJsonObject& data)
+{
+    NetworkLogger::info("Work Order Handler", "Handling get work order detail request");
+    
+    // 验证获取工单详情消息
+    if (!data.contains("workorderId") || !data.contains("userId") || !data.contains("userType")) {
+        sendErrorResponse(socket, MSG_GET_WORKORDER, 400, "Missing required fields: workorderId, userId, or userType");
+        return;
+    }
+    
+    // 解析请求参数
+    qDebug() << "data: " << data;
+    qDebug() << "workorderId: " << data["workorderId"];
+    int workorderId = data["workorderId"].toString().toInt();
+    qDebug() << "workorderId: " << workorderId;
+    int userId = data["userId"].toInt();
+    int userType = data["userType"].toInt();
+    
+    if (workorderId <= 0) {
+        sendErrorResponse(socket, MSG_GET_WORKORDER, 400, "Invalid work order ID");
+        return;
+    }
+    
+    if (userId <= 0) {
+        sendErrorResponse(socket, MSG_GET_WORKORDER, 400, "Invalid user ID");
+        return;
+    }
+    
+    QString clientInfo = QString("%1:%2")
+                        .arg(socket->peerAddress().toString())
+                        .arg(socket->peerPort());
+    
+    NetworkLogger::info("Work Order Handler", 
+                       QString("User %1 (type: %2) requesting work order detail for ticket: %3")
+                       .arg(userId).arg(userType).arg(workorderId));
+    
+    // 根据工单ID获取工单信息
+    WorkOrderModel workOrder = workOrderService_->getWorkOrderById(workorderId);
+    if (!workOrder.isValid()) {
+        sendErrorResponse(socket, MSG_GET_WORKORDER, 404, "Work order not found");
+        NetworkLogger::error("Work Order Handler", 
+                            QString("Work order not found for ticket: %1").arg(workorderId));
+        return;
+    }
+    
+    // 获取工厂端用户名（根据creator_id查询usertype=0的用户）
+    UserModel factoryUser = userService_->getUserInfo(workOrder.creatorId);
+    QString factoryUsername = "";
+    if (factoryUser.isValid() && factoryUser.userType == USER_TYPE_NORMAL) {
+        factoryUsername = factoryUser.username;
+    } else {
+        NetworkLogger::warning("Work Order Handler", 
+                              QString("Factory user not found or invalid for creator ID: %1").arg(workOrder.creatorId));
+        factoryUsername = "未知用户";
+    }
+    
+    // 获取专家端用户名（根据assigned_to查询usertype=1的用户）
+    QString expertUsername = "";
+    if (workOrder.assignedTo > 0) {
+        UserModel expertUser = userService_->getUserInfo(workOrder.assignedTo);
+        if (expertUser.isValid() && expertUser.userType == USER_TYPE_EXPERT) {
+            expertUsername = expertUser.username;
+        } else {
+            NetworkLogger::warning("Work Order Handler", 
+                                  QString("Expert user not found or invalid for assignee ID: %1").arg(workOrder.assignedTo));
+            expertUsername = "未分配";
+        }
+    } else {
+        expertUsername = "未分配";
+    }
+    
+    // 构建响应数据
+    QJsonObject responseData;
+    responseData["code"] = 0;  // 成功状态码
+    responseData["message"] = "Work order detail retrieved successfully";
+    responseData["ticketid"] = workOrder.ticketId;
+    responseData["status"] = workOrder.status;
+    responseData["factory_username"] = factoryUsername;
+    responseData["expert_username"] = expertUsername;
+    responseData["title"] = workOrder.title;
+    responseData["description"] = workOrder.description;
+    
+    // 发送成功响应
+    sendResponse(socket, MSG_GET_WORKORDER, responseData);
+    
+    NetworkLogger::info("Work Order Handler", 
+                       QString("Work order detail sent successfully for ticket: %1, factory: %2, expert: %3")
+                       .arg(workorderId).arg(factoryUsername).arg(expertUsername));
 }

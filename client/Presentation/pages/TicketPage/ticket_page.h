@@ -44,6 +44,11 @@ private slots:
     void onTicketDetailFailed(const QString& error);
     void onTicketDeleted(int ticketId);
     void onTicketDeletedFailed(const QString& error);
+    
+    // 工单状态更新处理
+    void onAcceptTicket(const QString& ticketId);
+    void onRefuseTicket(const QString& ticketId);
+    void onFinishTicket(const QString& ticketId);
 
 private:
     Ui::TicketPage *ui;
@@ -51,6 +56,9 @@ private:
     QStackedWidget *stackedWidget;
     TicketDialog *dialog;
     TicketDialogDetail *detail;
+    
+    // 当前显示的工单详情对话框引用
+    TicketDialogDetail *currentDetailDialog_;
 
     const int spacing = 10;
     QString name;

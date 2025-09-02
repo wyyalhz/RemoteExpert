@@ -226,10 +226,10 @@ QList<Ticket> TicketService::getAllTickets(int limit, int offset)
     return QList<Ticket>();
 }
 
-bool TicketService::updateTicketStatus(int ticketId, const QString& newStatus)
+bool TicketService::updateTicketStatus(const QString& ticketId, const QString& newStatus)
 {
-    if (ticketId <= 0) {
-        setError("工单ID无效");
+    if (ticketId.isEmpty()) {
+        setError("工单编号无效");
         return false;
     }
     
@@ -241,29 +241,45 @@ bool TicketService::updateTicketStatus(int ticketId, const QString& newStatus)
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
                                    "TicketService", QString("更新工单状态: %1 -> %2").arg(ticketId).arg(newStatus));
     
-    // 发送更新状态请求（将在网络层实现后调用）
+    // 发送更新状态请求
     sendUpdateStatusRequest(ticketId, newStatus);
     
-    return false;
+    return true;
 }
 
-bool TicketService::closeTicket(int ticketId)
+bool TicketService::closeTicket(const QString& ticketId)
 {
     return updateTicketStatus(ticketId, "closed");
 }
 
-bool TicketService::startProcessing(int ticketId)
+bool TicketService::startProcessing(const QString& ticketId)
 {
     return updateTicketStatus(ticketId, "in_progress");
 }
 
-bool TicketService::refuseTicket(int ticketId, const QString& reason)
+bool TicketService::refuseTicket(const QString& ticketId, const QString& reason)
 {
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
                                    "TicketService", QString("拒绝工单: %1, 原因: %2").arg(ticketId).arg(reason));
     
-    // TODO: 实现拒绝工单
-    return false;
+    return updateTicketStatus(ticketId, "refused");
+}
+
+// 新增：具体的状态更新方法实现
+bool TicketService::acceptTicket(const QString& ticketId)
+{
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                   "TicketService", QString("接受工单: %1").arg(ticketId));
+    
+    return updateTicketStatus(ticketId, "processing");
+}
+
+bool TicketService::finishTicket(const QString& ticketId)
+{
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                   "TicketService", QString("完成工单: %1").arg(ticketId));
+    
+    return updateTicketStatus(ticketId, "closed");
 }
 
 bool TicketService::assignTicket(int ticketId, int assigneeId)
@@ -562,11 +578,36 @@ void TicketService::sendGetTicketListRequest(const QString& status, int limit, i
                                     "TicketService", "获取工单列表请求已发送");
 }
 
-void TicketService::sendUpdateStatusRequest(int ticketId, const QString& newStatus)
+void TicketService::sendUpdateStatusRequest(const QString& ticketId, const QString& newStatus)
 {
-    // TODO: 构建更新状态消息并发送
-    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
-                                    "TicketService", "发送更新状态请求");
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", QString("准备发送状态更新请求: 工单%1 -> %2").arg(ticketId).arg(newStatus));
+    
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        return;
+    }
+    
+    // 通过网络客户端发送更新状态请求
+    bool success = networkClient_->sendUpdateStatusRequest(ticketId, newStatus);
+    if (!success) {
+        setError("发送更新状态请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送更新状态请求失败");
+        return;
+    }
+    
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", QString("状态更新请求已发送: 工单%1 -> %2").arg(ticketId).arg(newStatus));
 }
 
 void TicketService::sendAssignTicketRequest(int ticketId, int assigneeId)
@@ -749,12 +790,28 @@ void TicketService::onUpdateStatusResponse(const QJsonObject& response)
     LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
                                     "TicketService", "收到更新状态响应");
     
-    // TODO: 解析更新状态响应
+    // 解析更新状态响应
     int ticketId;
     QString newStatus;
     if (parseStatusUpdateResponse(response, ticketId, newStatus)) {
-        // 这里需要获取旧状态，暂时使用空字符串
+        LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                       "TicketService", QString("工单状态更新成功: %1 -> %2").arg(ticketId).arg(newStatus));
+        
+        // 发出状态变化信号
         emit ticketStatusChanged(ticketId, "", newStatus);
+        
+        // 根据新状态发出相应的成功信号
+        if (newStatus == "processing") {
+            emit ticketAccepted(ticketId);
+        } else if (newStatus == "refused") {
+            emit ticketRefused(ticketId);
+        } else if (newStatus == "closed") {
+            emit ticketFinished(ticketId);
+        }
+    } else {
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", QString("状态更新响应解析失败: %1").arg(lastError_));
+        emit ticketStatusUpdateFailed(ticketId, lastError_);
     }
 }
 
@@ -801,13 +858,23 @@ bool TicketService::parseTicketResponse(const QJsonObject& response, Ticket& tic
         return false;
     }
     
-    // 解析工单信息
-    if (response.contains("ticket_id")) {
+    // 解析工单信息 - 支持多种字段名
+    if (response.contains("ticketid")) {
+        ticket.setTicketId(response["ticketid"].toString());
+    } else if (response.contains("ticket_id")) {
         ticket.setTicketId(response["ticket_id"].toString());
     }
     
     if (response.contains("title")) {
         ticket.setTitle(response["title"].toString());
+    }
+    
+    if (response.contains("description")) {
+        ticket.setDescription(response["description"].toString());
+    }
+    
+    if (response.contains("status")) {
+        ticket.setStatus(response["status"].toString());
     }
     
     if (response.contains("priority")) {
@@ -816,6 +883,19 @@ bool TicketService::parseTicketResponse(const QJsonObject& response, Ticket& tic
     
     if (response.contains("category")) {
         ticket.setCategory(response["category"].toString());
+    }
+    
+    // 解析用户信息 - 支持多种字段名
+    if (response.contains("factory_username")) {
+        ticket.setCreatorName(response["factory_username"].toString());
+    } else if (response.contains("creatorName")) {
+        ticket.setCreatorName(response["creatorName"].toString());
+    }
+    
+    if (response.contains("expert_username")) {
+        ticket.setAssigneeName(response["expert_username"].toString());
+    } else if (response.contains("assigneeName")) {
+        ticket.setAssigneeName(response["assigneeName"].toString());
     }
     
     LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
@@ -871,8 +951,37 @@ bool TicketService::parseTicketListResponse(const QJsonObject& response, QList<T
 
 bool TicketService::parseStatusUpdateResponse(const QJsonObject& response, int& ticketId, QString& newStatus)
 {
-    // TODO: 解析状态更新响应
-    return false;
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", "解析状态更新响应");
+    
+    // 检查响应状态
+    if (response.contains("code") && response["code"].toInt() != 0) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "状态更新失败";
+        setError(error);
+        return false;
+    }
+    
+    // 解析工单ID和新状态
+    if (response.contains("ticket_id")) {
+        ticketId = response["ticket_id"].toString().toInt();
+    } else if (response.contains("workorderId")) {
+        ticketId = response["workorderId"].toString().toInt();
+    } else {
+        setError("响应中缺少工单ID");
+        return false;
+    }
+    
+    if (response.contains("status")) {
+        newStatus = response["status"].toString();
+    } else {
+        setError("响应中缺少新状态");
+        return false;
+    }
+    
+    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                   "TicketService", QString("状态更新响应解析成功: 工单%1 -> %2").arg(ticketId).arg(newStatus));
+    return true;
 }
 
 bool TicketService::parseAssignmentResponse(const QJsonObject& response, int& ticketId, int& assigneeId)
