@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QHostInfo>
+#include <QNetworkProxy>
 
 ConnectionManager::ConnectionManager(QObject *parent)
     : QObject(parent)
@@ -185,6 +186,9 @@ void ConnectionManager::disableAutoReconnect()
 void ConnectionManager::setupSocket()
 {
     socket_ = new QTcpSocket(this);
+    
+    // 禁用代理，直接连接
+    socket_->setProxy(QNetworkProxy::NoProxy);
     
     // 连接信号槽
     connect(socket_, &QTcpSocket::connected, this, &ConnectionManager::onSocketConnected);
