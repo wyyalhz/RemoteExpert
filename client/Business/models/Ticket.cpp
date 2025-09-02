@@ -106,6 +106,13 @@ Ticket Ticket::fromJson(const QJsonObject& json)
     
     if (json.contains("assigneeName")) {
         ticket.assigneeName_ = json["assigneeName"].toString();
+    } else if (json.contains("expert_username")) {
+        ticket.assigneeName_ = json["expert_username"].toString();
+    }
+    
+    // 支持工厂端用户名字段
+    if (json.contains("factory_username")) {
+        ticket.creatorName_ = json["factory_username"].toString();
     }
     
     if (json.contains("status")) {

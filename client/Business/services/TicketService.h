@@ -28,6 +28,7 @@ public:
     // 工单查询
     Ticket getTicketById(int ticketId);
     Ticket getTicketByTicketId(const QString& ticketId);
+    Ticket getTicketDetail(const QString& ticketId, int userId, int userType);
     QList<Ticket> getTicketsByStatus(const QString& status, int limit = -1, int offset = 0);
     QList<Ticket> getTicketsByCreator(int creatorId, int limit = -1, int offset = 0);
     QList<Ticket> getTicketsByAssignee(int assigneeId, int limit = -1, int offset = 0);
@@ -82,6 +83,8 @@ signals:
     void ticketClosed(int ticketId);
     void ticketListReceived(const QList<Ticket>& tickets);
     void ticketListFailed(const QString& error);
+    void ticketDetailReceived(const Ticket& ticket);
+    void ticketDetailFailed(const QString& error);
     void participantJoined(int ticketId, const QString& username);
     void participantLeft(int ticketId, const QString& username);
 
@@ -98,6 +101,7 @@ private:
     void sendUpdateTicketRequest(const Ticket& ticket);
     void sendDeleteTicketRequest(int ticketId);
     void sendGetTicketRequest(int ticketId);
+    void sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType);
     void sendGetTicketListRequest(const QString& status = QString(), int limit = -1, int offset = 0);
     void sendUpdateStatusRequest(int ticketId, const QString& newStatus);
     void sendAssignTicketRequest(int ticketId, int assigneeId);
@@ -128,6 +132,7 @@ public slots:
     void onUpdateTicketResponse(const QJsonObject& response);
     void onDeleteTicketResponse(const QJsonObject& response);
     void onGetTicketResponse(const QJsonObject& response);
+    void onGetTicketDetailResponse(const QJsonObject& response);
     void onGetTicketListResponse(const QJsonObject& response);
     void onUpdateStatusResponse(const QJsonObject& response);
     void onAssignTicketResponse(const QJsonObject& response);

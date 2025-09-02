@@ -13,8 +13,18 @@ TicketService::TicketService(QObject *parent)
 void TicketService::setNetworkClient(NetworkClient* client)
 {
     networkClient_ = client;
-    LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
-                                   "TicketService", "网络客户端已设置");
+    
+    if (networkClient_) {
+        // 连接网络客户端的信号
+        connect(networkClient_, &NetworkClient::getTicketDetailResponse, 
+                this, &TicketService::onGetTicketDetailResponse);
+        
+        LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                       "TicketService", "网络客户端已设置，信号已连接");
+    } else {
+        LogManager::getInstance()->warning(LogModule::TICKET, LogLayer::BUSINESS, 
+                                          "TicketService", "网络客户端为空");
+    }
 }
 
 TicketService::~TicketService()
@@ -137,6 +147,27 @@ Ticket TicketService::getTicketByTicketId(const QString& ticketId)
     } else {
         setError("工单ID格式无效");
     }
+    
+    return Ticket(); // 返回空Ticket，实际数据将通过信号返回
+}
+
+Ticket TicketService::getTicketDetail(const QString& ticketId, int userId, int userType)
+{
+    if (ticketId.isEmpty()) {
+        setError("工单编号无效");
+        return Ticket();
+    }
+    
+    if (userId <= 0) {
+        setError("用户ID无效");
+        return Ticket();
+    }
+    
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", QString("获取工单详情: %1, 用户ID: %2, 用户类型: %3").arg(ticketId).arg(userId).arg(userType));
+    
+    // 发送获取工单详情请求
+    sendGetTicketDetailRequest(ticketId, userId, userType);
     
     return Ticket(); // 返回空Ticket，实际数据将通过信号返回
 }
@@ -470,6 +501,35 @@ void TicketService::sendGetTicketRequest(int ticketId)
                                     "TicketService", "发送获取工单请求");
 }
 
+void TicketService::sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType)
+{
+    if (!networkClient_) {
+        setError("网络客户端未初始化");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "网络客户端未初始化");
+        return;
+    }
+    
+    if (!networkClient_->isConnected()) {
+        setError("未连接到服务器");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "未连接到服务器");
+        return;
+    }
+    
+    // 通过网络客户端发送获取工单详情请求
+    bool success = networkClient_->sendGetTicketDetailRequest(ticketId, userId, userType);
+    if (!success) {
+        setError("发送获取工单详情请求失败");
+        LogManager::getInstance()->error(LogModule::TICKET, LogLayer::BUSINESS, 
+                                        "TicketService", "发送获取工单详情请求失败");
+        return;
+    }
+    
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", QString("获取工单详情请求已发送: 工单ID=%1, 用户ID=%2, 用户类型=%3").arg(ticketId).arg(userId).arg(userType));
+}
+
 void TicketService::sendGetTicketListRequest(const QString& status, int limit, int offset)
 {
     if (!networkClient_) {
@@ -643,6 +703,31 @@ void TicketService::onGetTicketResponse(const QJsonObject& response)
                                     "TicketService", "收到获取工单响应");
     
     // TODO: 解析获取工单响应
+}
+
+void TicketService::onGetTicketDetailResponse(const QJsonObject& response)
+{
+    LogManager::getInstance()->debug(LogModule::TICKET, LogLayer::BUSINESS, 
+                                    "TicketService", "收到获取工单详情响应");
+    
+    // 检查响应状态
+    if (response.contains("code") && response["code"].toInt() != 0) {
+        QString error = response.value("message").toString();
+        if (error.isEmpty()) error = "获取工单详情失败";
+        setError(error);
+        emit ticketDetailFailed(lastError_);
+        return;
+    }
+    
+    // 解析工单详情
+    Ticket ticket;
+    if (parseTicketResponse(response, ticket)) {
+        LogManager::getInstance()->info(LogModule::TICKET, LogLayer::BUSINESS, 
+                                       "TicketService", QString("工单详情解析成功: %1").arg(ticket.getTitle()));
+        emit ticketDetailReceived(ticket);
+    } else {
+        emit ticketDetailFailed(lastError_);
+    }
 }
 
 void TicketService::onGetTicketListResponse(const QJsonObject& response)

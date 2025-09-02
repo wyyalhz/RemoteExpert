@@ -40,6 +40,8 @@ private slots:
     // 工单服务响应处理
     void onTicketListReceived(const QList<Ticket>& tickets);
     void onTicketListFailed(const QString& error);
+    void onTicketDetailReceived(const Ticket& ticket);
+    void onTicketDetailFailed(const QString& error);
     void onTicketDeleted(int ticketId);
     void onTicketDeletedFailed(const QString& error);
 

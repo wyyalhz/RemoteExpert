@@ -36,6 +36,7 @@ public:
     bool sendJoinTicketRequest(const QString& ticketId, const QString& role);
     bool sendLeaveTicketRequest(const QString& ticketId);
     bool sendGetTicketListRequest(const QString& status = QString(), int limit = -1, int offset = 0);
+    bool sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType);
     bool sendUpdateTicketRequest(const QJsonObject& ticketData);
     bool sendUpdateStatusRequest(int ticketId, const QString& newStatus);
     bool sendAssignTicketRequest(int ticketId, int assigneeId);
@@ -65,6 +66,7 @@ signals:
     void joinTicketResponse(const QJsonObject& response);
     void leaveTicketResponse(const QJsonObject& response);
     void getTicketListResponse(const QJsonObject& response);
+    void getTicketDetailResponse(const QJsonObject& response);
     void updateTicketResponse(const QJsonObject& response);
     void updateStatusResponse(const QJsonObject& response);
     void assignTicketResponse(const QJsonObject& response);

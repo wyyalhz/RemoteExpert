@@ -38,6 +38,10 @@ void TicketPage::setTicketService(TicketService* ticketService)
                 this, &TicketPage::onTicketListReceived);
         connect(ticketService_, &TicketService::ticketListFailed, 
                 this, &TicketPage::onTicketListFailed);
+        connect(ticketService_, &TicketService::ticketDetailReceived, 
+                this, &TicketPage::onTicketDetailReceived);
+        connect(ticketService_, &TicketService::ticketDetailFailed, 
+                this, &TicketPage::onTicketDetailFailed);
         connect(ticketService_, &TicketService::ticketDeleted, 
                 this, &TicketPage::onTicketDeleted);
         connect(ticketService_, &TicketService::ticketDeletedFailed, 
@@ -211,28 +215,64 @@ void TicketPage::onTicketDeletedFailed(const QString& error)
     QMessageBox::warning(this, "错误", QString("删除工单失败: %1").arg(error));
 }
 
+void TicketPage::onTicketDetailReceived(const Ticket& ticket)
+{
+    showLoading(false);
+    
+    // 创建并显示工单详情对话框
+    TicketDialogDetail *detailDialog = new TicketDialogDetail(isExpert);
+    connect(detailDialog, &TicketDialogDetail::backRequest, this, &TicketPage::returnToTicketList);
+    
+    // 设置工单数据
+    detailDialog->setTicketData(
+        ticket.getTicketId(),
+        ticket.getStatus(),
+        ticket.getCreatorName(),
+        ticket.getAssigneeName(),
+        ticket.getTitle(),
+        ticket.getDescription()
+    );
+    
+    detailDialog->show();
+}
+
+void TicketPage::onTicketDetailFailed(const QString& error)
+{
+    showLoading(false);
+    QMessageBox::warning(this, "错误", QString("获取工单详情失败: %1").arg(error));
+    
+    // 返回工单列表页面
+    this->show();
+}
+
 void TicketPage::showTicketDetail(const QString& id){
     if (!ticketService_) {
         QMessageBox::warning(this, "错误", "工单服务未初始化");
         return;
     }
     
+    if (!authService_) {
+        QMessageBox::warning(this, "错误", "认证服务未初始化");
+        return;
+    }
+    
+    // 获取当前用户信息
+    int userId = getCurrentUserId();
+    int userType = isExpert ? 1 : 0;
+    
+    if (userId == -1) {
+        QMessageBox::warning(this, "错误", "无法获取用户信息，请重新登录");
+        return;
+    }
+    
+    // 显示加载状态
+    showLoading(true);
+    
+    // 发送获取工单详情请求
+    ticketService_->getTicketDetail(id, userId, userType);
+    
+    // 暂时隐藏页面，等待工单详情响应
     this->hide();
-    TicketDialogDetail *detailDialog = new TicketDialogDetail(isExpert);
-    connect(detailDialog, &TicketDialogDetail::backRequest, this, &TicketPage::returnToTicketList);
-
-    // TODO: 这里需要从缓存或重新获取工单详情
-    // 暂时使用空数据，后续可以优化为从缓存获取
-    detailDialog->setTicketData(
-        id,
-        "open", // 默认状态
-        "",     // 创建者名称
-        "",     // 分配者名称
-        "工单详情", // 标题
-        ""      // 描述
-    );
-
-    detailDialog->show();
 }
 
 void TicketPage::returnToTicketList(){

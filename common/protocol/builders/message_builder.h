@@ -34,6 +34,10 @@ public:
     static QJsonObject buildJoinWorkOrderMessage(const QString& workorderId,
                                                 const QString& role);
     
+    static QJsonObject buildGetWorkOrderMessage(const QString& workorderId,
+                                               int userId,
+                                               int userType);
+    
     // 构建聊天消息
     static QJsonObject buildTextMessage(const QString& roomId,
                                        const QString& text,

@@ -68,7 +68,20 @@ QJsonObject MessageBuilder::buildJoinWorkOrderMessage(const QString& workorderId
 {
     return QJsonObject{
         {"roomId", workorderId},
+        {"workorderId", workorderId},
         {"role", role},
+        {"timestamp", QDateTime::currentMSecsSinceEpoch()}
+    };
+}
+
+QJsonObject MessageBuilder::buildGetWorkOrderMessage(const QString& workorderId,
+                                                   int userId,
+                                                   int userType)
+{
+    return QJsonObject{
+        {"workorderId", workorderId},
+        {"userId", userId},
+        {"userType", userType},
         {"timestamp", QDateTime::currentMSecsSinceEpoch()}
     };
 }

@@ -176,6 +176,12 @@ bool NetworkClient::sendGetTicketListRequest(const QString& status, int limit, i
     return sendMessage(MSG_LIST_WORKORDERS, data);
 }
 
+bool NetworkClient::sendGetTicketDetailRequest(const QString& ticketId, int userId, int userType)
+{
+    QJsonObject data = MessageBuilder::buildGetWorkOrderMessage(ticketId, userId, userType);
+    return sendMessage(MSG_GET_WORKORDER, data);
+}
+
 bool NetworkClient::sendUpdateTicketRequest(const QJsonObject& ticketData)
 {
     QJsonObject data = ticketData;
@@ -271,6 +277,7 @@ void NetworkClient::logMessage(quint16 type, const QJsonObject& data, bool isOut
         case MSG_LEAVE_WORKORDER: messageType = "离开工单"; break;
         case MSG_UPDATE_WORKORDER: messageType = "更新工单"; break;
         case MSG_LIST_WORKORDERS: messageType = "获取工单列表"; break;
+        case MSG_GET_WORKORDER: messageType = "获取工单详情"; break;
         case MSG_DELETE_WORKORDER: messageType = "删除工单"; break;
         case MSG_TEXT: messageType = "文本消息"; break;
         case MSG_SERVER_EVENT: messageType = "服务器事件"; break;
@@ -341,6 +348,9 @@ void NetworkClient::onMessageReceived(quint16 type, const QJsonObject& data, con
             break;
         case MSG_LIST_WORKORDERS:
             emit getTicketListResponse(data);
+            break;
+        case MSG_GET_WORKORDER:
+            emit getTicketDetailResponse(data);
             break;
         case MSG_UPDATE_WORKORDER:
             emit updateTicketResponse(data);
