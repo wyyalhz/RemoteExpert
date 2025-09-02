@@ -241,25 +241,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="btnRecord">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>64</width>
-           <height>64</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>会议记录</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer name="side_spacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

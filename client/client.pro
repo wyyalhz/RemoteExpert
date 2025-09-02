@@ -1,4 +1,4 @@
-QT += core gui sql widgets svg network
+QT += core gui sql widgets svg network multimedia multimediawidgets serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,6 +27,9 @@ SOURCES += \
     Presentation/pages/TicketPage/ticket_page.cpp \
     Presentation/pages/ThanksPage/thanks_page.cpp \
     Presentation/pages/SettingPage/setting_page.cpp \
+    Presentation/pages/LogPage/audiopipe1.cpp \
+    Presentation/pages/LogPage/logmainwindow.cpp \
+    Presentation/pages/LogPage/mtrreader1.cpp \
     # Presentation层 - 主窗口
     Presentation/main_window/home_main_window.cpp \
     # Presentation层 - 工具类
@@ -65,6 +68,9 @@ HEADERS += \
     Presentation/pages/TicketPage/ticket_page.h \
     Presentation/pages/ThanksPage/thanks_page.h \
     Presentation/pages/SettingPage/setting_page.h \
+    Presentation/pages/LogPage/audiopipe1.h \
+    Presentation/pages/LogPage/logmainwindow.h \
+    Presentation/pages/LogPage/mtrreader1.h \
     # Presentation层 - 主窗口
     Presentation/main_window/home_main_window.h \
     # Presentation层 - 工具类
@@ -98,7 +104,8 @@ FORMS += \
     Presentation/pages/TicketPage/ticket_page.ui \
     Presentation/pages/ThanksPage/thanks_page.ui \
     Presentation/pages/SettingPage/setting_page.ui \
-    Presentation/main_window/home_main_window.ui
+    Presentation/main_window/home_main_window.ui \
+    Presentation/pages/LogPage/logmainwindow.ui
 
 # 资源文件
 RESOURCES += \

@@ -10,6 +10,7 @@ AddTicket::AddTicket(QString factory, QWidget *parent) :
     ticketService_(nullptr)
 {
     ui->setupUi(this);
+    this->setWindowFlags(Qt::FramelessWindowHint);
 }
 
 AddTicket::~AddTicket()
