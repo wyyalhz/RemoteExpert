@@ -10,7 +10,7 @@ TicketDialogDetail::TicketDialogDetail(bool isExpert, QWidget *parent) :
     ui->btnAccept->setVisible(isExpert);
     ui->btnRefuse->setVisible(isExpert);
     ui->btnFinish->setVisible(!isExpert);
-    ui->btnConnect->setEnabled(false);
+    ui->btnConnect->setEnabled(true);
     layout()->activate();
 }
 
