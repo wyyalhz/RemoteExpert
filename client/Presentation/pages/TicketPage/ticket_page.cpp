@@ -5,6 +5,11 @@
 #include "Presentation/dialogs/AddTicket/add_ticket.h"
 #include <QGridLayout>
 #include <QMessageBox>
+#include <QProcess>
+#include <QDir>
+#include <QFile>
+#include <QCoreApplication>
+#include <QTimer>
 
 #include <QDebug>
 
@@ -229,6 +234,9 @@ void TicketPage::onTicketDetailReceived(const Ticket& ticket)
     connect(detailDialog, &TicketDialogDetail::refuseProcess, this, &TicketPage::onRefuseTicket);
     connect(detailDialog, &TicketDialogDetail::finishProcess, this, &TicketPage::onFinishTicket);
     
+    // 连接Connect信号到视频通话程序启动
+    connect(detailDialog, &TicketDialogDetail::connect, this, &TicketPage::onConnectRequest);
+    
     // 设置工单数据
     detailDialog->setTicketData(
         ticket.getTicketId(),
@@ -390,4 +398,67 @@ void TicketPage::onFinishTicket(const QString& ticketId)
     } else {
         QMessageBox::warning(this, "错误", QString("完成工单失败: %1").arg(ticketService_->getLastError()));
     }
+}
+
+void TicketPage::onConnectRequest(const QString& ticketId)
+{
+    Q_UNUSED(ticketId) // 暂时不使用工单ID，后续可以根据需要传递参数
+    
+    // 获取应用程序目录路径
+    QString appPath = QCoreApplication::applicationDirPath();
+    QString projectRoot = QDir(appPath).absoluteFilePath("../../.."); // 回到项目根目录
+    
+    // 根据操作系统选择相应的可执行程序
+    QString executablePath;
+    QString executableName;
+    
+#ifdef Q_OS_WIN
+    executableName = "videoplusplusplus-win.exe";
+#elif defined(Q_OS_LINUX)
+    executableName = "videoplusplusplus-linux";
+#else
+    QMessageBox::warning(this, "错误", "不支持的操作系统");
+    return;
+#endif
+    
+    executablePath = QDir(projectRoot).absoluteFilePath(executableName);
+    
+    // 检查可执行文件是否存在
+    if (!QFile::exists(executablePath)) {
+        QMessageBox::warning(this, "错误", 
+            QString("找不到可执行文件: %1\n请确保文件存在于项目根目录中").arg(executablePath));
+        return;
+    }
+    
+    // 启动可执行程序
+    QProcess* process = new QProcess(this);
+    
+    // 设置工作目录为可执行文件所在目录
+    process->setWorkingDirectory(QDir(executablePath).absolutePath());
+    
+    // 连接信号以处理程序启动结果
+    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [process](int exitCode, QProcess::ExitStatus exitStatus) {
+        Q_UNUSED(exitCode)
+        Q_UNUSED(exitStatus)
+        process->deleteLater();
+    });
+    
+    connect(process, &QProcess::errorOccurred,
+            [process, this](QProcess::ProcessError error) {
+        Q_UNUSED(error)
+        QMessageBox::warning(this, "错误", "启动程序失败: " + process->errorString());
+        process->deleteLater();
+    });
+    
+    // 启动程序
+    process->start(executablePath);
+    
+    if (!process->waitForStarted(5000)) { // 等待5秒启动
+        QMessageBox::warning(this, "错误", "程序启动超时");
+        process->deleteLater();
+        return;
+    }
+    
+    QMessageBox::information(this, "成功", "视频通话程序已启动");
 }
