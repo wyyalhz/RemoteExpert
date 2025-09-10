@@ -5,5 +5,7 @@
         <file>light/man-light.svg</file>
         <file>light/geer-light.svg</file>
         <file>light/flower-light.svg</file>
+        <file>light/record-light.svg</file>
+        <file>light/team-light.svg</file>
     </qresource>
 </RCC>

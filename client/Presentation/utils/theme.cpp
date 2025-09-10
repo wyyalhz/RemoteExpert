@@ -25,6 +25,8 @@ static QString iconKeyFor(QObject* obj) {
         {"btnThanks",   "flower"},
         {"btnSettings", "setGeer"},
         {"avatarLabel", "man"},
+        {"btnRecord", "record"},
+        {"heroIcon", "team"},
         /* 如果侧栏是 QAction，也可以加：*/
         {"actionDevices",  "geer"},
         {"actionOrders",   "ticket"},

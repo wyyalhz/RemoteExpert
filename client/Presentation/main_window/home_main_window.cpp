@@ -12,6 +12,8 @@
 #include "Presentation/utils/theme.h"
 #include "home_main_window.h"
 #include "ui_home_main_window.h"
+#include "EquipmentDialog/equipmentshow.h"
+#include "theme.h"
 
 HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, QWidget *parent)
     : QMainWindow(parent)
@@ -19,7 +21,7 @@ HomeMainWindow::HomeMainWindow(const QString& currentUser, int currentUserType, 
     , m_thanksPage(nullptr)//指针置空
     , m_ticketPage(nullptr)
     , m_settingPage(nullptr)
-    // , m_equipmentPage(nullptr)
+    , m_equipmentPage(nullptr)
     , m_logPage(nullptr)
     , currentUser(currentUser)
     , currentUserType(currentUserType)
@@ -104,17 +106,23 @@ void HomeMainWindow::initPage()
     if (currentUserType == 1) {
         qDebug() << "Creating TicketPage for EXPERT user";
         m_ticketPage = new TicketPage(currentUser, true, this);
+        ui->btnDevices->setVisible(false);
+        layout()->activate();
     } else {
         qDebug() << "Creating TicketPage for FACTORY user";
+        ui->btnDevices->setVisible(true);
+        layout()->activate();
         m_ticketPage = new TicketPage(currentUser, false, this);
     }
     m_settingPage = new SettingPage(this);
-    // m_equipmentPage = new EquipmentShow(this);
+    m_equipmentPage = new EquipmentShow(this);
     m_logPage = new LogMainWindow(this);
 
-    // QString portName = "ttyS1";
-    // qint32 baudRate = 9600;
-    // m_equipmentPage->openSerialPort(portName, baudRate);
+    if (currentUserType == 0) {
+        QString portName = "ttyS1";
+        qint32 baudRate = 9600;
+        m_equipmentPage->openSerialPort(portName, baudRate);
+    }
 
 
     //JSON Style
@@ -139,7 +147,7 @@ void HomeMainWindow::initPage()
     ui->stackWidget->addWidget(m_thanksPage);
     ui->stackWidget->addWidget(m_ticketPage);
     ui->stackWidget->addWidget(m_settingPage);
-    // ui->stackWidget->addWidget(m_equipmentPage);
+    ui->stackWidget->addWidget(m_equipmentPage);
     ui->stackWidget->addWidget(m_logPage);
     ui->stackWidget->setCurrentIndex(0);
 
@@ -168,12 +176,12 @@ void HomeMainWindow::dealMenu(){
             ui->stackWidget->setCurrentIndex(2);
             break;
         }
-        // if("btnDevices" == str){
-        //     ui->stackWidget->setCurrentIndex(3);
-        //     break;
-        // }
+         if("btnDevices" == str){
+             ui->stackWidget->setCurrentIndex(3);
+             break;
+         }
         if("btnRecord" == str){
-            ui->stackWidget->setCurrentIndex(3);
+            ui->stackWidget->setCurrentIndex(4);
             break;
         }
     }while(false);

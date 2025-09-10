@@ -1,4 +1,4 @@
-QT += core gui sql widgets svg network multimedia multimediawidgets serialport
+QT += core gui sql widgets svg network multimedia multimediawidgets serialport charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,6 +13,8 @@ DESTDIR = $$PWD/../bin
 # 源文件
 SOURCES += \
     # 主程序入口
+    Presentation/dialogs/EquipmentDialog/datamodel.cpp \
+    Presentation/dialogs/EquipmentDialog/equipmentshow.cpp \
     main.cpp \
     # 日志模块
     Logger/logger_base.cpp \
@@ -62,6 +64,8 @@ HEADERS += \
     Logger/logger_base.h \
     Logger/log_manager.h \
     # Presentation层 - 对话框
+    Presentation/dialogs/EquipmentDialog/datamodel.h \
+    Presentation/dialogs/EquipmentDialog/equipmentshow.h \
     Presentation/dialogs/LoginDialog/login_dialog.h \
     Presentation/dialogs/RegisterDialog/register_dialog.h \
     Presentation/dialogs/TicketDialog/ticket_dialog.h \
@@ -102,6 +106,7 @@ HEADERS += \
 
 # UI文件
 FORMS += \
+    Presentation/dialogs/EquipmentDialog/equipmentshow.ui \
     Presentation/dialogs/LoginDialog/login_dialog.ui \
     Presentation/dialogs/RegisterDialog/register_dialog.ui \
     Presentation/dialogs/TicketDialog/ticket_dialog.ui \
@@ -164,3 +169,6 @@ INSTALLS    += themes
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+SUBDIRS += \
+    Presentation/dialogs/EquipmentDialog/Equipment.pro

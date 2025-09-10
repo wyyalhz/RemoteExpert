@@ -12,6 +12,7 @@
 
 // #include "dialogs/vedio/mainwindow.h"
 #include "Presentation/pages/LogPage/logmainwindow.h"
+#include "EquipmentDialog/equipmentshow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class HomeMainWindow; }
@@ -53,7 +54,7 @@ private:
     ThanksWidget *m_thanksPage;
     TicketPage *m_ticketPage;
     SettingPage *m_settingPage;
-    // EquipmentShow *m_equipmentPage;
+    EquipmentShow *m_equipmentPage;
     LogMainWindow *m_logPage;
 
     QString currentUser;

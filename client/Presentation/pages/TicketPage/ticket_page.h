@@ -50,8 +50,8 @@ private slots:
     void onRefuseTicket(const QString& ticketId);
     void onFinishTicket(const QString& ticketId);
     
-    // 处理Connect信号，打开视频通话程序
-    void onConnectRequest(const QString& ticketId);
+    // 处理Connect信号
+    void onConnectRequested(const QString& ticketId);
 
 private:
     Ui::TicketPage *ui;
