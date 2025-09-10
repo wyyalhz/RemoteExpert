@@ -234,8 +234,8 @@ void TicketPage::onTicketDetailReceived(const Ticket& ticket)
     connect(detailDialog, &TicketDialogDetail::refuseProcess, this, &TicketPage::onRefuseTicket);
     connect(detailDialog, &TicketDialogDetail::finishProcess, this, &TicketPage::onFinishTicket);
     
-    // 连接Connect信号到视频通话程序启动
-    connect(detailDialog, &TicketDialogDetail::connect, this, &TicketPage::onConnectRequest);
+    // 连接Connect信号
+    connect(detailDialog, &TicketDialogDetail::connect, this, &TicketPage::onConnectRequested);
     
     // 设置工单数据
     detailDialog->setTicketData(
@@ -400,43 +400,58 @@ void TicketPage::onFinishTicket(const QString& ticketId)
     }
 }
 
-void TicketPage::onConnectRequest(const QString& ticketId)
+void TicketPage::onConnectRequested(const QString& ticketId)
 {
     Q_UNUSED(ticketId) // 暂时不使用工单ID，后续可以根据需要传递参数
     
-    // 获取应用程序目录路径
-    QString appPath = QCoreApplication::applicationDirPath();
-    QString projectRoot = QDir(appPath).absoluteFilePath("../../.."); // 回到项目根目录
+    // 获取应用程序的根目录路径
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString projectRoot = appDir;
     
-    // 根据操作系统选择相应的可执行程序
+    // 尝试找到项目根目录（包含可执行文件的目录）
+    // 由于可执行文件在项目根目录，我们需要向上查找
+    QDir dir(appDir);
+    while (dir.exists() && !dir.isRoot()) {
+        // 检查当前目录是否包含目标可执行文件
+        if (dir.exists("videoplusplusplus-win.exe") || dir.exists("videoplusplusplus-linux")) {
+            projectRoot = dir.absolutePath();
+            break;
+        }
+        dir.cdUp();
+    }
+    
     QString executablePath;
-    QString executableName;
+    QStringList arguments;
     
 #ifdef Q_OS_WIN
-    executableName = "videoplusplusplus-win.exe";
+    // Windows系统
+    executablePath = QDir(projectRoot).filePath("videoplusplusplus-win.exe");
+    if (!QFile::exists(executablePath)) {
+        QMessageBox::warning(this, "错误", "找不到videoplusplusplus-win.exe文件");
+        return;
+    }
 #elif defined(Q_OS_LINUX)
-    executableName = "videoplusplusplus-linux";
+    // Linux系统
+    executablePath = QDir(projectRoot).filePath("videoplusplusplus-linux");
+    if (!QFile::exists(executablePath)) {
+        QMessageBox::warning(this, "错误", "找不到videoplusplusplus-linux文件");
+        return;
+    }
+    // 确保Linux可执行文件有执行权限
+    QFile::setPermissions(executablePath, QFile::permissions(executablePath) | QFile::ExeOwner | QFile::ExeUser | QFile::ExeGroup | QFile::ExeOther);
 #else
+    // 其他系统
     QMessageBox::warning(this, "错误", "不支持的操作系统");
     return;
 #endif
     
-    executablePath = QDir(projectRoot).absoluteFilePath(executableName);
-    
-    // 检查可执行文件是否存在
-    if (!QFile::exists(executablePath)) {
-        QMessageBox::warning(this, "错误", 
-            QString("找不到可执行文件: %1\n请确保文件存在于项目根目录中").arg(executablePath));
-        return;
-    }
-    
     // 启动可执行程序
-    QProcess* process = new QProcess(this);
+    QProcess *process = new QProcess(this);
     
     // 设置工作目录为可执行文件所在目录
-    process->setWorkingDirectory(QDir(executablePath).absolutePath());
+    process->setWorkingDirectory(projectRoot);
     
-    // 连接信号以处理程序启动结果
+    // 连接信号以处理进程状态
     connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [process](int exitCode, QProcess::ExitStatus exitStatus) {
         Q_UNUSED(exitCode)
@@ -447,18 +462,18 @@ void TicketPage::onConnectRequest(const QString& ticketId)
     connect(process, &QProcess::errorOccurred,
             [process, this](QProcess::ProcessError error) {
         Q_UNUSED(error)
-        QMessageBox::warning(this, "错误", "启动程序失败: " + process->errorString());
+        QMessageBox::warning(this, "错误", QString("启动程序失败: %1").arg(process->errorString()));
         process->deleteLater();
     });
     
-    // 启动程序
-    process->start(executablePath);
+    // 启动进程
+    process->start(executablePath, arguments);
     
-    if (!process->waitForStarted(5000)) { // 等待5秒启动
-        QMessageBox::warning(this, "错误", "程序启动超时");
+    if (!process->waitForStarted(5000)) {
+        QMessageBox::warning(this, "错误", "启动程序超时");
         process->deleteLater();
         return;
     }
     
-    QMessageBox::information(this, "成功", "视频通话程序已启动");
+    QMessageBox::information(this, "成功", "远程协助程序已启动");
 }

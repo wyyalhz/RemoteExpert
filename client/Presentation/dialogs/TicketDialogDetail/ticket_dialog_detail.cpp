@@ -10,7 +10,7 @@ TicketDialogDetail::TicketDialogDetail(bool isExpert, QWidget *parent) :
     ui->btnAccept->setVisible(isExpert);
     ui->btnRefuse->setVisible(isExpert);
     ui->btnFinish->setVisible(!isExpert);
-    ui->btnConnect->setEnabled(true);
+    ui->btnConnect->setEnabled(false);
     layout()->activate();
 }
 
@@ -30,11 +30,12 @@ void TicketDialogDetail::setTicketData(const QString &id, const QString &status,
     ui->expert->setText(expert);
     ui->title->setText(title);
     ui->description->setText(description);
-    if (status == "processing") {
-        ui->btnConnect->setEnabled(true);
-    } else {
-        ui->btnConnect->setEnabled(false);
-    }
+    // if (status == "processing") {
+    //     ui->btnConnect->setEnabled(true);
+    // } else {
+    //     ui->btnConnect->setEnabled(false);
+    // }
+    ui->btnConnect->setEnabled(true);
 }
 
 void TicketDialogDetail::on_btnConnect_clicked()

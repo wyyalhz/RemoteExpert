@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ThanksWidget</class>
  <widget class="QWidget" name="ThanksWidget">
@@ -6,79 +6,193 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>793</width>
-    <height>587</height>
+    <width>720</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>致谢</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_root">
+   <property name="spacing">
+    <number>12</number>
+   </property>
    <property name="leftMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <item>
-    <layout class="QVBoxLayout" name="centerLayout">
-     <property name="spacing">
-      <number>0</number>
+    <widget class="QFrame" name="ThanksCard">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <property name="leftMargin">
-      <number>80</number>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
      </property>
-     <property name="topMargin">
-      <number>80</number>
-     </property>
-     <property name="rightMargin">
-      <number>80</number>
-     </property>
-     <property name="bottomMargin">
-      <number>80</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="thanksLabel">
-       <property name="styleSheet">
-        <string notr="true">
-         QLabel {
-             color: #222;
-             font-size: 20px;
-             font-weight: 600;
-             background: rgba(255,255,255,0.75);
-             border-radius: 12px;
-             padding: 16px 20px;
-         }
-         </string>
-       </property>
-       <property name="text">
-        <string>
-感谢一路以来的努力与付出！&lt;br/&gt;
-本项目由 &lt;b&gt;XX 团队&lt;/b&gt; 完成，&lt;br/&gt;
-特别致谢所有贡献者与支持者。
-         </string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::RichText</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
+     <layout class="QVBoxLayout" name="verticalLayout_card">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>24</number>
+      </property>
+      <property name="topMargin">
+       <number>24</number>
+      </property>
+      <property name="rightMargin">
+       <number>24</number>
+      </property>
+      <property name="bottomMargin">
+       <number>24</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="heroIcon">
+        <property name="minimumSize">
+         <size>
+          <width>96</width>
+          <height>96</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="pixmap_key" stdset="0">
+         <string>team</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="thanksLabel">
+        <property name="font">
+         <font>
+          <pointsize>18</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>感谢一路以来的努力与付出！</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="subtitle">
+        <property name="text">
+         <string>本项目由 实训3组 完成，特别感谢所有贡献者与支持者。</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_bottom">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_links">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>6</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <spacer name="spacer_left">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QToolButton" name="btnGithub">
+          <property name="text">
+           <string>GitHub</string>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="toolButtonStyle">
+           <enum>Qt::ToolButtonTextBesideIcon</enum>
+          </property>
+          <property name="icon_key" stdset="0">
+           <string>github</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="spacer_right">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
- <resources />
- <connections />
+ <resources/>
+ <connections/>
 </ui>

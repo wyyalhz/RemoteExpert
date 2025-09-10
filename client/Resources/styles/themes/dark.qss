@@ -9,10 +9,6 @@ QWidget { background: #0F141A; color: #E5E7EB; font-family: "Segoe UI"; font-siz
 QLabel#titleLabel { font-size: 20pt; font-weight: 700; color: #F3F4F6; }
 .QHint { color: #9CA3AF; font-size: 9pt; }
 
-QStackedWidget#stackWidget {
-background: #444444
-}
-
 QFrame#Card, QGroupBox {
     background: #171C22;
     border: 1px solid #2A323C;
@@ -75,14 +71,14 @@ QPushButton[variant="chip"], QToolButton[variant="chip"] {
     padding: 8px 16px;
 }
 
-/* Sidebar nav */
+/* Sidebar buttons (add sidebar="true" and checkable=true) */
 QFrame#side_nav QToolButton {
     background: transparent;
     color: #D1D5DB;
     border: 1px solid transparent;
     border-radius: 12px;
     padding-top: 10px; padding-bottom: 10px;
-    padding-left: 18px; padding-right: 14px;  /* ↑ 增大左内边距让文字更"居中感" */
+    padding-left: 18px; padding-right: 14px;  /* ↑ 增大左内边距让文字更“居中感” */
     text-align: left;
     qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
     qproperty-iconSize: 20 20;
@@ -95,8 +91,9 @@ QFrame#side_nav QToolButton:checked {
     background: #18222E;
     border-color: #2E3C4A;
     color: #8EC4FF;
-    border-left: 4px solid #4EA1F2;
-    padding-left: 8px;
+    border-left: 4px solid #4EA1F2;;
+    /* 为抵消左侧4px竖条，稍微再加左内边距，让视觉更稳： */
+    padding-left: 22px; /* 可在18~24之间微调 */
 }
 
 /* Table */
@@ -139,3 +136,148 @@ QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
 QScrollBar::handle:horizontal { background: #364252; border-radius: 5px; min-width: 24px; }
 QScrollBar::handle:horizontal:hover { background: #46566C; }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+
+
+
+
+/*LogPage*/
+/* 页面背景（按你的全局策略调整） */
+QWidget#centralWidget { background: #0F141A; }
+
+/* 顶部标题 */
+QLabel#lblHeader {
+    color: #F3F4F6;
+    font-size: 18pt;
+    font-weight: 700;
+    padding: 6px 2px;
+}
+
+/* 分组标题 */
+QLabel#capLocal, QLabel#capRemote {
+    color: #E5E7EB;
+    font-size: 11pt;
+    font-weight: 600;
+    padding: 4px 2px;
+}
+
+/* —— 板块卡片：视频、列表、文本 —— */
+QLabel#videoLocalLabel, QLabel#videoRemoteLabel,
+QListWidget#listText, QTextEdit#txtTrailer {
+    background: #171C22;
+    border: 1px solid #2A323C;
+    border-radius: 12px;
+}
+
+/* 内边距 & 选中颜色 */
+QListWidget#listText { padding: 6px; }
+QTextEdit#txtTrailer {
+    border-radius: 12px;
+    padding: 10px 12px;
+    selection-background-color: #1F3A5B;
+    selection-color: #E5E7EB;
+}
+QLabel#videoLocalLabel, QLabel#videoRemoteLabel {
+    background: #141A20;
+}
+
+/* 控制区按钮：深色友好的品牌色 */
+QPushButton#btnOpen,
+QPushButton#btnPlay,
+QPushButton#btnPause,
+QPushButton#btnStop {
+    background: #2B6CB0;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 18px;
+    padding: 8px 16px;
+    min-height: 36px;
+    font-weight: 600;
+}
+QPushButton#btnOpen:hover,
+QPushButton#btnPlay:hover,
+QPushButton#btnPause:hover,
+QPushButton#btnStop:hover { background: #2C5282; }
+QPushButton#btnOpen:pressed,
+QPushButton#btnPlay:pressed,
+QPushButton#btnPause:pressed,
+QPushButton#btnStop:pressed { background: #234E77; }
+QPushButton#btnOpen:disabled,
+QPushButton#btnPlay:disabled,
+QPushButton#btnPause:disabled,
+QPushButton#btnStop:disabled {
+    background: #374151; color: #9CA3AF;
+}
+
+/* 进度条与时间 */
+QSlider#slider::groove:horizontal {
+    height: 6px; background: #2A323C; border-radius: 3px;
+}
+QSlider#slider::handle:horizontal {
+    width: 14px; height: 14px; margin: -4px 0;
+    background: #4EA1F2; border-radius: 7px;
+}
+QLabel#lblTime { color: #D1D5DB; }
+
+/* 列表项 */
+QListWidget#listText::item { padding: 6px 8px; border-radius: 6px; }
+QListWidget#listText::item:selected {
+    background: #1F3A5B; color: #E5E7EB;
+}
+
+
+
+/*thanksPage*/
+QWidget#ThanksWidget { background: #0F141A; }
+
+QFrame#ThanksCard {
+    background: #171C22;
+    border: 1px solid #2A323C;
+    border-radius: 16px;
+    padding: 24px 28px;
+}
+
+QLabel#thanksLabel {
+    color: #F3F4F6;
+    font-size: 18pt;
+    font-weight: 700;
+    qproperty-alignment: 'AlignCenter';
+    padding: 6px 0;
+}
+
+QLabel#subtitle {
+    color: #D1D5DB;
+    font-size: 11pt;
+    qproperty-alignment: 'AlignCenter';
+    padding: 2px 0 10px 0;
+}
+
+QLabel#heroIcon {
+    qproperty-alignment: 'AlignCenter';
+    padding: 6px 0 10px 0;
+}
+
+QWidget#linksBar { background: transparent; }
+
+QToolButton#btnGithub, QToolButton#btnDoc, QToolButton#btnEmail {
+    background: #18222E;
+    color: #8EC4FF;
+    border: 1px solid #2E3C4A;
+    border-radius: 18px;
+    padding: 8px 14px;
+    qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+    qproperty-iconSize: 20 20;
+}
+QToolButton#btnGithub:hover, QToolButton#btnDoc:hover, QToolButton#btnEmail:hover {
+    background: #1B2430;
+    border-color: #3A4A5B;
+}
+QToolButton#btnGithub:pressed, QToolButton#btnDoc:pressed, QToolButton#btnEmail:pressed {
+    background: #1E2A37;
+}
+
+/* 统一卡片内的列表/文本（若后续加） */
+QFrame#ThanksCard QListWidget, QFrame#ThanksCard QTextEdit {
+    background: #141A20;
+    border: 1px solid #2A323C;
+    border-radius: 12px;
+}

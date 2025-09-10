@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>TicketPage</class>
  <widget class="QWidget" name="TicketPage">
@@ -10,10 +10,31 @@
     <height>600</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Segoe UI</family>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>TicketPage</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>12</number>
+   </property>
+   <property name="leftMargin">
+    <number>16</number>
+   </property>
+   <property name="topMargin">
+    <number>16</number>
+   </property>
+   <property name="rightMargin">
+    <number>16</number>
+   </property>
+   <property name="bottomMargin">
+    <number>16</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -25,7 +46,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Ticket Managment</string>
+        <string>工单管理</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -42,10 +63,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QListWidget" name="ticketListWidget" />
+    <widget class="QListWidget" name="ticketListWidget"/>
    </item>
-  <property name="spacing"><number>12</number></property><property name="leftMargin"><number>16</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>16</number></property><property name="bottomMargin"><number>16</number></property></layout>
- <property name="font"><font><family>Segoe UI</family><pointsize>10</pointsize></font></property></widget>
- <resources />
- <connections />
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
 </ui>

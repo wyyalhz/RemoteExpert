@@ -2,6 +2,7 @@
 #define THANKSWIDGET_H
 
 #include <QWidget>
+#include "theme.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class ThanksWidget; }

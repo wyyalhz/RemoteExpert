@@ -5,5 +5,7 @@
         <file>dark/man-dark.svg</file>
         <file>dark/geer-dark.svg</file>
         <file>dark/flower-dark.svg</file>
+        <file>dark/record-dark.svg</file>
+        <file>dark/team-dark.svg</file>
     </qresource>
 </RCC>
