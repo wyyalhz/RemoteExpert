@@ -1,7 +1,7 @@
 #include "network_client.h"
 #include "../connection/connection_manager.h"
 #include "../protocol/handlers/message_handler.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include "../../../common/protocol/protocol.h"
 #include <QJsonDocument>
 #include <QJsonObject>

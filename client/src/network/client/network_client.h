@@ -8,7 +8,7 @@
 #include <QJsonArray>
 #include "../connection/connection_manager.h"
 #include "../protocol/handlers/message_handler.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 
 // 网络客户端主类 - 整合所有网络组件
 class NetworkClient : public QObject

@@ -5,7 +5,7 @@
 
 // 静态成员初始化
 LogLevel LogConfig::defaultLogLevel_ = LogLevel::INFO;
-QString LogConfig::defaultLogFilePath_ = "logs/server.log";
+QString LogConfig::defaultLogFilePath_ = "logs/application.log";
 bool LogConfig::consoleOutputEnabled_ = true;
 bool LogConfig::fileOutputEnabled_ = true;
 int LogConfig::maxLogFileSize_ = 10; // 10MB
@@ -107,7 +107,7 @@ bool LogConfig::loadFromFile(const QString &configFilePath)
     int levelValue = settings.value("Logging/DefaultLevel", static_cast<int>(LogLevel::INFO)).toInt();
     defaultLogLevel_ = static_cast<LogLevel>(levelValue);
     
-    defaultLogFilePath_ = settings.value("Logging/LogFilePath", "logs/server.log").toString();
+    defaultLogFilePath_ = settings.value("Logging/LogFilePath", "logs/application.log").toString();
     consoleOutputEnabled_ = settings.value("Logging/ConsoleOutput", true).toBool();
     fileOutputEnabled_ = settings.value("Logging/FileOutput", true).toBool();
     maxLogFileSize_ = settings.value("Logging/MaxFileSize", 10).toInt();

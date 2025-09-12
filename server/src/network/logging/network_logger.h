@@ -1,7 +1,7 @@
 #ifndef NETWORK_LOGGER_H
 #define NETWORK_LOGGER_H
 
-#include "../../logging/managers/log_manager.h"
+#include "../../../../common/logging/managers/log_manager.h"
 #include <QTcpSocket>
 #include <QHostAddress>
 

@@ -15,8 +15,23 @@ ConsoleLogger::ConsoleLogger(QObject *parent)
 
 void ConsoleLogger::outputLog(LogLevel level, const QString &formattedMessage)
 {
-    Q_UNUSED(level)
-    qDebug().noquote() << formattedMessage;
+    switch (level) {
+        case LogLevel::DEBUG:
+            qDebug().noquote() << formattedMessage;
+            break;
+        case LogLevel::INFO:
+            qInfo().noquote() << formattedMessage;
+            break;
+        case LogLevel::WARNING:
+            qWarning().noquote() << formattedMessage;
+            break;
+        case LogLevel::ERROR:
+            qCritical().noquote() << formattedMessage;
+            break;
+        case LogLevel::CRITICAL:
+            qCritical().noquote() << formattedMessage;
+            break;
+    }
 }
 
 // FileLogger 实现
@@ -46,7 +61,14 @@ void FileLogger::setLogFilePath(const QString &path)
 {
     logFilePath_ = path;
     
-    // 关闭现有文件
+    // 确保日志目录存在
+    QFileInfo fileInfo(path);
+    QDir dir = fileInfo.absoluteDir();
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+    
+    // 关闭之前的文件
     if (logStream_) {
         delete logStream_;
         logStream_ = nullptr;
@@ -57,14 +79,8 @@ void FileLogger::setLogFilePath(const QString &path)
         logFile_ = nullptr;
     }
     
-    // 创建新文件
+    // 创建新的文件
     if (!logFilePath_.isEmpty()) {
-        QFileInfo fileInfo(logFilePath_);
-        QDir dir = fileInfo.dir();
-        if (!dir.exists()) {
-            dir.mkpath(".");
-        }
-        
         logFile_ = new QFile(logFilePath_);
         if (logFile_->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
             logStream_ = new QTextStream(logFile_);
@@ -77,7 +93,7 @@ void FileLogger::outputLog(LogLevel level, const QString &formattedMessage)
 {
     Q_UNUSED(level)
     if (logStream_ && logFile_ && logFile_->isOpen()) {
-        *logStream_ << formattedMessage << endl;
+        *logStream_ << formattedMessage << "\n";
         logStream_->flush();
     }
 }
@@ -118,10 +134,12 @@ void LogManager::initialize(LogLevel level, const QString &logFilePath)
         consoleLogger_->setLogLevel(level);
     }
     
-    // 创建文件日志器
-    if (!fileLogger_) {
-        fileLogger_ = new FileLogger(logFilePath, this);
-        fileLogger_->setLogLevel(level);
+    // 创建文件日志器（如果指定了文件路径）
+    if (!logFilePath.isEmpty()) {
+        if (!fileLogger_) {
+            fileLogger_ = new FileLogger(logFilePath, this);
+            fileLogger_->setLogLevel(level);
+        }
     }
     
     info(LogModule::SYSTEM, LogLayer::BUSINESS, "LogManager", "日志系统初始化完成");
@@ -147,18 +165,40 @@ QString LogManager::generateLoggerKey(LogModule module, LogLayer layer) const
 
 LoggerBase* LogManager::createLogger(LogModule module, LogLayer layer)
 {
-    // 创建一个组合日志器，同时输出到控制台和文件
-    // 由于LoggerBase是抽象类，我们需要创建一个具体的实现
-    // 这里我们返回控制台日志器作为默认实现
-    LoggerBase* logger = new ConsoleLogger(this);
-    logger->setLogLevel(globalLogLevel_);
-    logger->setModule(module);
-    logger->setLayer(layer);
+    // 创建一个复合日志器，同时输出到控制台和文件
+    class CompositeLogger : public LoggerBase
+    {
+    public:
+        CompositeLogger(LogModule module, LogLayer layer, 
+                       ConsoleLogger* console, FileLogger* file, QObject* parent = nullptr)
+            : LoggerBase(parent)
+            , consoleLogger_(console)
+            , fileLogger_(file)
+        {
+            setModule(module);
+            setLayer(layer);
+        }
+        
+    protected:
+        void outputLog(LogLevel level, const QString &formattedMessage) override
+        {
+            if (consoleLogger_) {
+                consoleLogger_->outputLog(level, formattedMessage);
+            }
+            if (fileLogger_) {
+                fileLogger_->outputLog(level, formattedMessage);
+            }
+        }
+        
+    private:
+        ConsoleLogger* consoleLogger_;
+        FileLogger* fileLogger_;
+    };
     
-    return logger;
+    return new CompositeLogger(module, layer, consoleLogger_, fileLogger_, this);
 }
 
-// 直接调用日志方法实现
+// 直接调用日志方法实现 - 兼容客户端调用方式
 void LogManager::debug(LogModule module, LogLayer layer, const QString &message)
 {
     LoggerBase* logger = getLogger(module, layer);
@@ -199,7 +239,7 @@ void LogManager::critical(LogModule module, LogLayer layer, const QString &messa
     }
 }
 
-// 带上下文的日志方法实现
+// 带上下文的日志方法实现 - 兼容客户端调用方式
 void LogManager::debug(LogModule module, LogLayer layer, const QString &context, const QString &message)
 {
     LoggerBase* logger = getLogger(module, layer);
@@ -263,8 +303,12 @@ void LogManager::setGlobalLogLevel(LogLevel level)
 void LogManager::setLogFilePath(const QString &path)
 {
     logFilePath_ = path;
+    
     if (fileLogger_) {
         fileLogger_->setLogFilePath(path);
+    } else if (!path.isEmpty()) {
+        fileLogger_ = new FileLogger(path, this);
+        fileLogger_->setLogLevel(globalLogLevel_);
     }
 }
 
@@ -272,7 +316,7 @@ void LogManager::cleanup()
 {
     QMutexLocker locker(&loggersMutex_);
     
-    // 清理日志器
+    // 清理所有日志器
     for (auto logger : loggers_) {
         if (logger) {
             delete logger;

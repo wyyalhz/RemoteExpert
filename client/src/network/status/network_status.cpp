@@ -1,5 +1,5 @@
 #include "network_status.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include <QDateTime>
 
 NetworkStatus::NetworkStatus(QObject *parent)

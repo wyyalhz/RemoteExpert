@@ -1,5 +1,5 @@
 #include "connection_manager.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include "../../../common/protocol/protocol.h"
 #include "../../../common/protocol/serialization/serializer.h"
 #include <QJsonDocument>

@@ -1,5 +1,5 @@
 #include "database_manager.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include <QApplication>
 #include <QDir>
 #include <QDebug>

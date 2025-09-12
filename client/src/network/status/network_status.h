@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QDateTime>
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 
 // 网络状态枚举
 enum NetworkState {

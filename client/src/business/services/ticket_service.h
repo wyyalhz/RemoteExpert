@@ -2,7 +2,7 @@
 #define TICKET_SERVICE_H
 
 #include "../models/ticket.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include "../../network/client/network_client.h"
 #include <QObject>
 #include <QJsonObject>

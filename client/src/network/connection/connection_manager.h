@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QTimer>
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include "../../../common/protocol/protocol.h"
 
 // 连接管理器 - 负责TCP连接管理和消息收发

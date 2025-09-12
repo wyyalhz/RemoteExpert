@@ -18,7 +18,7 @@
 #include "network/network_server.h"
 
 // 日志系统
-#include "logging/managers/log_manager.h"
+#include "../../common/logging/managers/log_manager.h"
 
 // 公共协议
 #include "../../common/protocol/protocol.h"

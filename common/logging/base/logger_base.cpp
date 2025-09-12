@@ -98,6 +98,7 @@ QString LoggerBase::getModuleName() const
     switch (currentModule_) {
         case LogModule::USER: return "USER";
         case LogModule::TICKET: return "TICKET";
+        case LogModule::WORKORDER: return "WORKORDER";
         case LogModule::DATABASE: return "DB";
         case LogModule::NETWORK: return "NET";
         case LogModule::SYSTEM: return "SYS";
@@ -113,6 +114,7 @@ QString LoggerBase::getLayerName() const
         case LogLayer::BUSINESS: return "BUSINESS";
         case LogLayer::NETWORK: return "NETWORK";
         case LogLayer::PRESENTATION: return "UI";
+        case LogLayer::API: return "API";
         default: return "UNKNOWN";
     }
 }

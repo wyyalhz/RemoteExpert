@@ -3,6 +3,7 @@
 
 #include "../base/logger_base.h"
 #include <QString>
+#include <QMap>
 
 // 日志配置类
 class LogConfig

@@ -1,7 +1,7 @@
 #ifndef DB_LOGGER_H
 #define DB_LOGGER_H
 
-#include "../../logging/managers/log_manager.h"
+#include "../../../../common/logging/managers/log_manager.h"
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QVariantMap>

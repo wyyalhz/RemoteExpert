@@ -2,7 +2,7 @@
 #define SESSION_MANAGER_H
 
 #include "../models/user.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include <QObject>
 #include <QString>
 #include <QDateTime>

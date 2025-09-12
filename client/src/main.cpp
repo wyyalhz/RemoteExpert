@@ -1,7 +1,7 @@
 #include "presentation/main_window/home_main_window.h"
 #include "presentation/dialogs/login_dialog/login_dialog.h"
 #include "presentation/utils/theme.h"
-#include "logging/log_manager.h"
+#include "../../common/logging/managers/log_manager.h"
 #include "network/client/network_client.h"
 #include "business/services/auth_service.h"
 #include "business/services/ticket_service.h"

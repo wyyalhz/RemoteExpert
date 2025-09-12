@@ -1,7 +1,7 @@
 #include "login_dialog.h"
 #include "ui_login_dialog.h"
 #include "../register_dialog/register_dialog.h"
-#include "../../../logging/log_manager.h"
+#include "../../../../common/logging/managers/log_manager.h"
 #include <QSvgRenderer>
 #include <QPainter>
 

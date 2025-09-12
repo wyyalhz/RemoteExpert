@@ -1,6 +1,6 @@
 #include "user_message_handler.h"
 #include "../client/network_client.h"
-#include "../../../logging/log_manager.h"
+#include "../../../../../common/logging/managers/log_manager.h"
 #include <QJsonDocument>
 
 UserMessageHandler::UserMessageHandler(QObject *parent)

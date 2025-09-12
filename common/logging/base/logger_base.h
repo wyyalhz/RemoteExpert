@@ -14,22 +14,24 @@ enum class LogLevel {
     CRITICAL = 4
 };
 
-// 模块枚举
+// 模块枚举（合并客户端和服务端）
 enum class LogModule {
     USER = 0,
-    TICKET = 1,
-    DATABASE = 2,
-    NETWORK = 3,
-    SYSTEM = 4,
-    PRESENTATION = 5
+    TICKET = 1,        // 客户端原有
+    WORKORDER = 2,     // 服务端原有
+    DATABASE = 3,
+    NETWORK = 4,
+    SYSTEM = 5,
+    PRESENTATION = 6   // 客户端原有
 };
 
-// 层级枚举
+// 层级枚举（合并客户端和服务端）
 enum class LogLayer {
     DATA = 0,
     BUSINESS = 1,
     NETWORK = 2,
-    PRESENTATION = 3
+    PRESENTATION = 3,  // 客户端原有
+    API = 4           // 服务端原有
 };
 
 // 日志基类

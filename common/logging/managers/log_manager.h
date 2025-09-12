@@ -52,7 +52,21 @@ public:
     // 获取指定模块和层级的日志器
     LoggerBase* getLogger(LogModule module, LogLayer layer);
     
-    // 便捷的日志输出方法 - 支持可变参数
+    // 直接调用日志方法 - 兼容客户端调用方式
+    void debug(LogModule module, LogLayer layer, const QString &message);
+    void info(LogModule module, LogLayer layer, const QString &message);
+    void warning(LogModule module, LogLayer layer, const QString &message);
+    void error(LogModule module, LogLayer layer, const QString &message);
+    void critical(LogModule module, LogLayer layer, const QString &message);
+    
+    // 带上下文的日志方法 - 兼容客户端调用方式
+    void debug(LogModule module, LogLayer layer, const QString &context, const QString &message);
+    void info(LogModule module, LogLayer layer, const QString &context, const QString &message);
+    void warning(LogModule module, LogLayer layer, const QString &context, const QString &message);
+    void error(LogModule module, LogLayer layer, const QString &context, const QString &message);
+    void critical(LogModule module, LogLayer layer, const QString &context, const QString &message);
+    
+    // 便捷的日志输出方法 - 支持可变参数，兼容服务端调用方式
     template<typename... Args>
     void debug(LogModule module, LogLayer layer, Args&&... args);
     
@@ -101,7 +115,7 @@ private:
     QMutex loggersMutex_;
 };
 
-// 便捷宏定义 - 支持可变参数
+// 便捷宏定义 - 兼容服务端调用方式
 #define LOG_DEBUG(module, layer, ...) \
     LogManager::getInstance()->debug(module, layer, __VA_ARGS__)
 

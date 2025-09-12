@@ -1,6 +1,7 @@
 #include "auth_service.h"
 #include "../../common/protocol/builders/message_builder.h"
 #include "../../network/client/network_client.h"
+#include "../../common/logging/managers/log_manager.h"
 
 AuthService::AuthService(QObject *parent)
     : QObject(parent)

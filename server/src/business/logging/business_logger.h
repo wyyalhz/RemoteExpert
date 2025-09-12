@@ -1,7 +1,7 @@
 #ifndef BUSINESS_LOGGER_H
 #define BUSINESS_LOGGER_H
 
-#include "../../logging/managers/log_manager.h"
+#include "../../../../common/logging/managers/log_manager.h"
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>

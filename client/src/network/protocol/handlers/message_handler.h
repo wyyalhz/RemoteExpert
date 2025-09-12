@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QJsonObject>
 #include <QByteArray>
-#include "../../../logging/log_manager.h"
+#include "../../../../../common/logging/managers/log_manager.h"
 
 // 前向声明
 class NetworkClient;

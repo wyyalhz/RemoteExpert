@@ -15,13 +15,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # 协议模块
 include(../common/protocol/protocol.pri)
 
+# 公共日志模块
+include(../common/logging/logging.pri)
+
 # 源文件
 SOURCES += \
     # 主程序入口
     src/main.cpp \
-    # 日志模块
-    src/logging/logger_base.cpp \
-    src/logging/log_manager.cpp \
     # 表示层
     src/presentation/dialogs/equipment_dialog/data_model.cpp \
     src/presentation/dialogs/equipment_dialog/equipment_show.cpp \
@@ -57,9 +57,6 @@ SOURCES += \
 
 # 头文件
 HEADERS += \
-    # 日志模块
-    src/logging/logger_base.h \
-    src/logging/log_manager.h \
     # 表示层
     src/presentation/dialogs/equipment_dialog/data_model.h \
     src/presentation/dialogs/equipment_dialog/equipment_show.h \
@@ -133,7 +130,6 @@ INCLUDEPATH += \
     src/network/protocol \
     src/network/protocol/handlers \
     src/network/status \
-    src/logging \
     src/resources
 
 # 开发/运行时：把外部 themes 目录复制到可执行文件旁，方便覆盖qss

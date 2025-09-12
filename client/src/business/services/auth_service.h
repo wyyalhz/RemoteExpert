@@ -2,7 +2,7 @@
 #define AUTH_SERVICE_H
 
 #include "../models/user.h"
-#include "../../logging/log_manager.h"
+#include "../../../common/logging/managers/log_manager.h"
 #include "../../network/client/network_client.h"
 #include <QObject>
 #include <QJsonObject>
