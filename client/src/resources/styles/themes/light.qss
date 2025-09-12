@@ -1,0 +1,391 @@
+
+/* ===== Light (Blue brand) ===== */
+/* Global page background: soft blue */
+QWidget { background: #F2F7FF; color: #1B1D1F; font-family: "Segoe UI"; font-size: 10pt; }
+QLabel#titleLabel { font-size: 20pt; font-weight: 700; color: #111827; }
+.QHint { color: #6B7280; font-size: 9pt; }
+
+/* Optional: login/main root gradient (uncomment if you want a gentle gradient) */
+/*
+QDialog#LoginDialog, QWidget#LoginDialog,
+QMainWindow#HomeMainWindow, QWidget#HomeMainWindow {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #F3F8FF, stop:1 #F7FBFF);
+}
+*/
+
+/* Cards / GroupBox */
+QFrame#Card, QGroupBox {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+    margin-top: 14px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin; left: 12px; padding: 4px 6px;
+    font-weight: 600; color: #0F172A;
+}
+
+/* Inputs (pill) */
+QLineEdit, QPlainTextEdit, QTextEdit, QComboBox,
+QSpinBox, QDoubleSpinBox, QDateEdit, QTimeEdit, QDateTimeEdit {
+    background: #FFFFFF;
+    border: 1px solid #D8DEE6;
+    border-radius: 18px;
+    padding: 8px 14px;
+    min-height: 40px;
+    selection-background-color: #DCEFFD;
+    selection-color: #111827;
+}
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QComboBox:focus,
+QSpinBox:focus, QDoubleSpinBox:focus, QDateEdit:focus, QTimeEdit:focus, QDateTimeEdit:focus {
+    border: 1px solid #0B74D1;
+}
+QComboBox::drop-down { border: none; width: 28px; margin-right: 6px; }
+QComboBox::down-arrow {}
+
+/* Primary Buttons */
+QPushButton {
+    background: #0B74D1;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 18px;
+    padding: 10px 18px;
+    min-height: 40px;
+    font-weight: 600;
+}
+QPushButton:hover  { background: #106EBE; }
+QPushButton:pressed{ background: #0E5CA8; }
+QPushButton:disabled { background: #BFD8F4; color: #FFFFFF; }
+
+/* Ghost & Chip */
+QPushButton[flat="true"], QToolButton[flat="true"] {
+    background: #FFFFFF;
+    color: #0F5FA8;
+    border: 1px solid #C7D7EB;
+    border-radius: 12px;
+    padding: 8px 14px;
+}
+QPushButton[variant="chip"], QToolButton[variant="chip"] {
+    background: #EAF3FF;
+    color: #0B74D1;
+    border: 1px solid #C9E2FF;
+    border-radius: 18px;
+    padding: 8px 16px;
+}
+
+/* Sidebar container (give your left panel objectName="SideBar") */
+/*
+QWidget#SideBar {
+    background: #EAF3FF;
+    border: none;
+}
+*/
+
+QFrame#side_nav{
+    background: #EAF3FF;
+    border: none;
+}
+
+/* Sidebar buttons (add sidebar="true" and checkable=true) */
+QFrame#side_nav QToolButton {
+    background: transparent;
+    color: #1F2937;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding-top: 10px; padding-bottom: 10px;
+    padding-left: 18px; padding-right: 14px;  /* ↑ 增大左内边距让文字更“居中感” */
+    text-align: left;
+    qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+    qproperty-iconSize: 20 20;
+}
+QFrame#side_nav QToolButton:hover {
+    background: #E3EEFA;
+    border-color: #D6E6FB;
+}
+QFrame#side_nav QToolButton:checked {
+    background: #E3EEFA;
+    border-color: #BDD9FF;
+    color: #0B74D1;
+    border-left: 4px solid #0B74D1;
+    /* 为抵消左侧4px竖条，稍微再加左内边距，让视觉更稳： */
+    padding-left: 22px; /* 可在18~24之间微调 */
+}
+
+/* Table */
+QTableView {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+    gridline-color: #E6EBF1;
+    selection-background-color: #E6F2FB;
+    selection-color: #111827;
+}
+QHeaderView::section {
+    background: #F3F4F6;
+    color: #111827;
+    border: none;
+    border-right: 1px solid #E6EBF1;
+    padding: 8px 10px;
+    font-weight: 600;
+}
+
+/* Tabs */
+QTabBar::tab {
+    background: transparent;
+    padding: 8px 14px;
+    margin-right: 2px;
+    border-bottom: 2px solid transparent;
+    font-weight: 600;
+}
+QTabBar::tab:selected { color: #0B74D1; border-bottom: 2px solid #0B74D1; }
+QTabWidget::pane { border: none; top: -1px; }
+
+/* Scrollbars */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #CBD5E1; border-radius: 5px; min-height: 24px; }
+QScrollBar::handle:vertical:hover { background: #94A3B8; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #CBD5E1; border-radius: 5px; min-width: 24px; }
+QScrollBar::handle:horizontal:hover { background: #94A3B8; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+
+
+
+
+/*LogPage*/
+/* 页面背景（可按你的全局主题替换成透明） */
+QWidget#centralWidget { background: #F2F7FF; }
+
+/* 顶部标题 */
+QLabel#lblHeader {
+    color: #0F172A;
+    font-size: 18pt;
+    font-weight: 700;
+    padding: 6px 2px;
+}
+
+/* 分组标题（本地/远端） */
+QLabel#capLocal, QLabel#capRemote {
+    color: #111827;
+    font-size: 11pt;
+    font-weight/* 页面背景（可按你的全局主题替换成透明） */
+    QWidget#centralWidget { background: #F2F7FF; }
+
+    /* 顶部标题 */
+    QLabel#lblHeader {
+        color: #0F172A;
+        font-size: 18pt;
+        font-weight: 700;
+        padding: 6px 2px;
+    }
+
+    /* 分组标题（本地/远端） */
+    QLabel#capLocal, QLabel#capRemote {
+        color: #111827;
+        font-size: 11pt;
+        font-weight: 600;
+        padding: 4px 2px;
+    }
+
+    /* —— 板块卡片：给“视频、文本列表、预览文本”加底色 —— */
+    QLabel#videoLocalLabel, QLabel#videoRemoteLabel,
+    QListWidget#listText, QTextEdit#txtTrailer {
+        background: #FFFFFF;
+        border: 1px solid #E6EBF1;
+        border-radius: 12px;
+    }
+
+    /* 让列表/文本内部有内边距（视觉更像卡片） */
+    QListWidget#listText { padding: 6px; }
+    QTextEdit#txtTrailer {
+        border-radius: 12px;
+        padding: 10px 12px;
+        selection-background-color: #DCEFFD;
+        selection-color: #111827;
+    }
+
+    /* 视频占位：未加载画面时保持淡灰底，加载后一般会被视频绘制覆盖 */
+    QLabel#videoLocalLabel, QLabel#videoRemoteLabel {
+        background: #F8FAFF;
+    }
+
+    /* 控制区按钮：主色蓝、圆角胶囊 */
+    QPushButton#btnOpen,
+    QPushButton#btnPlay,
+    QPushButton#btnPause,
+    QPushButton#btnStop {
+        background: #0B74D1;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 18px;
+        padding: 8px 16px;
+        min-height: 36px;
+        font-weight: 600;
+    }
+    QPushButton#btnOpen:hover,
+    QPushButton#btnPlay:hover,
+    QPushButton#btnPause:hover,
+    QPushButton#btnStop:hover { background: #106EBE; }
+    QPushButton#btnOpen:pressed,
+    QPushButton#btnPlay:pressed,
+    QPushButton#btnPause:pressed,
+    QPushButton#btnStop:pressed { background: #0E5CA8; }
+    QPushButton#btnOpen:disabled,
+    QPushButton#btnPlay:disabled,
+    QPushButton#btnPause:disabled,
+    QPushButton#btnStop:disabled {
+        background: #BFD8F4; color: #FFFFFF;
+    }
+
+    /* 进度条与时间 */
+    QSlider#slider::groove:horizontal {
+        height: 6px; background: #D8DEE6; border-radius: 3px;
+    }
+    QSlider#slider::handle:horizontal {
+        width: 14px; height: 14px; margin: -4px 0;
+        background: #0B74D1; border-radius: 7px;
+    }
+    QLabel#lblTime { color: #374151; }
+
+    /* 列表项（可选） */
+    QListWidget#listText::item { padding: 6px 8px; border-radius: 6px; }
+    QListWidget#listText::item:selected {
+        background: #E6F2FB; color: #111827;
+    }
+: 600;
+    padding: 4px 2px;
+}
+
+/* —— 板块卡片：给“视频、文本列表、预览文本”加底色 —— */
+QLabel#videoLocalLabel, QLabel#videoRemoteLabel,
+QListWidget#listText, QTextEdit#txtTrailer {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+}
+
+/* 让列表/文本内部有内边距（视觉更像卡片） */
+QListWidget#listText { padding: 6px; }
+QTextEdit#txtTrailer {
+    border-radius: 12px;
+    padding: 10px 12px;
+    selection-background-color: #DCEFFD;
+    selection-color: #111827;
+}
+
+/* 视频占位：未加载画面时保持淡灰底，加载后一般会被视频绘制覆盖 */
+QLabel#videoLocalLabel, QLabel#videoRemoteLabel {
+    background: #F8FAFF;
+}
+
+/* 控制区按钮：主色蓝、圆角胶囊 */
+QPushButton#btnOpen,
+QPushButton#btnPlay,
+QPushButton#btnPause,
+QPushButton#btnStop {
+    background: #0B74D1;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 18px;
+    padding: 8px 16px;
+    min-height: 36px;
+    font-weight: 600;
+}
+QPushButton#btnOpen:hover,
+QPushButton#btnPlay:hover,
+QPushButton#btnPause:hover,
+QPushButton#btnStop:hover { background: #106EBE; }
+QPushButton#btnOpen:pressed,
+QPushButton#btnPlay:pressed,
+QPushButton#btnPause:pressed,
+QPushButton#btnStop:pressed { background: #0E5CA8; }
+QPushButton#btnOpen:disabled,
+QPushButton#btnPlay:disabled,
+QPushButton#btnPause:disabled,
+QPushButton#btnStop:disabled {
+    background: #BFD8F4; color: #FFFFFF;
+}
+
+/* 进度条与时间 */
+QSlider#slider::groove:horizontal {
+    height: 6px; background: #D8DEE6; border-radius: 3px;
+}
+QSlider#slider::handle:horizontal {
+    width: 14px; height: 14px; margin: -4px 0;
+    background: #0B74D1; border-radius: 7px;
+}
+QLabel#lblTime { color: #374151; }
+
+/* 列表项（可选） */
+QListWidget#listText::item { padding: 6px 8px; border-radius: 6px; }
+QListWidget#listText::item:selected {
+    background: #E6F2FB; color: #111827;
+}
+
+
+/*thanksPage*/
+/* 根背景：保持你的浅蓝基调（可改为 transparent 让全局底色透出） */
+QWidget#ThanksWidget { background: #F2F7FF; }
+
+/* 卡片容器 */
+QFrame#ThanksCard {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 16px;
+    padding: 24px 28px;
+}
+
+/* 主标题（你原来的 thanksLabel） */
+QLabel#thanksLabel {
+    color: #0F172A;
+    font-size: 18pt;
+    font-weight: 700;
+    qproperty-alignment: 'AlignCenter';
+    padding: 6px 0;
+}
+
+/* 副标题 */
+QLabel#subtitle {
+    color: #374151;
+    font-size: 11pt;
+    qproperty-alignment: 'AlignCenter';
+    padding: 2px 0 10px 0;
+}
+
+/* 插画/图标（建议放 96~128px 的 SVG） */
+QLabel#heroIcon {
+    qproperty-alignment: 'AlignCenter';
+    padding: 6px 0 10px 0;
+}
+
+/* 链接按钮条 */
+QWidget#linksBar { background: transparent; }
+
+/* 链接按钮：chip 风格 */
+QToolButton#btnGithub, QToolButton#btnDoc, QToolButton#btnEmail {
+    background: #EAF3FF;
+    color: #0B74D1;
+    border: 1px solid #C9E2FF;
+    border-radius: 18px;
+    padding: 8px 14px;
+    qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+    qproperty-iconSize: 20 20;
+}
+QToolButton#btnGithub:hover, QToolButton#btnDoc:hover, QToolButton#btnEmail:hover {
+    background: #E3EEFA;
+    border-color: #BBD7FF;
+}
+QToolButton#btnGithub:pressed, QToolButton#btnDoc:pressed, QToolButton#btnEmail:pressed {
+    background: #D9EAFE;
+}
+
+/* 让卡片内的列表/文本（若后续加）看起来也统一 */
+QFrame#ThanksCard QListWidget, QFrame#ThanksCard QTextEdit {
+    background: #FFFFFF;
+    border: 1px solid #E6EBF1;
+    border-radius: 12px;
+}
+
+

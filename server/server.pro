@@ -6,13 +6,24 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-# 包含重构后的协议模块
-include(../common/protocol.pri)
+TARGET = server
+
+DESTDIR = $$PWD/bin
+
+# 编译警告设置
+DEFINES += QT_DEPRECATED_WARNINGS
+
+# 协议模块
+include(../common/protocol/protocol.pri)
 
 # 源文件
 SOURCES += \
     # 主程序入口
     src/main.cpp \
+    # 日志模块
+    src/logging/base/logger_base.cpp \
+    src/logging/config/log_config.cpp \
+    src/logging/managers/log_manager.cpp \
     # 数据库层
     src/data/databasemanager.cpp \
     src/data/base/db_base.cpp \
@@ -32,10 +43,6 @@ SOURCES += \
     src/business/services/session_service.cpp \
     src/business/validators/user_validator.cpp \
     src/business/validators/workorder_validator.cpp \
-    # 日志系统
-    src/logging/base/logger_base.cpp \
-    src/logging/config/log_config.cpp \
-    src/logging/managers/log_manager.cpp \
     # 网络层
     src/network/network_server.cpp \
     src/network/connection_manager.cpp \
@@ -49,6 +56,10 @@ SOURCES += \
 
 # 头文件
 HEADERS += \
+    # 日志模块
+    src/logging/base/logger_base.h \
+    src/logging/config/log_config.h \
+    src/logging/managers/log_manager.h \
     # 数据库层
     src/data/databasemanager.h \
     src/data/base/db_base.h \
@@ -68,10 +79,6 @@ HEADERS += \
     src/business/services/session_service.h \
     src/business/validators/user_validator.h \
     src/business/validators/workorder_validator.h \
-    # 日志系统
-    src/logging/base/logger_base.h \
-    src/logging/config/log_config.h \
-    src/logging/managers/log_manager.h \
     # 网络层
     src/network/network_server.h \
     src/network/connection_manager.h \
@@ -86,6 +93,11 @@ HEADERS += \
 # 包含路径
 INCLUDEPATH += \
     src \
+    # 日志模块
+    src/logging \
+    src/logging/base \
+    src/logging/config \
+    src/logging/managers \
     # 数据库层
     src/data \
     src/data/base \
@@ -99,11 +111,6 @@ INCLUDEPATH += \
     src/business/managers \
     src/business/services \
     src/business/validators \
-    # 日志系统
-    src/logging \
-    src/logging/base \
-    src/logging/config \
-    src/logging/managers \
     # 网络层
     src/network \
     src/network/server \
@@ -111,11 +118,3 @@ INCLUDEPATH += \
     src/network/protocol/protocol_handlers \
     src/network/logging
 
-# 目标名称
-TARGET = server
-
-# 编译选项
-DEFINES += QT_DEPRECATED_WARNINGS
-
-# 输出目录
-DESTDIR = $$PWD/bin
