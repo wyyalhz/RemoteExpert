@@ -8,7 +8,7 @@ TEMPLATE = app
 
 TARGET = server
 
-DESTDIR = $$PWD/bin
+DESTDIR = $$PWD/../bin
 
 # 编译警告设置
 DEFINES += QT_DEPRECATED_WARNINGS
