@@ -413,7 +413,7 @@ void TicketPage::onConnectRequested(const QString& ticketId)
     QDir dir(appDir);
     while (dir.exists() && !dir.isRoot()) {
         // 检查当前目录是否包含目标可执行文件
-        if (dir.exists("videoplusplusplus-win.exe") || dir.exists("videoplusplusplus-linux")) {
+        if (dir.exists("videoplusplusplus.exe") || dir.exists("videoplusplusplus")) {
             projectRoot = dir.absolutePath();
             break;
         }
@@ -425,16 +425,16 @@ void TicketPage::onConnectRequested(const QString& ticketId)
     
 #ifdef Q_OS_WIN
     // Windows系统
-    executablePath = QDir(projectRoot).filePath("videoplusplusplus-win.exe");
+    executablePath = QDir(projectRoot).filePath("videoplusplusplus.exe");
     if (!QFile::exists(executablePath)) {
-        QMessageBox::warning(this, "错误", "找不到videoplusplusplus-win.exe文件");
+        QMessageBox::warning(this, "错误", "找不到videoplusplusplus.exe文件");
         return;
     }
 #elif defined(Q_OS_LINUX)
     // Linux系统
-    executablePath = QDir(projectRoot).filePath("videoplusplusplus-linux");
+    executablePath = QDir(projectRoot).filePath("videoplusplusplus");
     if (!QFile::exists(executablePath)) {
-        QMessageBox::warning(this, "错误", "找不到videoplusplusplus-linux文件");
+        QMessageBox::warning(this, "错误", "找不到videoplusplusplus文件");
         return;
     }
     // 确保Linux可执行文件有执行权限
