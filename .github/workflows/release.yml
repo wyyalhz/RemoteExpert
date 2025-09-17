@@ -9,11 +9,8 @@ on:
       - master
 
 jobs:
-  build-and-release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-18.04]
+  build-windows:
+    runs-on: windows-latest
     
     steps:
     - name: Checkout code
@@ -21,35 +18,16 @@ jobs:
       with:
         fetch-depth: 0  # 需要完整历史记录用于semantic-release
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install semantic-release dependencies
-      run: npm ci
-    
     - name: Setup Qt (Windows)
-      if: matrix.os == 'windows-latest'
       uses: jurplel/install-qt-action@v3
       with:
         version: '5.12.8'
         modules: 'qtbase,qtsvg,qtmultimedia,qtmultimediawidgets,qtserialport,qtcharts'
     
-    - name: Setup Qt (Ubuntu)
-      if: matrix.os == 'ubuntu-18.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qt5-default qtbase5-dev qtmultimedia5-dev libqt5svg5-dev libqt5serialport5-dev libqt5charts5-dev
-        sudo apt-get install -y build-essential cmake
-    
     - name: Setup Visual Studio (Windows)
-      if: matrix.os == 'windows-latest'
       uses: microsoft/setup-msbuild@v1.3
     
     - name: Configure Qt environment (Windows)
-      if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
         echo "Qt_DIR=C:\Qt\5.12.8\msvc2017_64" >> $GITHUB_ENV
@@ -57,21 +35,12 @@ jobs:
         echo "QTDIR=C:\Qt\5.12.8\msvc2017_64" >> $GITHUB_ENV
     
     - name: Build project (Windows)
-      if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
         qmake remote_expert.pro
         nmake release
     
-    - name: Build project (Ubuntu)
-      if: matrix.os == 'ubuntu-18.04'
-      shell: bash
-      run: |
-        qmake remote_expert.pro
-        make -j$(nproc)
-    
     - name: Collect Qt runtime libraries (Windows)
-      if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
         mkdir -p bin\qt_libs
@@ -89,8 +58,43 @@ jobs:
         copy "C:\Qt\5.12.8\msvc2017_64\bin\vcruntime140.dll" bin\qt_libs\
         copy "C:\Qt\5.12.8\msvc2017_64\bin\vcruntime140_1.dll" bin\qt_libs
     
+    - name: Copy configuration files
+      run: |
+        cp client/src/config.ini bin/
+    
+    - name: Create release package (Windows)
+      shell: cmd
+      run: |
+        powershell Compress-Archive -Path bin\* -DestinationPath RemoteExpert-windows.zip
+    
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: RemoteExpert-windows
+        path: RemoteExpert-windows.zip
+
+  build-linux:
+    runs-on: ubuntu-18.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 需要完整历史记录用于semantic-release
+    
+    - name: Setup Qt (Ubuntu)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qt5-default qtbase5-dev qtmultimedia5-dev libqt5svg5-dev libqt5serialport5-dev libqt5charts5-dev
+        sudo apt-get install -y build-essential cmake
+    
+    - name: Build project (Ubuntu)
+      shell: bash
+      run: |
+        qmake remote_expert.pro
+        make -j$(nproc)
+    
     - name: Collect Qt runtime libraries (Ubuntu)
-      if: matrix.os == 'ubuntu-18.04'
       run: |
         mkdir -p bin/qt_libs
         cp /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 bin/qt_libs/
@@ -108,46 +112,48 @@ jobs:
       run: |
         cp client/src/config.ini bin/
     
-    - name: Create release package (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: cmd
-      run: |
-        powershell Compress-Archive -Path bin\* -DestinationPath RemoteExpert-windows.zip
-    
     - name: Create release package (Ubuntu)
-      if: matrix.os == 'ubuntu-18.04'
       run: |
         tar -czf RemoteExpert-linux.tar.gz -C bin .
     
-    - name: Upload Windows artifacts
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: RemoteExpert-windows
-        path: RemoteExpert-windows.zip
-    
     - name: Upload Linux artifacts
-      if: matrix.os == 'ubuntu-18.04'
       uses: actions/upload-artifact@v4
       with:
         name: RemoteExpert-linux
         path: RemoteExpert-linux.tar.gz
+
+  release:
+    runs-on: windows-latest
+    needs: [build-windows, build-linux]
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 需要完整历史记录用于semantic-release
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install semantic-release dependencies
+      run: npm ci
     
     - name: Semantic Release
-      if: matrix.os == 'windows-latest' && github.ref == 'refs/heads/master'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx semantic-release
       continue-on-error: true
     
     - name: Download all artifacts
-      if: matrix.os == 'windows-latest' && github.ref == 'refs/heads/master'
       uses: actions/download-artifact@v4
       with:
         path: ./artifacts
     
     - name: Create final release packages
-      if: matrix.os == 'windows-latest' && github.ref == 'refs/heads/master'
       shell: bash
       run: |
         # 重命名文件以包含版本号
