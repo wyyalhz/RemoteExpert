@@ -68,3 +68,17 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Semantic Release
+CHANGELOG.md
+
+# Build artifacts for CI/CD
+artifacts/
+RemoteExpert-*.zip
+RemoteExpert-*.tar.gz

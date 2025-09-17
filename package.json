@@ -1,0 +1,24 @@
+{
+  "name": "remote-expert",
+  "version": "1.0.0",
+  "description": "Remote Expert Support System - A C++ Qt application for remote technical support",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wyyalhz/RemoteExpert.git"
+  },
+  "scripts": {
+    "semantic-release": "semantic-release"
+  },
+  "devDependencies": {
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/github": "^9.2.6",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "semantic-release": "^22.0.12"
+  },
+  "release": {
+    "branches": [
+      "master"
+    ]
+  }
+}
