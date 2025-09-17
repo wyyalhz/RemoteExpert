@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - chore/semantic-release-fix
   pull_request:
     branches:
       - master
@@ -22,7 +23,7 @@ jobs:
       uses: jurplel/install-qt-action@v3
       with:
         version: '5.12.8'
-        modules: 'qtbase,qtsvg,qtmultimedia,qtmultimediawidgets,qtserialport,qtcharts'
+        modules: 'qtbase;qtsvg;qtmultimedia;qtmultimediawidgets;qtserialport;qtcharts'
     
     - name: Setup Visual Studio (Windows)
       uses: microsoft/setup-msbuild@v1.3
