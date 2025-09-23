@@ -1,25 +1,24 @@
-FROM ubuntu:22.04
+FROM mxe/mxe:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates gnupg software-properties-common \
-    build-essential make git pkg-config \
-    curl wget unzip zip tar xz-utils \
-    binutils-mingw-w64 mingw-w64 wine64 \
-    file python3 \
-    && rm -rf /var/lib/apt/lists/*
+# 与 Linux 构建镜像保持相似风格：注释与分步构建
+# 说明：此镜像已包含 MXE 基础环境与构建工具
 
-# Build selected MXE packages (qtbase/qtsvg/qtmultimedia)
-# 首次构建时间较长；后续可换用 GHCR 预构建镜像以提速
-RUN git clone https://github.com/mxe/mxe.git /opt/mxe && \
-    make -C /opt/mxe -j"$(nproc)" \
-      MXE_TARGETS='x86_64-w64-mingw32.shared' \
-      qtbase qtsvg qtmultimedia
-
+# 目标三方包（依据 client.pro 与脚本：需要 svg、multimedia、serialport、charts）
+# 分步先下载源码，再编译；同时提高日志详细度（V=1），并控制并发避免 OOM
+ARG MXE_JOBS=2
 ENV PATH=/opt/mxe/usr/bin:$PATH \
     MXE_PREFIX=/opt/mxe/usr \
     MXE_TARGET=x86_64-w64-mingw32.shared
+
+# 下载 Qt 源码（便于缓存和重试）
+RUN make -C /opt/mxe V=1 MXE_TARGETS="${MXE_TARGET}" \
+    download-qtbase download-qtsvg download-qtmultimedia download-qtserialport download-qtcharts
+
+# 编译所需 Qt 组件
+RUN make -C /opt/mxe -j"${MXE_JOBS}" V=1 MXE_TARGETS="${MXE_TARGET}" \
+    qtbase qtsvg qtmultimedia qtserialport qtcharts
 
 WORKDIR /workspace
 
