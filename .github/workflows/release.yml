@@ -4,163 +4,96 @@ on:
   push:
     branches:
       - master
-      - chore/semantic-release-fix
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # 需要完整历史记录用于semantic-release
-    
-    - name: Setup Qt (Windows)
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: '5.12.8'
-        modules: 'qtbase;qtsvg;qtmultimedia;qtmultimediawidgets;qtserialport;qtcharts'
-    
-    - name: Setup Visual Studio (Windows)
-      uses: microsoft/setup-msbuild@v1.3
-    
-    - name: Configure Qt environment (Windows)
-      shell: cmd
-      run: |
-        echo "Qt_DIR=C:\Qt\5.12.8\msvc2017_64" >> $GITHUB_ENV
-        echo "PATH=C:\Qt\5.12.8\msvc2017_64\bin;%PATH%" >> $GITHUB_ENV
-        echo "QTDIR=C:\Qt\5.12.8\msvc2017_64" >> $GITHUB_ENV
-    
-    - name: Build project (Windows)
-      shell: cmd
-      run: |
-        qmake remote_expert.pro
-        nmake release
-    
-    - name: Collect Qt runtime libraries (Windows)
-      shell: cmd
-      run: |
-        mkdir -p bin\qt_libs
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Core.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Gui.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Widgets.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Network.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Svg.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Multimedia.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5MultimediaWidgets.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5SerialPort.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Charts.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\Qt5Sql.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\msvcp140.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\vcruntime140.dll" bin\qt_libs\
-        copy "C:\Qt\5.12.8\msvc2017_64\bin\vcruntime140_1.dll" bin\qt_libs
-    
-    - name: Copy configuration files
-      run: |
-        cp client/src/config.ini bin/
-    
-    - name: Create release package (Windows)
-      shell: cmd
-      run: |
-        powershell Compress-Archive -Path bin\* -DestinationPath RemoteExpert-windows.zip
-    
-    - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: RemoteExpert-windows
-        path: RemoteExpert-windows.zip
-
   build-linux:
-    runs-on: ubuntu-18.04
-    
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 需要完整历史记录用于semantic-release
-    
-    - name: Setup Qt (Ubuntu)
+        fetch-depth: 0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Build Linux image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/build/build_linux.Dockerfile
+        push: false
+        tags: local/remote-expert-linux:ci
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Build and package in container
       run: |
-        sudo apt-get update
-        sudo apt-get install -y qt5-default qtbase5-dev qtmultimedia5-dev libqt5svg5-dev libqt5serialport5-dev libqt5charts5-dev
-        sudo apt-get install -y build-essential cmake
-    
-    - name: Build project (Ubuntu)
-      shell: bash
-      run: |
-        qmake remote_expert.pro
-        make -j$(nproc)
-    
-    - name: Collect Qt runtime libraries (Ubuntu)
-      run: |
-        mkdir -p bin/qt_libs
-        cp /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Network.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Svg.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Multimedia.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5MultimediaWidgets.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5SerialPort.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Charts.so.5 bin/qt_libs/
-        cp /usr/lib/x86_64-linux-gnu/libQt5Sql.so.5 bin/qt_libs/
-    
-    - name: Copy configuration files
-      run: |
-        cp client/src/config.ini bin/
-    
-    - name: Create release package (Ubuntu)
-      run: |
-        tar -czf RemoteExpert-linux.tar.gz -C bin .
-    
-    - name: Upload Linux artifacts
+        docker run --rm -v "${{ github.workspace }}:/workspace" local/remote-expert-linux:ci \
+          bash -lc "cd /workspace && chmod +x ./scripts/*.sh && ./scripts/build_linux.sh && ./scripts/package_linux.sh"
+    - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
-        name: RemoteExpert-linux
-        path: RemoteExpert-linux.tar.gz
+        name: linux-package
+        path: dist/*linux-x86_64.tar.gz
+
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Build MXE image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/build/build_windows-mxe.Dockerfile
+        push: false
+        tags: local/remote-expert-mxe:ci
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Build and package in container (MXE)
+      run: |
+        docker run --rm -v "${{ github.workspace }}:/workspace" local/remote-expert-mxe:ci \
+          bash -lc "cd /workspace && chmod +x ./scripts/*.sh && ./scripts/build_windows_mxe.sh && ./scripts/package_windows.sh"
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-package
+        path: dist/*windows-x86_64.zip
 
   release:
-    runs-on: windows-latest
-    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows]
     if: github.ref == 'refs/heads/master'
-    
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 需要完整历史记录用于semantic-release
-    
+        fetch-depth: 0
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - name: Collect artifacts into dist/
+      run: |
+        mkdir -p dist
+        find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp -f {} dist/ \;
+        ls -al dist || true
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
-    - name: Install semantic-release dependencies
+    - name: Install dependencies
       run: npm ci
-    
     - name: Semantic Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx semantic-release
-      continue-on-error: true
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: ./artifacts
-    
-    - name: Create final release packages
-      shell: bash
-      run: |
-        # 重命名文件以包含版本号
-        if [ -f "artifacts/RemoteExpert-windows/RemoteExpert-windows.zip" ]; then
-          cp "artifacts/RemoteExpert-windows/RemoteExpert-windows.zip" "RemoteExpert-${{ github.ref_name }}-windows.zip"
-        fi
-        if [ -f "artifacts/RemoteExpert-linux/RemoteExpert-linux.tar.gz" ]; then
-          cp "artifacts/RemoteExpert-linux/RemoteExpert-linux.tar.gz" "RemoteExpert-${{ github.ref_name }}-linux.tar.gz"
-        fi
