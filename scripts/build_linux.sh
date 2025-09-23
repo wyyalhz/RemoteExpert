@@ -22,7 +22,7 @@ mkdir -p out/linux/bin dist
 echo "[linux] qmake version:" && (qmake -v || true)
 
 (set -x; qmake remote_expert.pro CONFIG+=release)
-(set -x; make -j"$(nproc || echo 4)")
+(set -x; make -j"$(nproc || echo 4)" V=1)
 
 # Collect expected executables if present
 for exe in \
