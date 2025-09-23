@@ -4,6 +4,7 @@
 
 # VSCode qt building files
 build
+!docker/build
 bin
 debug
 release
