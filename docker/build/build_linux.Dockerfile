@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Qt 5.12.8 (beineri PPA)
 RUN add-apt-repository -y ppa:beineri/opt-qt-5.12.8-bionic && \
     apt-get update && apt-get install -y --no-install-recommends \
-    qt512base qt512tools qt512svg qt512multimedia qt512serialport qt512charts \
+    qt512base qt512tools qt512svg qt512multimedia qt512serialport qt512charts-no-lgpl \
     && rm -rf /var/lib/apt/lists/*
 
 ## Provide OpenGL headers and libGL.so needed by Qt (fixes: missing /usr/lib/x86_64-linux-gnu/libGL.so)
