@@ -15,6 +15,11 @@ RUN add-apt-repository -y ppa:beineri/opt-qt-5.12.8-bionic && \
     qt512base qt512tools qt512svg \
     && rm -rf /var/lib/apt/lists/*
 
+## Provide OpenGL headers and libGL.so needed by Qt (fixes: missing /usr/lib/x86_64-linux-gnu/libGL.so)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PATH=/opt/qt512/bin:$PATH
 
 WORKDIR /workspace
