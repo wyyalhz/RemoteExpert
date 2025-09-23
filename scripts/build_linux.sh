@@ -25,13 +25,18 @@ echo "[linux] qmake version:" && (qmake -v || true)
 (set -x; make -j"$(nproc || echo 4)" V=1)
 
 # Collect expected executables if present
+# Note: project .pro files set DESTDIR=$$PWD/../bin, so outputs land in top-level bin/
+# We check both per-project and top-level bin locations
 for exe in \
   client/src/main \
   client/bin/client \
   server/src/main \
   server/bin/server \
   videoplusplusplus/videoplusplusplus \
-  videoplusplusplus/bin/videoplusplusplus; do
+  videoplusplusplus/bin/videoplusplusplus \
+  bin/client \
+  bin/server \
+  bin/videoplusplusplus; do
   if [ -f "$exe" ]; then
     cp -f "$exe" out/linux/bin/
   fi
